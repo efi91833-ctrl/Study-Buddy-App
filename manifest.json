@@ -2,7 +2,7 @@
   "name": "Study Buddy",
   "short_name": "Study Buddy",
   "description": "Medical anatomy & histology study app",
-  "start_url": "/index.html",
+  "start_url": "/Study-Buddy-App/index.html",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#ffffff",
