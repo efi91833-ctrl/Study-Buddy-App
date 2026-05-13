@@ -5739,25 +5739,17 @@ function AssSlot({ node, placed, selectedVessel, onSlotClick, submitted,
   );
 }
 
-/* ── Recursive tree node — vertical flow layout ── */
-function AssTreeNode({ node, byParent, placed, selectedVessel, onSlotClick, submitted,
-                       dragOverSlot, onSlotDragOver, onSlotDragLeave, onSlotDrop, onSlotDragStart,
-                       mode, hiddenSet, onInfoClick, highlightSet }) {
-  const children      = byParent[node.id] || [];
-  const continuations = children.filter(c => c.type === 'continuation');
-  const branches      = children.filter(c => c.type !== 'continuation');
-  const isHidden      = hiddenSet.has(node.id);
-
-  const shared = {
-    placed, selectedVessel, onSlotClick, submitted,
-    dragOverSlot, onSlotDragOver, onSlotDragLeave, onSlotDrop, onSlotDragStart,
-    mode, hiddenSet, onInfoClick, highlightSet,
-  };
-
+/* ── Compact vertical sub-tree for branch children ── */
+function AssBranchSubTree({ node, byParent, placed, selectedVessel, onSlotClick, submitted,
+                             dragOverSlot, onSlotDragOver, onSlotDragLeave, onSlotDrop, onSlotDragStart,
+                             mode, hiddenSet, onInfoClick, highlightSet }) {
+  const children = byParent[node.id] || [];
+  const isHidden = hiddenSet.has(node.id);
+  const shared   = { byParent, placed, selectedVessel, onSlotClick, submitted,
+                     dragOverSlot, onSlotDragOver, onSlotDragLeave, onSlotDrop, onSlotDragStart,
+                     mode, hiddenSet, onInfoClick, highlightSet };
   return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
-
-      {/* ── This node's slot ── */}
+    <div>
       <AssSlot
         node={node} placed={placed} selectedVessel={selectedVessel}
         onSlotClick={onSlotClick} submitted={submitted}
@@ -5769,40 +5761,97 @@ function AssTreeNode({ node, byParent, placed, selectedVessel, onSlotClick, subm
         mode={mode} isHidden={isHidden} onInfoClick={onInfoClick}
         isHighlighted={highlightSet ? highlightSet.has(node.id) : false}
       />
-
-      {/* ── Numbered branches — indented left border ── */}
-      {branches.length > 0 && (
-        <div style={{
-          marginLeft: 20, paddingLeft: 14, marginTop: 5, marginBottom: 2,
-          borderLeft: '2px solid rgba(0,0,0,0.09)',
-          display: 'flex', flexDirection: 'column', gap: 5,
-        }}>
-          {branches.map((branch, i) => (
-            <div key={branch.id} style={{ position: 'relative' }}>
-              {/* Branch number badge */}
-              <div style={{
-                position: 'absolute', left: -27, top: '50%', transform: 'translateY(-50%)',
-                fontSize: 9, fontWeight: 700, color: '#bbb',
-                background: 'rgba(242,237,232,0.97)', padding: '1px 3px',
-                borderRadius: 3, minWidth: 13, textAlign: 'center',
-              }}>{i + 1}</div>
-              <AssTreeNode node={branch} byParent={byParent} {...shared} />
+      {children.length > 0 && (
+        <div style={{ marginLeft: 12, paddingLeft: 8, marginTop: 3,
+                      borderLeft: '2px solid rgba(0,0,0,0.08)',
+                      display: 'flex', flexDirection: 'column', gap: 3 }}>
+          {children.map((child, i) => (
+            <div key={child.id} style={{ position: 'relative' }}>
+              <span style={{ position: 'absolute', left: -16, top: '50%', transform: 'translateY(-50%)',
+                             fontSize: 8, fontWeight: 700, color: '#ccc' }}>{i + 1}</span>
+              <AssBranchSubTree node={child} byParent={byParent} {...shared} />
             </div>
           ))}
         </div>
       )}
+    </div>
+  );
+}
 
-      {/* ── Continuation arrow — flows below ── */}
-      {continuations.map(cont => (
-        <div key={cont.id}>
-          <div style={{ display: 'flex', alignItems: 'center', padding: '3px 0 3px 9px', gap: 6 }}>
-            <div style={{ width: 2, height: 16, background: 'rgba(91,155,213,0.4)', flexShrink: 0 }} />
-            <span style={{ fontSize: 9.5, color: '#88a0c0', fontStyle: 'italic', letterSpacing: 0.3 }}>
-              continues as
-            </span>
-          </div>
-          <AssTreeNode node={cont} byParent={byParent} {...shared} />
+/* ── Spine tree node — 3-column layout (left branches | spine | right branches) ── */
+function AssTreeNode({ node, byParent, placed, selectedVessel, onSlotClick, submitted,
+                       dragOverSlot, onSlotDragOver, onSlotDragLeave, onSlotDrop, onSlotDragStart,
+                       mode, hiddenSet, onInfoClick, highlightSet }) {
+  const children      = byParent[node.id] || [];
+  const continuations = children.filter(c => c.type === 'continuation');
+  const branches      = children.filter(c => c.type !== 'continuation');
+  const isHidden      = hiddenSet.has(node.id);
+
+  /* Split branches left / right */
+  const mid           = Math.floor(branches.length / 2);
+  const leftBranches  = branches.slice(0, mid);
+  const rightBranches = branches.slice(mid);
+
+  const slotProps = { placed, selectedVessel, onSlotClick, submitted,
+                      dragOverSlot, onSlotDragOver, onSlotDragLeave, onSlotDrop, onSlotDragStart,
+                      mode, hiddenSet, onInfoClick, highlightSet };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+
+      {/* 3-column row */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', width: '100%', gap: 10 }}>
+
+        {/* Left branches */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5, paddingTop: 6 }}>
+          {leftBranches.map(b => (
+            <AssBranchSubTree key={b.id} node={b} byParent={byParent} {...slotProps} />
+          ))}
         </div>
+
+        {/* Spine node */}
+        <div style={{ width: 210, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <AssSlot
+            node={node} placed={placed} selectedVessel={selectedVessel}
+            onSlotClick={onSlotClick} submitted={submitted}
+            dragOver={dragOverSlot === node.id}
+            onDragOver={(e) => { e.preventDefault(); onSlotDragOver(node.id); }}
+            onDragLeave={() => onSlotDragLeave(node.id)}
+            onDrop={(e) => onSlotDrop(e, node.id)}
+            onDragStart={onSlotDragStart}
+            mode={mode} isHidden={isHidden} onInfoClick={onInfoClick}
+            isHighlighted={highlightSet ? highlightSet.has(node.id) : false}
+          />
+          {/* Connector line to next continuation */}
+          {continuations.length > 0 && (
+            <div style={{ width: 2, height: 22, background: 'rgba(91,155,213,0.35)' }} />
+          )}
+          {/* Landmark divider (e.g. Diaphragm) */}
+          {node.landmark && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0',
+                          width: '100vw', maxWidth: 700, alignSelf: 'center' }}>
+              <div style={{ flex: 1, height: 3, background: 'rgba(200,160,0,0.28)', borderRadius: 2 }} />
+              <span style={{ fontSize: 10, fontWeight: 800, color: '#b89000',
+                             textTransform: 'uppercase', letterSpacing: 1.2, flexShrink: 0 }}>
+                {node.landmark}
+              </span>
+              <div style={{ flex: 1, height: 3, background: 'rgba(200,160,0,0.28)', borderRadius: 2 }} />
+            </div>
+          )}
+        </div>
+
+        {/* Right branches */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5, paddingTop: 6 }}>
+          {rightBranches.map(b => (
+            <AssBranchSubTree key={b.id} node={b} byParent={byParent} {...slotProps} />
+          ))}
+        </div>
+
+      </div>
+
+      {/* Continuation nodes flow down the spine */}
+      {continuations.map(cont => (
+        <AssTreeNode key={cont.id} node={cont} byParent={byParent} {...slotProps} />
       ))}
 
     </div>
@@ -6429,13 +6478,13 @@ function ArteryAssemblyGame({ onBack }) {
             </div>
           )}
 
-          {/* ── Tree — vertical flow ── */}
+          {/* ── Tree — spine + left/right branches ── */}
           <div ref={treeInnerRef}
             style={{
-              display: 'flex', flexDirection: 'column', gap: 8,
-              maxWidth: 560,
+              display: 'flex', flexDirection: 'column', gap: 10,
+              width: '100%',
               transform: pinchScale !== 1 ? `scale(${pinchScale})` : undefined,
-              transformOrigin: 'top left',
+              transformOrigin: 'top center',
             }}>
             {roots.map(root => (
               <AssTreeNode

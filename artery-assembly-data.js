@@ -243,6 +243,7 @@ window.ARTERY_ASSEMBLY_MODULES = {
         level: 0,
         sexSpecific: null,
         clinicalNote: null,
+        landmark: 'Diaphragm',
       },
       /* Visceral branches */
       {
