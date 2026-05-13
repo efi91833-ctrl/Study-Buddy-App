@@ -2227,7 +2227,7 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
           <button onClick={() => onSelectExam({ type: 'anatomy_slides' })}
             style={{ ...cardStyle, background: 'rgba(235,240,255,0.95)', gridColumn: '1 / -1',
                      borderLeft: '4px solid #5c7cfa' }}>
-            🫀 Anatomy Slides
+            Anatomy Slides
             <div style={{ fontSize: 12, fontWeight: 400, color: '#888', marginTop: 4 }}>
               {ANATOMY_SLIDE_TESTS.length} topics · label and study anatomy images
             </div>
@@ -2246,7 +2246,7 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
         {subject === 'Anatomy' && (
           <button onClick={() => onSelectExam({ type: 'muscle_lab' })}
             style={{ ...cardStyle, background: 'rgba(245,245,245,0.95)', fontSize: 15 }}>
-            💪 Muscle Lab
+            Muscle Lab
             <div style={{ fontSize: 11, fontWeight: 400, color: '#888', marginTop: 4 }}>
               {(window.MUSCLE_BANK || []).length} muscles · origin, insertion, innervation
             </div>
@@ -2256,7 +2256,7 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
         {subject === 'Anatomy' && (
           <button onClick={() => onSelectExam({ type: 'artery_assembly' })}
             style={{ ...cardStyle, background: 'rgba(245,245,245,0.95)', fontSize: 15 }}>
-            🩸 Artery Assembly
+            Artery Assembly
             <div style={{ fontSize: 11, fontWeight: 400, color: '#888', marginTop: 4 }}>
               Decision-tree · place vessels in correct position
             </div>
@@ -2266,7 +2266,7 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
         {subject === 'Anatomy' && (
           <button onClick={() => onSelectExam({ type: 'peritoneal_game' })}
             style={{ ...cardStyle, background: 'rgba(245,245,245,0.95)', fontSize: 15 }}>
-            🫁 Peritoneal Relations
+            Peritoneal Relations
             <div style={{ fontSize: 11, fontWeight: 400, color: '#888', marginTop: 4 }}>
               28 organs · drag into correct peritoneal category
             </div>
@@ -2276,7 +2276,7 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
         {subject === 'Anatomy' && (
           <button onClick={() => onSelectExam({ type: 'vertebral_game' })}
             style={{ ...cardStyle, background: 'rgba(245,245,245,0.95)', fontSize: 15 }}>
-            🦴 Vertebral & Rib Levels
+            Vertebral & Rib Levels
             <div style={{ fontSize: 11, fontWeight: 400, color: '#888', marginTop: 4 }}>
               45 landmarks · match to vertebral/rib level
             </div>
@@ -2601,7 +2601,7 @@ function AnatomyTest({ onBack }) {
               <button onClick={enterEdit}
                 style={{marginLeft:'auto', padding:'5px 14px', borderRadius:8, fontSize:12,
                   cursor:'pointer', background:'#f5f5f5', color:'#555', border:'1px solid #ccc'}}>
-                ✏️ Position boxes
+                Edit boxes
               </button>
             </>
           ) : (
@@ -2617,7 +2617,7 @@ function AnatomyTest({ onBack }) {
               <button onClick={exitEdit}
                 style={{marginLeft:'auto', padding:'5px 14px', borderRadius:8, fontSize:13,
                   cursor:'pointer', background:'#1a1a1a', color:'#fff', border:'none', fontWeight:600}}>
-                ✅ Save & done
+                Save & done
               </button>
               <button onClick={discardEdit}
                 style={{padding:'5px 10px', borderRadius:7, fontSize:12, cursor:'pointer',
@@ -3683,17 +3683,24 @@ function SearchWidget({ books = [] }) {
   const [results, setResults]   = useState([]);
   const [selected, setSelected] = useState(null);
   const [open, setOpen]         = useState(false);
-  const wrapRef = useRef(null);
+  const [expanded, setExpanded] = useState(false); /* collapsed by default so it never overlaps UI */
+  const wrapRef  = useRef(null);
+  const inputRef = useRef(null);
 
   useEffect(() => {
     function handleClick(e) {
       if (wrapRef.current && !wrapRef.current.contains(e.target)) {
-        setOpen(false); setQuery(''); setResults([]); setSelected(null);
+        setOpen(false); setQuery(''); setResults([]); setSelected(null); setExpanded(false);
       }
     }
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
+
+  function handleExpand() {
+    setExpanded(true);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }
 
   function handleChange(e) {
     const val = e.target.value;
@@ -3702,26 +3709,19 @@ function SearchWidget({ books = [] }) {
     if (val.trim().length < 2) { setResults([]); setOpen(false); return; }
     const q = val.toLowerCase();
 
-    // Search question bank + atlas
     const staticHits = SEARCH_INDEX.filter(e =>
       e.term.toLowerCase().includes(q) ||
       e.topic.toLowerCase().includes(q) ||
       e.definition.toLowerCase().includes(q)
     ).slice(0, 6);
 
-    // Search books
     const bookHits = [];
     books.forEach(book => {
       book.pages.forEach(p => {
         if (p.text.toLowerCase().includes(q) && bookHits.length < 4) {
           const idx = p.text.toLowerCase().indexOf(q);
           const snippet = p.text.slice(Math.max(0, idx - 60), idx + 120).trim();
-          bookHits.push({
-            term: val,
-            topic: `${book.title} · p.${p.page}`,
-            definition: snippet,
-            source: 'book',
-          });
+          bookHits.push({ term: val, topic: `${book.title} · p.${p.page}`, definition: snippet, source: 'book' });
         }
       });
     });
@@ -3730,22 +3730,45 @@ function SearchWidget({ books = [] }) {
     setOpen(true);
   }
 
-  function handleSelect(item) {
-    setSelected(item);
-    setResults([]);
+  function handleSelect(item) { setSelected(item); setResults([]); }
+
+  /* When collapsed: show only a small button that doesn't block anything */
+  if (!expanded) {
+    return (
+      <div ref={wrapRef} style={{
+        position: 'fixed', top: 14, right: 18, zIndex: 1000,
+      }}>
+        <button onClick={handleExpand} style={{
+          width: 34, height: 34, borderRadius: 17,
+          border: '1px solid rgba(0,0,0,0.15)',
+          background: 'rgba(255,255,255,0.88)',
+          backdropFilter: 'blur(6px)',
+          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 15, color: '#888', boxShadow: '0 1px 6px rgba(0,0,0,0.10)',
+        }}>
+          &#x2315;
+        </button>
+      </div>
+    );
   }
 
+  /* Expanded: full search input */
   return (
     <div className="search-widget" ref={wrapRef}>
       <div className="search-input-wrap">
-        <span className="search-icon">⌕</span>
+        <span className="search-icon">&#x2315;</span>
         <input
+          ref={inputRef}
           type="text"
           placeholder="Search a term…"
           value={query}
           onChange={handleChange}
-          onFocus={() => results.length > 0 && setOpen(true)}
+          onKeyDown={e => e.key === 'Escape' && setExpanded(false)}
         />
+        <button onClick={() => setExpanded(false)} style={{
+          border: 'none', background: 'none', cursor: 'pointer',
+          fontSize: 12, color: '#bbb', padding: '0 2px',
+        }}>x</button>
       </div>
 
       {open && results.length > 0 && !selected && (
@@ -6045,7 +6068,7 @@ function ArteryAssemblyGame({ onBack }) {
                   color: weakOnly ? '#fff' : '#c62828',
                   fontSize: 11, fontWeight: 700, cursor: 'pointer',
                 }}>
-                {weakOnly ? '✕ Stop weak practice' : `⚡ Practice weak (${weakIds.size})`}
+                {weakOnly ? 'Stop weak practice' : `Practice weak (${weakIds.size})`}
               </button>
             </div>
           )}
@@ -6081,7 +6104,7 @@ function ArteryAssemblyGame({ onBack }) {
                     color: '#a00', border: 'none', borderLeft: '3px solid #c00',
                     cursor: 'pointer', fontSize: 10.5, fontWeight: 600,
                   }}>
-                  ✕ Clear focus
+                  x Clear focus
                 </button>
               )}
               {majorBranches.map(branch => (
@@ -6118,7 +6141,7 @@ function ArteryAssemblyGame({ onBack }) {
               <span style={{ flex: 1 }}>Placing: {selectedVessel} — tap a slot</span>
               <button onClick={() => setSelectedVessel(null)}
                 style={{ border: 'none', background: 'none', color: 'rgba(255,255,255,0.65)',
-                         cursor: 'pointer', fontSize: 15, padding: 0 }}>✕</button>
+                         cursor: 'pointer', fontSize: 15, padding: 0 }}>x</button>
             </div>
           )}
 
@@ -6129,10 +6152,10 @@ function ArteryAssemblyGame({ onBack }) {
               background: 'rgba(240,220,100,0.25)', border: '1.5px solid rgba(180,140,0,0.35)',
               fontSize: 12.5, color: '#5a4800', display: 'flex', alignItems: 'center', gap: 10,
             }}>
-              <span style={{ flex: 1 }}>💡 {hint.text}</span>
+              <span style={{ flex: 1 }}>{hint.text}</span>
               <button onClick={() => { setHint(null); if (hintTimer) clearTimeout(hintTimer); }}
                 style={{ border: 'none', background: 'none', color: '#bba000', cursor: 'pointer', fontSize: 14 }}>
-                ✕
+                x
               </button>
             </div>
           )}
@@ -6146,7 +6169,7 @@ function ArteryAssemblyGame({ onBack }) {
               <strong>{displayNodes.find(n => n.id === focusNodeId)?.label}</strong>
               <button onClick={() => setFocusNodeId(null)}
                 style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#999', fontSize: 11 }}>
-                ✕
+                x
               </button>
             </div>
           )}
@@ -6203,7 +6226,7 @@ function ArteryAssemblyGame({ onBack }) {
                 <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>{infoNode.label}</div>
                 <button onClick={() => setInfoNode(null)}
                   style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 15, color: '#bbb', padding: '0 0 0 10px' }}>
-                  ✕
+                  x
                 </button>
               </div>
 
