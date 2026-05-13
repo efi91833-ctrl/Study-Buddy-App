@@ -2309,7 +2309,7 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
 }
 
 function AnatomyTest({ onBack }) {
-  const [selectedTest, setSelectedTest] = React.useState(null);
+  const [selectedTest, setSelectedTest] = React.useState(ANATOMY_SLIDE_TESTS[0] || null);
   const [slideIdx, setSlideIdx]         = React.useState(0);
   const [revealedIds, setRevealedIds]   = React.useState({});
 
@@ -2487,6 +2487,41 @@ function AnatomyTest({ onBack }) {
   return (
     <div style={{display:'flex', height:'100vh', overflow:'hidden'}}>
 
+      {/* ── Left sidebar: topic list ── */}
+      <div style={{
+        width:165, borderRight:'1px solid #e0e0e0', overflowY:'auto',
+        background:'#fafafa', flexShrink:0, padding:'8px 0',
+      }}>
+        <div style={{display:'flex', alignItems:'center', gap:6, padding:'6px 10px 10px'}}>
+          <button onClick={onBack}
+            style={{border:'none', background:'none', cursor:'pointer', fontSize:18, color:'#888', padding:0, lineHeight:1}}>
+            ←
+          </button>
+          <div style={{fontSize:10, fontWeight:700, color:'#aaa',
+            letterSpacing:'0.08em', textTransform:'uppercase'}}>Topics</div>
+        </div>
+        {ANATOMY_SLIDE_TESTS.map(test => {
+          const isActive = test.testId === selectedTest.testId;
+          return (
+            <div key={test.testId}
+              onClick={() => { if (!isActive) goToTopic(test); }}
+              style={{
+                padding:'9px 12px 9px 11px',
+                cursor: isActive ? 'default' : 'pointer',
+                fontSize:12,
+                fontWeight: isActive ? 700 : 400,
+                color: isActive ? '#1a1a1a' : '#555',
+                background: isActive ? '#e3f2fd' : 'transparent',
+                borderLeft: isActive ? '3px solid #1976d2' : '3px solid transparent',
+                lineHeight:1.35,
+                transition:'background .12s',
+              }}>
+              {test.title}
+            </div>
+          );
+        })}
+      </div>
+
       {/* ── Main content ── */}
       <div style={{flex:1, overflow:'auto', padding:'16px 20px'}}
         onTouchStart={e => {
@@ -2508,10 +2543,7 @@ function AnatomyTest({ onBack }) {
 
         {/* ── Top bar ── */}
         <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:14, flexWrap:'wrap'}}>
-          <button className="topbar-back"
-            onClick={() => { setSelectedTest(null); setEditMode(false); setEditLabels(null); setRevealedIds({}); }}>
-            ← Tests
-          </button>
+          <span style={{fontSize:14, fontWeight:700, color:'#1a1a1a'}}>{selectedTest.title}</span>
           {!editMode ? (
             <>
               <span style={{fontSize:13, color:'#888'}}>
@@ -2672,37 +2704,6 @@ function AnatomyTest({ onBack }) {
                 borderRadius:7, fontSize:13, cursor:'pointer'}}>Cancel</button>
           </div>
         )}
-      </div>
-
-      {/* ── Right sidebar: topic list ── */}
-      <div style={{
-        width:165, borderLeft:'1px solid #e0e0e0', overflowY:'auto',
-        background:'#fafafa', flexShrink:0, padding:'8px 0',
-      }}>
-        <div style={{fontSize:10, fontWeight:700, color:'#aaa', padding:'6px 12px 10px',
-          letterSpacing:'0.08em', textTransform:'uppercase'}}>Topics</div>
-        {ANATOMY_SLIDE_TESTS.map((test, idx) => {
-          const isActive = test.testId === selectedTest.testId;
-          const allTests = ANATOMY_SLIDE_TESTS;
-          const currentIdx = allTests.findIndex(t => t.testId === selectedTest.testId);
-          return (
-            <div key={test.testId}
-              onClick={() => { if (!isActive) goToTopic(test); }}
-              style={{
-                padding:'9px 12px 9px 11px',
-                cursor: isActive ? 'default' : 'pointer',
-                fontSize:12,
-                fontWeight: isActive ? 700 : 400,
-                color: isActive ? '#1a1a1a' : '#555',
-                background: isActive ? '#e3f2fd' : 'transparent',
-                borderLeft: isActive ? '3px solid #1976d2' : '3px solid transparent',
-                lineHeight:1.35,
-                transition:'background .12s',
-              }}>
-              {test.title}
-            </div>
-          );
-        })}
       </div>
 
     </div>
