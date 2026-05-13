@@ -4947,7 +4947,7 @@ function PeriotonealGame({ onBack }) {
 
   const refImg = (
     <img
-      src="peritoneum/DAF36D83-A190-4AB5-9951-CA9DA4957481.png"
+      src="Peritoneum/DAF36D83-A190-4AB5-9951-CA9DA4957481.png"
       alt="Peritoneal relations diagram"
       style={{ width: '100%', borderRadius: 12, boxShadow: '0 3px 14px rgba(0,0,0,0.12)', display: 'block' }}
     />
@@ -5605,15 +5605,6 @@ function ArteryGame({ onBack }) {
    Difficulty: Core (1) | Intermediate (2) | Full (3)
    ═══════════════════════════════════════════════════════════════ */
 
-const ASS_UNIT   = 172;  /* px per leaf column */
-const ASS_CARD_W = 148;  /* base node card width */
-
-/* Count leaf nodes (determines horizontal span) */
-function assLeafWidth(nodeId, byParent) {
-  const children = byParent[nodeId] || [];
-  if (children.length === 0) return 1;
-  return children.reduce((s, c) => s + assLeafWidth(c.id, byParent), 0);
-}
 
 /* Walk upward from nodeId, collecting labels root-first */
 function getArteryPath(nodeId, allNodes) {
@@ -5679,59 +5670,36 @@ class ArteryErrorBoundary extends React.Component {
 function AssSlot({ node, placed, selectedVessel, onSlotClick, submitted,
                    dragOver, onDragOver, onDragLeave, onDrop, onDragStart,
                    mode, isHidden, onInfoClick, isHighlighted }) {
-  const value = placed[node.id];
-  const lv    = node.level ?? 0;
+  const value          = placed[node.id];
+  const isContinuation = node.type === 'continuation';
 
-  /* ── Visual hierarchy by depth ── */
-  const cardW  = lv <= 1 ? ASS_CARD_W + 12 : lv >= 4 ? ASS_CARD_W - 10 : ASS_CARD_W;
-  const minH   = lv <= 1 ? 64 : lv >= 4 ? 44 : 52;
-  const fW     = lv <= 1 ? 700 : lv >= 4 ? 400 : 500;
-  const fS     = lv <= 1 ? 13.5 : lv >= 4 ? 11 : 12.5;
-  const bpx    = lv <= 1 ? 2 : 1.5;
-  const opac   = lv >= 4 ? 0.87 : 1;
-
-  /* ── State-driven colours ── */
   const isCorrect = submitted && isHidden && value &&
     (value === node.label || (node.synonyms || []).includes(value));
   const isWrong   = submitted && isHidden && value && !isCorrect;
 
-  let bg     = lv <= 1 ? 'rgba(255,255,255,0.97)' : 'rgba(255,255,255,0.91)';
-  let border = `${bpx}px solid rgba(0,0,0,${lv <= 1 ? 0.22 : 0.14})`;
-  let shadow = lv <= 1
-    ? '0 4px 14px rgba(0,0,0,0.14), 0 1px 4px rgba(0,0,0,0.09)'
-    : '0 2px 8px rgba(0,0,0,0.09), 0 1px 3px rgba(0,0,0,0.05)';
+  let bg      = 'rgba(255,255,255,0.95)';
+  let border  = '1.5px solid rgba(0,0,0,0.14)';
+  let accent  = isContinuation ? '#5b9bd5' : 'rgba(0,0,0,0.22)';
 
   if (!isHidden && mode !== 'exam') {
-    /* Pre-filled slot (practice / learn) */
-    bg     = 'rgba(245,245,245,0.85)';
-    border = `${bpx}px solid rgba(0,0,0,0.08)`;
-    shadow = '0 1px 4px rgba(0,0,0,0.04)';
+    bg = 'rgba(245,245,245,0.85)'; border = '1.5px solid rgba(0,0,0,0.08)'; accent = 'rgba(0,0,0,0.10)';
   } else if (dragOver && isHidden) {
-    bg = 'rgba(200,230,255,0.90)'; border = '2px solid #5b9bd5';
-    shadow = '0 4px 16px rgba(91,155,213,0.35)';
+    bg = 'rgba(200,230,255,0.90)'; border = '2px solid #5b9bd5'; accent = '#5b9bd5';
   } else if (isCorrect) {
-    bg = 'rgba(180,240,190,0.95)'; border = '2px solid #4caf50';
-    shadow = '0 3px 12px rgba(76,175,80,0.30)';
+    bg = 'rgba(180,240,190,0.95)'; border = '1.5px solid #4caf50'; accent = '#4caf50';
   } else if (isWrong) {
-    bg = 'rgba(255,200,200,0.95)'; border = '2px solid #e53935';
-    shadow = '0 3px 12px rgba(229,57,53,0.28)';
+    bg = 'rgba(255,200,200,0.95)'; border = '1.5px solid #e53935'; accent = '#e53935';
   } else if (value && isHidden) {
-    bg = 'rgba(230,240,255,0.95)'; border = '2px solid rgba(80,120,200,0.50)';
-    shadow = '0 4px 14px rgba(80,120,200,0.15)';
+    bg = 'rgba(230,240,255,0.95)'; border = '1.5px solid rgba(80,120,200,0.50)'; accent = '#5b9bd5';
   } else if (selectedVessel && isHidden && !value) {
-    bg = 'rgba(255,248,220,0.95)'; border = '2px dashed rgba(160,120,40,0.60)';
-    shadow = '0 3px 10px rgba(160,120,40,0.12)';
+    bg = 'rgba(255,248,220,0.95)'; border = '1.5px dashed rgba(160,120,40,0.60)'; accent = '#c8a000';
   }
+  if (isHighlighted) { border = '1.5px solid rgba(180,140,0,0.80)'; accent = '#c8a000'; }
 
-  if (isHighlighted) {
-    border = '2px solid rgba(180,140,0,0.80)';
-    shadow = `0 0 0 3px rgba(200,160,0,0.18), ${shadow}`;
-  }
-
-  /* What text to show */
   const showLabel  = mode === 'learn' || !isHidden;
-  const labelText  = mode === 'learn' ? node.label : (!isHidden ? node.label : null);
-  const placedText = isHidden ? value : null;
+  const displayText = showLabel ? node.label : (value || null);
+  const textColor   = isCorrect ? '#1b5e20' : isWrong ? '#b71c1c'
+                    : (mode === 'learn' ? '#222' : (!isHidden ? '#666' : '#222'));
 
   return (
     <div
@@ -5746,126 +5714,97 @@ function AssSlot({ node, placed, selectedVessel, onSlotClick, submitted,
         if (!submitted && isHidden) onSlotClick(node.id);
       }}
       style={{
-        width: cardW, minHeight: minH,
-        borderRadius: 10, border, background: bg, opacity: opac,
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        padding: '6px 8px',
+        display: 'flex', alignItems: 'stretch', minHeight: 44,
+        borderRadius: 9, border, background: bg, overflow: 'hidden',
         cursor: mode === 'learn' ? 'pointer' : (isHidden && !submitted ? 'pointer' : 'default'),
-        fontSize: fS, fontWeight: fW, textAlign: 'center', lineHeight: 1.3,
-        transition: 'background 0.14s, border 0.14s, box-shadow 0.14s',
-        boxSizing: 'border-box', userSelect: 'none', boxShadow: shadow,
-      }}
-    >
-      {labelText !== null
-        ? <span style={{ color: mode === 'learn' ? '#222' : '#666', fontStyle: !isHidden ? 'italic' : 'normal' }}>
-            {labelText}
-          </span>
-        : placedText
-          ? <span style={{ color: isCorrect ? '#1b5e20' : isWrong ? '#b71c1c' : '#333' }}>{placedText}</span>
-          : <span style={{ color: '#c0b8b0', fontWeight: 400, fontSize: 13 }}>?</span>
-      }
-      <span style={{
-        fontSize: 9.5, fontWeight: 400, marginTop: 3, letterSpacing: 0.4,
-        color: '#aaa', textTransform: 'uppercase',
+        boxShadow: '0 1px 5px rgba(0,0,0,0.07)',
+        userSelect: 'none', transition: 'background 0.14s, border 0.14s',
       }}>
-        {node.type}
-      </span>
+      {/* Left accent stripe — blue for continuations, grey for branches */}
+      <div style={{ width: 5, background: accent, flexShrink: 0 }} />
+      {/* Text content */}
+      <div style={{ flex: 1, padding: '7px 12px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        {displayText
+          ? <span style={{ fontSize: 13, fontWeight: 600, color: textColor, lineHeight: 1.3,
+                           fontStyle: !isHidden && mode !== 'learn' ? 'italic' : 'normal' }}>
+              {displayText}
+            </span>
+          : <span style={{ fontSize: 13, color: '#c0b8b0', fontWeight: 400 }}>?</span>
+        }
+        <span style={{ fontSize: 9, color: '#bbb', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}>
+          {node.type}
+        </span>
+      </div>
     </div>
   );
 }
 
-/* ── Recursive tree node (top-down) ── */
+/* ── Recursive tree node — vertical flow layout ── */
 function AssTreeNode({ node, byParent, placed, selectedVessel, onSlotClick, submitted,
                        dragOverSlot, onSlotDragOver, onSlotDragLeave, onSlotDrop, onSlotDragStart,
                        mode, hiddenSet, onInfoClick, highlightSet }) {
-  const children    = byParent[node.id] || [];
-  const totalW      = assLeafWidth(node.id, byParent);
-  const childWidths = children.map(c => assLeafWidth(c.id, byParent));
-  const isHidden    = hiddenSet.has(node.id);
+  const children      = byParent[node.id] || [];
+  const continuations = children.filter(c => c.type === 'continuation');
+  const branches      = children.filter(c => c.type !== 'continuation');
+  const isHidden      = hiddenSet.has(node.id);
 
-  const connH    = 28;
-  const midLine  = 14;
-  const LINE_CLR = 'rgba(0,0,0,0.32)';
+  const shared = {
+    placed, selectedVessel, onSlotClick, submitted,
+    dragOverSlot, onSlotDragOver, onSlotDragLeave, onSlotDrop, onSlotDragStart,
+    mode, hiddenSet, onInfoClick, highlightSet,
+  };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center',
-                  width: totalW * ASS_UNIT }}>
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
 
+      {/* ── This node's slot ── */}
       <AssSlot
-        node={node}
-        placed={placed}
-        selectedVessel={selectedVessel}
-        onSlotClick={onSlotClick}
-        submitted={submitted}
+        node={node} placed={placed} selectedVessel={selectedVessel}
+        onSlotClick={onSlotClick} submitted={submitted}
         dragOver={dragOverSlot === node.id}
         onDragOver={(e) => { e.preventDefault(); onSlotDragOver(node.id); }}
         onDragLeave={() => onSlotDragLeave(node.id)}
         onDrop={(e) => onSlotDrop(e, node.id)}
         onDragStart={onSlotDragStart}
-        mode={mode}
-        isHidden={isHidden}
-        onInfoClick={onInfoClick}
+        mode={mode} isHidden={isHidden} onInfoClick={onInfoClick}
         isHighlighted={highlightSet ? highlightSet.has(node.id) : false}
       />
 
-      {children.length > 0 && (
-        <div style={{ position: 'relative', width: totalW * ASS_UNIT, height: connH, flexShrink: 0 }}>
-          <div style={{
-            position: 'absolute', top: 0, left: '50%', transform: 'translateX(-1px)',
-            width: 2, height: midLine, background: LINE_CLR,
-          }} />
-          {children.length > 1 && (
-            <div style={{
-              position: 'absolute', top: midLine, height: 2, background: LINE_CLR,
-              left:  Math.floor(childWidths[0] * ASS_UNIT / 2) - 1,
-              right: Math.floor(childWidths[childWidths.length - 1] * ASS_UNIT / 2) - 1,
-            }} />
-          )}
-          {(() => {
-            let x = 0;
-            return children.map((child, i) => {
-              const cw = childWidths[i];
-              const cx = x + Math.floor(cw * ASS_UNIT / 2);
-              x += cw * ASS_UNIT;
-              return (
-                <div key={child.id} style={{
-                  position: 'absolute',
-                  top:    children.length > 1 ? midLine : 0,
-                  left:   cx - 1, width: 2,
-                  height: children.length > 1 ? (connH - midLine) : connH,
-                  background: LINE_CLR,
-                }} />
-              );
-            });
-          })()}
-        </div>
-      )}
-
-      {children.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start' }}>
-          {children.map(child => (
-            <AssTreeNode
-              key={child.id}
-              node={child}
-              byParent={byParent}
-              placed={placed}
-              selectedVessel={selectedVessel}
-              onSlotClick={onSlotClick}
-              submitted={submitted}
-              dragOverSlot={dragOverSlot}
-              onSlotDragOver={onSlotDragOver}
-              onSlotDragLeave={onSlotDragLeave}
-              onSlotDrop={onSlotDrop}
-              onSlotDragStart={onSlotDragStart}
-              mode={mode}
-              hiddenSet={hiddenSet}
-              onInfoClick={onInfoClick}
-              highlightSet={highlightSet}
-            />
+      {/* ── Numbered branches — indented left border ── */}
+      {branches.length > 0 && (
+        <div style={{
+          marginLeft: 20, paddingLeft: 14, marginTop: 5, marginBottom: 2,
+          borderLeft: '2px solid rgba(0,0,0,0.09)',
+          display: 'flex', flexDirection: 'column', gap: 5,
+        }}>
+          {branches.map((branch, i) => (
+            <div key={branch.id} style={{ position: 'relative' }}>
+              {/* Branch number badge */}
+              <div style={{
+                position: 'absolute', left: -27, top: '50%', transform: 'translateY(-50%)',
+                fontSize: 9, fontWeight: 700, color: '#bbb',
+                background: 'rgba(242,237,232,0.97)', padding: '1px 3px',
+                borderRadius: 3, minWidth: 13, textAlign: 'center',
+              }}>{i + 1}</div>
+              <AssTreeNode node={branch} byParent={byParent} {...shared} />
+            </div>
           ))}
         </div>
       )}
+
+      {/* ── Continuation arrow — flows below ── */}
+      {continuations.map(cont => (
+        <div key={cont.id}>
+          <div style={{ display: 'flex', alignItems: 'center', padding: '3px 0 3px 9px', gap: 6 }}>
+            <div style={{ width: 2, height: 16, background: 'rgba(91,155,213,0.4)', flexShrink: 0 }} />
+            <span style={{ fontSize: 9.5, color: '#88a0c0', fontStyle: 'italic', letterSpacing: 0.3 }}>
+              continues as
+            </span>
+          </div>
+          <AssTreeNode node={cont} byParent={byParent} {...shared} />
+        </div>
+      ))}
+
     </div>
   );
 }
@@ -5884,7 +5823,6 @@ function ArteryAssemblyGame({ onBack }) {
   const [bankSearch,     setBankSearch]     = useState('');
   const [feedback,       setFeedback]       = useState(null);
   const [allVessels,     setAllVessels]     = useState([]);
-  const [treeScale,      setTreeScale]      = useState(1);
 
   /* Phase 1 additions */
   const [mode,        setMode]        = useState('exam');  /* 'learn' | 'practice' | 'exam' */
@@ -5976,23 +5914,6 @@ function ArteryAssemblyGame({ onBack }) {
     setHint(null);
   }, [moduleKey, mode, difficulty, focusNodeId, weakOnly]);  /* eslint-disable-line */
 
-  /* ── Scale tree to fit panel ── */
-  useEffect(() => {
-    function measure() {
-      const outer = treeContainerRef.current;
-      const inner = treeInnerRef.current;
-      if (!outer || !inner) return;
-      inner.style.transform = 'scale(1)';
-      const availW   = outer.clientWidth - 40;
-      const contentW = inner.scrollWidth;
-      const scale    = contentW > availW ? availW / contentW : 1;
-      inner.style.transform = '';
-      setTreeScale(scale);
-    }
-    const raf = requestAnimationFrame(measure);
-    window.addEventListener('resize', measure);
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', measure); };
-  }, [moduleKey, displayNodes.length, mode, focusNodeId]);
 
   /* ── Pinch zoom on tree ── */
   useEffect(() => {
@@ -6508,12 +6429,13 @@ function ArteryAssemblyGame({ onBack }) {
             </div>
           )}
 
-          {/* ── Tree ── */}
+          {/* ── Tree — vertical flow ── */}
           <div ref={treeInnerRef}
             style={{
-              display: 'inline-flex', flexDirection: 'row', alignItems: 'flex-start',
-              transform: `scale(${treeScale * pinchScale})`, transformOrigin: 'top left',
-              minWidth: 'max-content',
+              display: 'flex', flexDirection: 'column', gap: 8,
+              maxWidth: 560,
+              transform: pinchScale !== 1 ? `scale(${pinchScale})` : undefined,
+              transformOrigin: 'top left',
             }}>
             {roots.map(root => (
               <AssTreeNode
