@@ -54,12 +54,16 @@
       border-bottom: 1px solid #ccc;
     }
     .topbar-back {
-      margin-left: auto;
+      margin-left: 0;
+      margin-right: 8px;
       background: none; border: 1px solid #999; border-radius: 8px;
       color: #555; cursor: pointer; padding: 6px 14px; font-size: 14px;
       transition: all .15s;
+      flex-shrink: 0;
     }
     .topbar-back:hover { border-color: #333; color: #000; }
+    /* Keep right side of every topbar clear of the fixed search button */
+    .topbar { padding-right: 60px; }
 
     .content { flex: 1; padding: 36px 24px; max-width: 860px; margin: 0 auto; width: 100%; }
 
@@ -2599,7 +2603,7 @@ function AnatomyTest({ onBack }) {
                 </button>
               )}
               <button onClick={enterEdit}
-                style={{marginLeft:'auto', padding:'5px 14px', borderRadius:8, fontSize:12,
+                style={{padding:'5px 14px', borderRadius:8, fontSize:12,
                   cursor:'pointer', background:'#f5f5f5', color:'#555', border:'1px solid #ccc'}}>
                 Edit boxes
               </button>
@@ -2615,7 +2619,7 @@ function AnatomyTest({ onBack }) {
                 Clear all
               </button>
               <button onClick={exitEdit}
-                style={{marginLeft:'auto', padding:'5px 14px', borderRadius:8, fontSize:13,
+                style={{padding:'5px 14px', borderRadius:8, fontSize:13,
                   cursor:'pointer', background:'#1a1a1a', color:'#fff', border:'none', fontWeight:600}}>
                 Save & done
               </button>
@@ -5937,7 +5941,7 @@ function ArteryAssemblyGame({ onBack }) {
         </div>
 
         {submitted && (
-          <span style={{ marginLeft: 'auto', marginRight: 12, fontSize: 14, fontWeight: 600,
+          <span style={{ marginLeft: 16, fontSize: 14, fontWeight: 600,
                          color: scoreCorrect === totalHidden ? '#2e7d32' : '#555', flexShrink: 0 }}>
             {scoreCorrect} / {totalHidden}
           </span>
