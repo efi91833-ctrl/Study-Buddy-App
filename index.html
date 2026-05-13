@@ -4720,15 +4720,13 @@ function VertebralRibGame({ onBack }) {
           </div>
         </div>
 
-        {/* Centre — Anatomy image, cropped to just the figure */}
-        <div style={{flex:1,minWidth:0,
+        {/* Centre — Anatomy image */}
+        <div style={{flex:2,minWidth:0,
           borderRadius:10,overflow:'hidden',
           boxShadow:'0 2px 12px rgba(0,0,0,0.06)'}}>
-          {/* Crop wrapper — clips white border around the man; lines live here so % matches image */}
           <div style={{
             position:'relative',
             overflow:'hidden',
-            margin: '0 -12% -6% -12%',
             background: 'transparent',
           }}>
             <img
@@ -4736,6 +4734,8 @@ function VertebralRibGame({ onBack }) {
               alt="Vertebral column and ribs — posterior view"
               style={{
                 width:'100%', display:'block',
+                maxHeight:'calc(100vh - 180px)',
+                objectFit:'contain',
                 filter:'grayscale(1) contrast(1.4) brightness(1.0)',
               }}
             />
