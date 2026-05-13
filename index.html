@@ -2354,6 +2354,58 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
   );
 }
 
+/* ── Custom photo storage (IndexedDB) ── */
+const PHOTO_DB_NAME = 'study-buddy-photos';
+function openPhotoDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(PHOTO_DB_NAME, 1);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('topics'))
+        db.createObjectStore('topics', { keyPath: 'id' });
+      if (!db.objectStoreNames.contains('slides')) {
+        const s = db.createObjectStore('slides', { keyPath: 'id' });
+        s.createIndex('byTopic', 'topicId', { unique: false });
+      }
+    };
+    req.onsuccess = e => res(e.target.result);
+    req.onerror = e => rej(e.target.error);
+  });
+}
+async function photoDbGetAll(store) {
+  const db = await openPhotoDB();
+  return new Promise((res, rej) => {
+    const req = db.transaction(store, 'readonly').objectStore(store).getAll();
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+  });
+}
+async function photoDbPut(store, record) {
+  const db = await openPhotoDB();
+  return new Promise((res, rej) => {
+    const req = db.transaction(store, 'readwrite').objectStore(store).put(record);
+    req.onsuccess = () => res();
+    req.onerror = () => rej(req.error);
+  });
+}
+async function photoDbDelete(store, id) {
+  const db = await openPhotoDB();
+  return new Promise((res, rej) => {
+    const req = db.transaction(store, 'readwrite').objectStore(store).delete(id);
+    req.onsuccess = () => res();
+    req.onerror = () => rej(req.error);
+  });
+}
+async function photoDbGetByTopic(topicId) {
+  const db = await openPhotoDB();
+  return new Promise((res, rej) => {
+    const req = db.transaction('slides', 'readonly')
+      .objectStore('slides').index('byTopic').getAll(topicId);
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+  });
+}
+
 function AnatomyTest({ onBack }) {
   const [selectedTest, setSelectedTest] = React.useState(ANATOMY_SLIDE_TESTS[0] || null);
   const [slideIdx, setSlideIdx]         = React.useState(0);
@@ -2367,9 +2419,116 @@ function AnatomyTest({ onBack }) {
   const [editLabels, setEditLabels]   = React.useState(null);
   const [, forceUpdate]               = React.useReducer(x => x + 1, 0);
 
-  const wrapRef  = React.useRef(null);
-  const termRef  = React.useRef(null);
-  const swipeRef = React.useRef(null);
+  // Custom photo state
+  const [customTopics,  setCustomTopics]  = React.useState([]);
+  const [customSlides,  setCustomSlides]  = React.useState({});  // topicId → [{id,url,title}]
+  const [photoManage,   setPhotoManage]   = React.useState(false); // show manage panel
+  const [addingTopic,   setAddingTopic]   = React.useState(false);
+  const [newTopicName,  setNewTopicName]  = React.useState('');
+
+  const wrapRef     = React.useRef(null);
+  const termRef     = React.useRef(null);
+  const swipeRef    = React.useRef(null);
+  const fileInputRef = React.useRef(null);
+
+  // Load custom topics + slides from IndexedDB on mount
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const topics = await photoDbGetAll('topics');
+        topics.sort((a, b) => a.createdAt - b.createdAt);
+        setCustomTopics(topics);
+        const map = {};
+        for (const t of topics) {
+          const slides = await photoDbGetByTopic(t.id);
+          slides.sort((a, b) => a.createdAt - b.createdAt);
+          map[t.id] = slides.map(s => ({ id: s.id, url: URL.createObjectURL(s.blob), title: s.title || '' }));
+        }
+        setCustomSlides(map);
+      } catch(e) { console.warn('Photo DB load failed:', e); }
+    })();
+  }, []);
+
+  // Build full topic list: built-in + custom
+  const allTopics = React.useMemo(() => {
+    const custom = customTopics.map(t => ({
+      testId: 'custom-' + t.id,
+      title: t.name,
+      isCustom: true,
+      customTopicId: t.id,
+      slides: (customSlides[t.id] || []).map((s, i) => ({
+        slideId: s.id,
+        image: s.url,
+        title: s.title,
+      })),
+    }));
+    return [...ANATOMY_SLIDE_TESTS, ...custom];
+  }, [customTopics, customSlides]);
+
+  // Custom topic helpers
+  async function handleAddTopic() {
+    const name = newTopicName.trim();
+    if (!name) return;
+    const id = 'ct-' + Date.now();
+    const topic = { id, name, createdAt: Date.now() };
+    await photoDbPut('topics', topic);
+    const updated = [...customTopics, topic];
+    setCustomTopics(updated);
+    setCustomSlides(prev => ({ ...prev, [id]: [] }));
+    setNewTopicName('');
+    setAddingTopic(false);
+    // Select it
+    setSelectedTest({ testId: 'custom-' + id, title: name, isCustom: true, customTopicId: id, slides: [] });
+    setSlideIdx(0); setRevealedIds({});
+    setPhotoManage(true);
+  }
+
+  async function handleDeleteTopic(topicId) {
+    if (!confirm('Delete this topic and all its photos?')) return;
+    // Delete all slides
+    const slides = await photoDbGetByTopic(topicId);
+    for (const s of slides) {
+      await photoDbDelete('slides', s.id);
+    }
+    await photoDbDelete('topics', topicId);
+    // Revoke object URLs
+    (customSlides[topicId] || []).forEach(s => URL.revokeObjectURL(s.url));
+    setCustomTopics(prev => prev.filter(t => t.id !== topicId));
+    setCustomSlides(prev => { const n = { ...prev }; delete n[topicId]; return n; });
+    // Go back to first built-in topic
+    setSelectedTest(ANATOMY_SLIDE_TESTS[0] || null);
+    setSlideIdx(0); setRevealedIds({}); setPhotoManage(false);
+  }
+
+  async function handleUploadPhotos(e) {
+    const files = Array.from(e.target.files);
+    if (!files.length || !selectedTest?.isCustom) return;
+    const topicId = selectedTest.customTopicId;
+    const newSlides = [];
+    for (const file of files) {
+      const id = 'slide-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+      const blob = file;
+      const title = file.name.replace(/\.[^.]+$/, '');
+      await photoDbPut('slides', { id, topicId, blob, title, createdAt: Date.now() });
+      newSlides.push({ id, url: URL.createObjectURL(blob), title });
+    }
+    setCustomSlides(prev => ({
+      ...prev,
+      [topicId]: [...(prev[topicId] || []), ...newSlides],
+    }));
+    e.target.value = '';
+  }
+
+  async function handleDeleteSlide(topicId, slideId) {
+    await photoDbDelete('slides', slideId);
+    setCustomSlides(prev => {
+      const updated = (prev[topicId] || []).filter(s => {
+        if (s.id === slideId) { URL.revokeObjectURL(s.url); return false; }
+        return true;
+      });
+      return { ...prev, [topicId]: updated };
+    });
+  }
 
   // ── All hooks must be before any early return ──────────────
   const slide  = selectedTest ? selectedTest.slides[slideIdx] : null;
@@ -2544,28 +2703,99 @@ function AnatomyTest({ onBack }) {
             ←
           </button>
           <div style={{fontSize:10, fontWeight:700, color:'#aaa',
-            letterSpacing:'0.08em', textTransform:'uppercase'}}>Topics</div>
+            letterSpacing:'0.08em', textTransform:'uppercase', flex:1}}>Topics</div>
         </div>
+
+        {/* Built-in topics */}
         {ANATOMY_SLIDE_TESTS.map(test => {
-          const isActive = test.testId === selectedTest.testId;
+          const isActive = test.testId === selectedTest?.testId;
           return (
             <div key={test.testId}
-              onClick={() => { if (!isActive) goToTopic(test); }}
+              onClick={() => { if (!isActive) goToTopic(test); setPhotoManage(false); }}
               style={{
-                padding:'9px 12px 9px 11px',
-                cursor: isActive ? 'default' : 'pointer',
-                fontSize:12,
-                fontWeight: isActive ? 700 : 400,
+                padding:'9px 12px 9px 11px', cursor: isActive ? 'default' : 'pointer',
+                fontSize:12, fontWeight: isActive ? 700 : 400,
                 color: isActive ? '#1a1a1a' : '#555',
                 background: isActive ? '#e3f2fd' : 'transparent',
                 borderLeft: isActive ? '3px solid #1976d2' : '3px solid transparent',
-                lineHeight:1.35,
-                transition:'background .12s',
+                lineHeight:1.35, transition:'background .12s',
               }}>
               {test.title}
             </div>
           );
         })}
+
+        {/* My Photos section */}
+        <div style={{fontSize:10, fontWeight:700, color:'#aaa', padding:'10px 12px 4px',
+          letterSpacing:'0.08em', textTransform:'uppercase', borderTop:'1px solid #e8e8e8',
+          marginTop:6, display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+          My Photos
+          <button onClick={() => setAddingTopic(true)}
+            style={{border:'1px solid #ccc', borderRadius:6, background:'#f5f5f5',
+              color:'#555', cursor:'pointer', fontSize:11, padding:'1px 7px', fontWeight:600}}>
+            + Add
+          </button>
+        </div>
+
+        {/* New topic name input */}
+        {addingTopic && (
+          <div style={{padding:'6px 10px', display:'flex', gap:4}}>
+            <input
+              autoFocus
+              type="text" placeholder="Topic name…" value={newTopicName}
+              onChange={e => setNewTopicName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleAddTopic(); if (e.key === 'Escape') { setAddingTopic(false); setNewTopicName(''); } }}
+              style={{flex:1, fontSize:11, padding:'4px 7px', borderRadius:6, border:'1px solid #ccc', outline:'none'}}
+            />
+            <button onClick={handleAddTopic}
+              style={{border:'none', borderRadius:6, background:'#1a1a1a', color:'#fff',
+                cursor:'pointer', fontSize:11, padding:'4px 8px'}}>
+              OK
+            </button>
+          </div>
+        )}
+
+        {/* Custom topics list */}
+        {customTopics.map(ct => {
+          const testId = 'custom-' + ct.id;
+          const isActive = selectedTest?.testId === testId;
+          const count = (customSlides[ct.id] || []).length;
+          return (
+            <div key={testId} style={{ position:'relative' }}>
+              <div
+                onClick={() => {
+                  if (!isActive) {
+                    goToTopic(allTopics.find(t => t.testId === testId) || { testId, title: ct.name, isCustom:true, customTopicId: ct.id, slides: customSlides[ct.id]?.map((s,i) => ({slideId:s.id, image:s.url, title:s.title})) || [] });
+                  }
+                  setPhotoManage(true);
+                }}
+                style={{
+                  padding:'9px 32px 9px 11px', cursor:'pointer', fontSize:12,
+                  fontWeight: isActive ? 700 : 400,
+                  color: isActive ? '#1a1a1a' : '#555',
+                  background: isActive ? '#fdf3e7' : 'transparent',
+                  borderLeft: isActive ? '3px solid #e07b00' : '3px solid transparent',
+                  lineHeight:1.35, transition:'background .12s',
+                }}>
+                {ct.name}
+                <span style={{fontSize:10, color:'#bbb', marginLeft:5}}>{count}</span>
+              </div>
+              <button onClick={() => handleDeleteTopic(ct.id)}
+                style={{position:'absolute', right:6, top:'50%', transform:'translateY(-50%)',
+                  border:'none', background:'none', cursor:'pointer', fontSize:13,
+                  color:'#ccc', padding:'2px 4px'}}
+                title="Delete topic">
+                x
+              </button>
+            </div>
+          );
+        })}
+
+        {customTopics.length === 0 && !addingTopic && (
+          <div style={{fontSize:11, color:'#ccc', padding:'6px 12px', fontStyle:'italic'}}>
+            No custom topics yet
+          </div>
+        )}
       </div>
 
       {/* ── Main content ── */}
@@ -2579,11 +2809,11 @@ function AnatomyTest({ onBack }) {
           const dx = e.changedTouches[0].clientX - swipeRef.current;
           swipeRef.current = null;
           if (Math.abs(dx) < 60) return;
-          const idx = ANATOMY_SLIDE_TESTS.findIndex(t => t.testId === selectedTest.testId);
-          if (dx < 0 && idx < ANATOMY_SLIDE_TESTS.length - 1) {
-            goToTopic(ANATOMY_SLIDE_TESTS[idx + 1]);
+          const idx = allTopics.findIndex(t => t.testId === selectedTest.testId);
+          if (dx < 0 && idx < allTopics.length - 1) {
+            goToTopic(allTopics[idx + 1]);
           } else if (dx > 0 && idx > 0) {
-            goToTopic(ANATOMY_SLIDE_TESTS[idx - 1]);
+            goToTopic(allTopics[idx - 1]);
           }
         }}>
 
@@ -2607,6 +2837,13 @@ function AnatomyTest({ onBack }) {
                   cursor:'pointer', background:'#f5f5f5', color:'#555', border:'1px solid #ccc'}}>
                 Edit boxes
               </button>
+              {selectedTest?.isCustom && !photoManage && (
+                <button onClick={() => setPhotoManage(true)}
+                  style={{padding:'5px 14px', borderRadius:8, fontSize:12,
+                    cursor:'pointer', background:'#fff8f0', color:'#e07b00', border:'1px solid #f0c87a'}}>
+                  Manage photos
+                </button>
+              )}
             </>
           ) : (
             <>
@@ -2631,6 +2868,77 @@ function AnatomyTest({ onBack }) {
             </>
           )}
         </div>
+
+        {/* ── Photo management panel (custom topics only) ── */}
+        {selectedTest?.isCustom && photoManage ? (
+          <div>
+            {/* Upload area */}
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={e => e.preventDefault()}
+              onDrop={e => {
+                e.preventDefault();
+                const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+                if (files.length) handleUploadPhotos({ target: { files, value: '' } });
+              }}
+              style={{
+                border: '2px dashed #ccc', borderRadius: 12, padding: '28px 20px',
+                textAlign: 'center', cursor: 'pointer', marginBottom: 16,
+                background: 'rgba(255,255,255,0.7)',
+                transition: 'border-color .15s',
+              }}>
+              <div style={{fontSize:14, color:'#888', marginBottom:4}}>Tap or drag photos here to upload</div>
+              <div style={{fontSize:11, color:'#bbb'}}>JPG, PNG, WEBP supported</div>
+            </div>
+            <input
+              ref={fileInputRef} type="file" accept="image/*" multiple
+              style={{display:'none'}}
+              onChange={handleUploadPhotos}
+            />
+
+            {/* Photo grid */}
+            {(customSlides[selectedTest.customTopicId] || []).length === 0 ? (
+              <div style={{fontSize:13, color:'#bbb', fontStyle:'italic', textAlign:'center', padding:'20px 0'}}>
+                No photos yet — upload some above
+              </div>
+            ) : (
+              <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(130px, 1fr))', gap:10}}>
+                {(customSlides[selectedTest.customTopicId] || []).map((s, i) => (
+                  <div key={s.id} style={{position:'relative', borderRadius:10, overflow:'hidden',
+                    border:'1px solid #e0e0e0', background:'#f5f5f5', aspectRatio:'4/3'}}>
+                    <img src={s.url} alt={s.title}
+                      style={{width:'100%', height:'100%', objectFit:'cover', display:'block'}} />
+                    <div style={{
+                      position:'absolute', bottom:0, left:0, right:0,
+                      background:'rgba(0,0,0,0.5)', color:'#fff', fontSize:10,
+                      padding:'3px 6px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis',
+                    }}>{s.title || `Photo ${i+1}`}</div>
+                    <button
+                      onClick={() => handleDeleteSlide(selectedTest.customTopicId, s.id)}
+                      style={{
+                        position:'absolute', top:4, right:4,
+                        width:22, height:22, borderRadius:11,
+                        border:'none', background:'rgba(200,0,0,0.80)', color:'#fff',
+                        cursor:'pointer', fontSize:12, fontWeight:700,
+                        display:'flex', alignItems:'center', justifyContent:'center', lineHeight:1,
+                      }}>x</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* View slides button (only if there are photos) */}
+            {(customSlides[selectedTest.customTopicId] || []).length > 0 && (
+              <button
+                onClick={() => setPhotoManage(false)}
+                style={{marginTop:18, padding:'8px 20px', borderRadius:9, border:'1px solid #ccc',
+                  background:'#1a1a1a', color:'#fff', fontWeight:600, fontSize:13, cursor:'pointer'}}>
+                View slides
+              </button>
+            )}
+          </div>
+        ) : (
+        <div>{/* wrapper for slide content */}
 
         {/* ── Slide navigation ── */}
         <div style={{display:'flex', flexWrap:'wrap', gap:6, marginBottom:10, alignItems:'center'}}>
@@ -2778,6 +3086,9 @@ function AnatomyTest({ onBack }) {
                 borderRadius:7, fontSize:13, cursor:'pointer'}}>Cancel</button>
           </div>
         )}
+        </div>
+        )}
+
       </div>
 
     </div>
