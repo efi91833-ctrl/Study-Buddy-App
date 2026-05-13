@@ -2321,8 +2321,9 @@ function AnatomyTest({ onBack }) {
   const [editLabels, setEditLabels]   = React.useState(null);
   const [, forceUpdate]               = React.useReducer(x => x + 1, 0);
 
-  const wrapRef = React.useRef(null);
-  const termRef = React.useRef(null);
+  const wrapRef  = React.useRef(null);
+  const termRef  = React.useRef(null);
+  const swipeRef = React.useRef(null);
 
   // ── All hooks must be before any early return ──────────────
   const slide  = selectedTest ? selectedTest.slides[slideIdx] : null;
@@ -2473,175 +2474,237 @@ function AnatomyTest({ onBack }) {
   const coveredCount = Object.values(revealedIds).filter(Boolean).length;
   const allRevealed  = labels.length > 0 && labels.every(l => revealedIds[l.id]);
 
-  return (
-    <div style={{maxWidth:860, margin:'0 auto', padding:'16px 20px'}}>
+  // ── Topic navigation helpers ──
+  function goToTopic(test) {
+    if (editMode) exitEdit();
+    setSelectedTest(test);
+    setSlideIdx(0);
+    setRevealedIds({});
+    setEditMode(false);
+    setEditLabels(null);
+  }
 
-      {/* ── Top bar ── */}
-      <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:14, flexWrap:'wrap'}}>
-        <button className="topbar-back"
-          onClick={() => { setSelectedTest(null); setEditMode(false); setEditLabels(null); setRevealedIds({}); }}>
-          ← Tests
-        </button>
-        {!editMode ? (
-          <>
-            <span style={{fontSize:13, color:'#888'}}>
-              {selectedTest.title}&nbsp;·&nbsp;{coveredCount} covered term{coveredCount !== 1 ? 's' : ''}
-            </span>
-            {allRevealed && (
-              <button onClick={() => setRevealedIds({})}
-                style={{padding:'5px 12px', borderRadius:8, fontSize:12, cursor:'pointer',
-                  background:'#f5f5f5', color:'#333', border:'1px solid #ccc'}}>
-                Reset
+  return (
+    <div style={{display:'flex', height:'100vh', overflow:'hidden'}}>
+
+      {/* ── Main content ── */}
+      <div style={{flex:1, overflow:'auto', padding:'16px 20px'}}
+        onTouchStart={e => {
+          if (editMode) return;
+          swipeRef.current = e.touches[0].clientX;
+        }}
+        onTouchEnd={e => {
+          if (editMode || swipeRef.current === null) return;
+          const dx = e.changedTouches[0].clientX - swipeRef.current;
+          swipeRef.current = null;
+          if (Math.abs(dx) < 60) return;
+          const idx = ANATOMY_SLIDE_TESTS.findIndex(t => t.testId === selectedTest.testId);
+          if (dx < 0 && idx < ANATOMY_SLIDE_TESTS.length - 1) {
+            goToTopic(ANATOMY_SLIDE_TESTS[idx + 1]);
+          } else if (dx > 0 && idx > 0) {
+            goToTopic(ANATOMY_SLIDE_TESTS[idx - 1]);
+          }
+        }}>
+
+        {/* ── Top bar ── */}
+        <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:14, flexWrap:'wrap'}}>
+          <button className="topbar-back"
+            onClick={() => { setSelectedTest(null); setEditMode(false); setEditLabels(null); setRevealedIds({}); }}>
+            ← Tests
+          </button>
+          {!editMode ? (
+            <>
+              <span style={{fontSize:13, color:'#888'}}>
+                {selectedTest.title}&nbsp;·&nbsp;{coveredCount} covered term{coveredCount !== 1 ? 's' : ''}
+              </span>
+              {allRevealed && (
+                <button onClick={() => setRevealedIds({})}
+                  style={{padding:'5px 12px', borderRadius:8, fontSize:12, cursor:'pointer',
+                    background:'#f5f5f5', color:'#333', border:'1px solid #ccc'}}>
+                  Reset
+                </button>
+              )}
+              <button onClick={enterEdit}
+                style={{marginLeft:'auto', padding:'5px 14px', borderRadius:8, fontSize:12,
+                  cursor:'pointer', background:'#f5f5f5', color:'#555', border:'1px solid #ccc'}}>
+                ✏️ Position boxes
               </button>
-            )}
-            <button onClick={enterEdit}
-              style={{marginLeft:'auto', padding:'5px 14px', borderRadius:8, fontSize:12,
-                cursor:'pointer', background:'#f5f5f5', color:'#555', border:'1px solid #ccc'}}>
-              ✏️ Position boxes
+            </>
+          ) : (
+            <>
+              <span style={{fontSize:13, color:'#e65100', fontWeight:600}}>
+                Edit mode — drag to draw boxes, click x to delete
+              </span>
+              <button onClick={clearSlide}
+                style={{padding:'5px 10px', borderRadius:7, fontSize:12, cursor:'pointer',
+                  background:'#fff3e0', color:'#e65100', border:'1px solid #ffcc80'}}>
+                Clear all
+              </button>
+              <button onClick={exitEdit}
+                style={{marginLeft:'auto', padding:'5px 14px', borderRadius:8, fontSize:13,
+                  cursor:'pointer', background:'#1a1a1a', color:'#fff', border:'none', fontWeight:600}}>
+                ✅ Save & done
+              </button>
+              <button onClick={discardEdit}
+                style={{padding:'5px 10px', borderRadius:7, fontSize:12, cursor:'pointer',
+                  background:'#eee', color:'#666', border:'1px solid #ccc'}}>
+                Cancel
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* ── Slide navigation ── */}
+        <div style={{display:'flex', flexWrap:'wrap', gap:5, marginBottom:10}}>
+          {selectedTest.slides.map((s, i) => (
+            <button key={String(s.slideId)}
+              onClick={() => { if (editMode) exitEdit(); setSlideIdx(i); }}
+              style={{
+                minWidth:34, height:34, padding:'0 10px', borderRadius:8, fontSize:12, fontWeight:600,
+                cursor:'pointer', border:'1px solid',
+                background:  i === slideIdx ? '#1a1a1a' : '#f5f5f5',
+                color:       i === slideIdx ? '#fff'    : '#888',
+                borderColor: i === slideIdx ? '#1a1a1a' : '#e0e0e0',
+              }}>
+              {i + 1}
             </button>
-          </>
-        ) : (
-          <>
-            <span style={{fontSize:13, color:'#e65100', fontWeight:600}}>
-              Edit mode — drag to draw boxes, click x to delete
-            </span>
-            <button onClick={clearSlide}
-              style={{padding:'5px 10px', borderRadius:7, fontSize:12, cursor:'pointer',
-                background:'#fff3e0', color:'#e65100', border:'1px solid #ffcc80'}}>
-              Clear all
-            </button>
-            <button onClick={exitEdit}
-              style={{marginLeft:'auto', padding:'5px 14px', borderRadius:8, fontSize:13,
-                cursor:'pointer', background:'#1a1a1a', color:'#fff', border:'none', fontWeight:600}}>
-              ✅ Save & done
-            </button>
-            <button onClick={discardEdit}
-              style={{padding:'5px 10px', borderRadius:7, fontSize:12, cursor:'pointer',
-                background:'#eee', color:'#666', border:'1px solid #ccc'}}>
-              Cancel
-            </button>
-          </>
+          ))}
+        </div>
+
+        {/* ── Slide title ── */}
+        {slide.title && (
+          <div style={{fontSize:13, color:'#888', marginBottom:8}}>{slide.title}</div>
+        )}
+
+        {/* ── Image + cover boxes ── */}
+        <div
+          ref={wrapRef}
+          style={{
+            position:'relative', width:'100%', display:'block',
+            cursor: editMode ? 'crosshair' : 'default', userSelect:'none',
+            touchAction: editMode ? 'none' : 'pan-y',
+            WebkitUserSelect: 'none',
+          }}
+          onMouseDown={onMouseDown}
+          onMouseMove={onMouseMove}
+          onMouseUp={onMouseUp}
+          onMouseLeave={() => drawing && setDrawing(null)}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
+          <img
+            src={slide.image}
+            alt={slide.title || ('Slide ' + (slideIdx + 1))}
+            draggable={false}
+            style={{width:'100%', display:'block', borderRadius:10, border:'1px solid #ddd',
+              boxShadow:'0 4px 20px rgba(0,0,0,0.12)', minHeight:200}}
+            onError={e => { e.target.style.minHeight='200px'; e.target.style.background='#f5f5f5'; }}
+          />
+
+          {labels.map(label => {
+            const revealed = !editMode && !!revealedIds[label.id];
+            return (
+              <div
+                key={label.id}
+                className={'cover-box' + (revealed ? ' revealed' : '')}
+                onClick={() => !editMode && handleBoxClick(label)}
+                onTouchEnd={e => { if (!editMode) { e.preventDefault(); handleBoxClick(label); } }}
+                style={{
+                  left:`${label.x}%`, top:`${label.y}%`,
+                  width:`${label.w}%`, height:`${label.h}%`,
+                  cursor:      editMode ? 'default'                 : 'pointer',
+                  background:  editMode ? 'rgba(25,118,210,0.15)'  : revealed ? 'transparent' : '#888',
+                  borderColor: editMode ? '#1976d2'                 : revealed ? '#999'        : '#666',
+                  borderStyle: editMode ? 'dashed'                  : revealed ? 'dashed'      : 'solid',
+                  opacity:     1,
+                }}>
+                {editMode ? (
+                  <>
+                    <span style={{fontSize:'clamp(8px,1vw,11px)', color:'#1976d2',
+                      overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
+                      maxWidth:'90%', textAlign:'center'}}>
+                      {label.term}
+                    </span>
+                    <button
+                      onMouseDown={e => e.stopPropagation()}
+                      onClick={e => { e.stopPropagation(); deleteEditLabel(label.id); }}
+                      style={{position:'absolute', top:1, right:1, background:'#c62828', color:'#fff',
+                        border:'none', borderRadius:3, fontSize:9, lineHeight:1, padding:'1px 3px',
+                        cursor:'pointer', zIndex:5}}>
+                      x
+                    </button>
+                  </>
+                ) : (
+                  !revealed && '?'
+                )}
+              </div>
+            );
+          })}
+
+          {drawRect && (
+            <div style={{position:'absolute', pointerEvents:'none',
+              left:`${drawRect.x}%`, top:`${drawRect.y}%`,
+              width:`${drawRect.w}%`, height:`${drawRect.h}%`,
+              border:'2px dashed #e65100', background:'rgba(230,81,0,0.1)', borderRadius:4}}/>
+          )}
+        </div>
+
+        {/* ── Pending box: name the term ── */}
+        {editMode && pendingBox && (
+          <div style={{marginTop:10, padding:'10px 16px', background:'#fff3e0', borderRadius:10,
+            border:'1px solid #ffcc80', display:'flex', gap:8, alignItems:'center', flexWrap:'wrap'}}>
+            <span style={{fontSize:13, color:'#b26000', fontWeight:600}}>Term name:</span>
+            <input ref={termRef} type="text" value={pendingTerm}
+              onChange={e => setPendingTerm(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter')  savePending();
+                if (e.key === 'Escape') { setPendingBox(null); setPendingTerm(''); }
+              }}
+              placeholder="e.g. Femoral head (optional)"
+              style={{flex:1, minWidth:150, padding:'6px 10px', border:'1px solid #ffcc80',
+                borderRadius:7, fontSize:13}}/>
+            <button onClick={savePending}
+              style={{padding:'6px 14px', background:'#1a1a1a', color:'#fff', border:'none',
+                borderRadius:7, fontSize:13, cursor:'pointer'}}>Save box</button>
+            <button onClick={() => { setPendingBox(null); setPendingTerm(''); }}
+              style={{padding:'6px 10px', background:'#eee', color:'#555', border:'1px solid #ccc',
+                borderRadius:7, fontSize:13, cursor:'pointer'}}>Cancel</button>
+          </div>
         )}
       </div>
 
-      {/* ── Slide navigation ── */}
-      <div style={{display:'flex', flexWrap:'wrap', gap:5, marginBottom:10}}>
-        {selectedTest.slides.map((s, i) => (
-          <button key={String(s.slideId)}
-            onClick={() => { if (editMode) exitEdit(); setSlideIdx(i); }}
-            style={{
-              minWidth:34, height:34, padding:'0 10px', borderRadius:8, fontSize:12, fontWeight:600,
-              cursor:'pointer', border:'1px solid',
-              background:  i === slideIdx ? '#1a1a1a' : '#f5f5f5',
-              color:       i === slideIdx ? '#fff'    : '#888',
-              borderColor: i === slideIdx ? '#1a1a1a' : '#e0e0e0',
-            }}>
-            {i + 1}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Slide title ── */}
-      {slide.title && (
-        <div style={{fontSize:13, color:'#888', marginBottom:8}}>{slide.title}</div>
-      )}
-
-      {/* ── Image + cover boxes ── */}
-      <div
-        ref={wrapRef}
-        style={{
-          position:'relative', width:'100%', display:'block',
-          cursor: editMode ? 'crosshair' : 'default', userSelect:'none',
-          touchAction: editMode ? 'none' : 'pan-y',
-          WebkitUserSelect: 'none',
-        }}
-        onMouseDown={onMouseDown}
-        onMouseMove={onMouseMove}
-        onMouseUp={onMouseUp}
-        onMouseLeave={() => drawing && setDrawing(null)}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-      >
-        <img
-          src={slide.image}
-          alt={slide.title || ('Slide ' + (slideIdx + 1))}
-          draggable={false}
-          style={{width:'100%', display:'block', borderRadius:10, border:'1px solid #ddd',
-            boxShadow:'0 4px 20px rgba(0,0,0,0.12)', minHeight:200}}
-          onError={e => { e.target.style.minHeight='200px'; e.target.style.background='#f5f5f5'; }}
-        />
-
-        {labels.map(label => {
-          const revealed = !editMode && !!revealedIds[label.id];
+      {/* ── Right sidebar: topic list ── */}
+      <div style={{
+        width:165, borderLeft:'1px solid #e0e0e0', overflowY:'auto',
+        background:'#fafafa', flexShrink:0, padding:'8px 0',
+      }}>
+        <div style={{fontSize:10, fontWeight:700, color:'#aaa', padding:'6px 12px 10px',
+          letterSpacing:'0.08em', textTransform:'uppercase'}}>Topics</div>
+        {ANATOMY_SLIDE_TESTS.map((test, idx) => {
+          const isActive = test.testId === selectedTest.testId;
+          const allTests = ANATOMY_SLIDE_TESTS;
+          const currentIdx = allTests.findIndex(t => t.testId === selectedTest.testId);
           return (
-            <div
-              key={label.id}
-              className={'cover-box' + (revealed ? ' revealed' : '')}
-              onClick={() => !editMode && handleBoxClick(label)}
-              onTouchEnd={e => { if (!editMode) { e.preventDefault(); handleBoxClick(label); } }}
+            <div key={test.testId}
+              onClick={() => { if (!isActive) goToTopic(test); }}
               style={{
-                left:`${label.x}%`, top:`${label.y}%`,
-                width:`${label.w}%`, height:`${label.h}%`,
-                cursor:      editMode ? 'default'                 : 'pointer',
-                background:  editMode ? 'rgba(25,118,210,0.15)'  : revealed ? 'transparent' : '#888',
-                borderColor: editMode ? '#1976d2'                 : revealed ? '#999'        : '#666',
-                borderStyle: editMode ? 'dashed'                  : revealed ? 'dashed'      : 'solid',
-                opacity:     1,
+                padding:'9px 12px 9px 11px',
+                cursor: isActive ? 'default' : 'pointer',
+                fontSize:12,
+                fontWeight: isActive ? 700 : 400,
+                color: isActive ? '#1a1a1a' : '#555',
+                background: isActive ? '#e3f2fd' : 'transparent',
+                borderLeft: isActive ? '3px solid #1976d2' : '3px solid transparent',
+                lineHeight:1.35,
+                transition:'background .12s',
               }}>
-              {editMode ? (
-                <>
-                  <span style={{fontSize:'clamp(8px,1vw,11px)', color:'#1976d2',
-                    overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
-                    maxWidth:'90%', textAlign:'center'}}>
-                    {label.term}
-                  </span>
-                  <button
-                    onMouseDown={e => e.stopPropagation()}
-                    onClick={e => { e.stopPropagation(); deleteEditLabel(label.id); }}
-                    style={{position:'absolute', top:1, right:1, background:'#c62828', color:'#fff',
-                      border:'none', borderRadius:3, fontSize:9, lineHeight:1, padding:'1px 3px',
-                      cursor:'pointer', zIndex:5}}>
-                    x
-                  </button>
-                </>
-              ) : (
-                !revealed && '?'
-              )}
+              {test.title}
             </div>
           );
         })}
-
-        {drawRect && (
-          <div style={{position:'absolute', pointerEvents:'none',
-            left:`${drawRect.x}%`, top:`${drawRect.y}%`,
-            width:`${drawRect.w}%`, height:`${drawRect.h}%`,
-            border:'2px dashed #e65100', background:'rgba(230,81,0,0.1)', borderRadius:4}}/>
-        )}
       </div>
 
-      {/* ── Pending box: name the term ── */}
-      {editMode && pendingBox && (
-        <div style={{marginTop:10, padding:'10px 16px', background:'#fff3e0', borderRadius:10,
-          border:'1px solid #ffcc80', display:'flex', gap:8, alignItems:'center', flexWrap:'wrap'}}>
-          <span style={{fontSize:13, color:'#b26000', fontWeight:600}}>Term name:</span>
-          <input ref={termRef} type="text" value={pendingTerm}
-            onChange={e => setPendingTerm(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter')  savePending();
-              if (e.key === 'Escape') { setPendingBox(null); setPendingTerm(''); }
-            }}
-            placeholder="e.g. Femoral head (optional)"
-            style={{flex:1, minWidth:150, padding:'6px 10px', border:'1px solid #ffcc80',
-              borderRadius:7, fontSize:13}}/>
-          <button onClick={savePending}
-            style={{padding:'6px 14px', background:'#1a1a1a', color:'#fff', border:'none',
-              borderRadius:7, fontSize:13, cursor:'pointer'}}>Save box</button>
-          <button onClick={() => { setPendingBox(null); setPendingTerm(''); }}
-            style={{padding:'6px 10px', background:'#eee', color:'#555', border:'1px solid #ccc',
-              borderRadius:7, fontSize:13, cursor:'pointer'}}>Cancel</button>
-        </div>
-      )}
     </div>
   );
 }
@@ -5121,86 +5184,174 @@ function ArteryGame({ onBack }) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ARTERY ASSEMBLY GAME
-   Decision-tree layout: root at top, leaves at bottom.
-   Each slot = one named vessel the student must identify and place.
+   ARTERY ASSEMBLY GAME  — Phase 1 Enhanced
+   Modes: Learn | Practice | Exam
+   Difficulty: Core (1) | Intermediate (2) | Full (3)
    ═══════════════════════════════════════════════════════════════ */
 
-const ASS_UNIT    = 172;  /* px per leaf column — controls horizontal spread */
-const ASS_CARD_W  = 148;  /* node card width */
+const ASS_UNIT   = 172;  /* px per leaf column */
+const ASS_CARD_W = 148;  /* base node card width */
 
-/* Count leaf (terminal descendant) nodes to determine column width */
+/* Count leaf nodes (determines horizontal span) */
 function assLeafWidth(nodeId, byParent) {
   const children = byParent[nodeId] || [];
   if (children.length === 0) return 1;
   return children.reduce((s, c) => s + assLeafWidth(c.id, byParent), 0);
 }
 
+/* Walk upward from nodeId, collecting labels root-first */
+function getArteryPath(nodeId, allNodes) {
+  const path = [];
+  let cur = allNodes.find(n => n.id === nodeId);
+  while (cur) {
+    path.unshift(cur.label);
+    cur = cur.parent ? allNodes.find(n => n.id === cur.parent) : null;
+  }
+  return path;
+}
+
+/* True if nodeId is nodeId itself or a descendant of ancestorId */
+function isDescendantOf(nodeId, ancestorId, allNodes) {
+  let cur = allNodes.find(n => n.id === nodeId);
+  while (cur) {
+    if (cur.id === ancestorId) return true;
+    cur = cur.parent ? allNodes.find(n => n.id === cur.parent) : null;
+  }
+  return false;
+}
+
+/* ── Progress persistence helpers ── */
+const ASS_PROGRESS_KEY = 'ass_progress_v1';
+function loadAllProgress() {
+  try { return JSON.parse(localStorage.getItem(ASS_PROGRESS_KEY) || '{}'); }
+  catch(e) { return {}; }
+}
+function saveModuleProgress(moduleKey, nodeStats) {
+  try {
+    const all = loadAllProgress();
+    all[moduleKey] = nodeStats;
+    localStorage.setItem(ASS_PROGRESS_KEY, JSON.stringify(all));
+  } catch(e) {}
+}
+
+/* ── Error boundary ── */
+class ArteryErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+  static getDerivedStateFromError(error) { return { hasError: true, error }; }
+  componentDidCatch(error, info) { console.warn('ArteryAssemblyGame error:', error, info); }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '40px 20px', textAlign: 'center', color: '#888' }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: '#c00', marginBottom: 10 }}>
+            Something went wrong loading this module.
+          </div>
+          <div style={{ fontSize: 12, marginBottom: 20, color: '#aaa' }}>{String(this.state.error || '')}</div>
+          <button onClick={() => this.setState({ hasError: false, error: null })}
+            style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid #ccc',
+                     background: '#f5f5f5', cursor: 'pointer', fontSize: 13 }}>
+            Try again
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 /* ── Single slot card ── */
 function AssSlot({ node, placed, selectedVessel, onSlotClick, submitted,
-                   dragOver, onDragOver, onDragLeave, onDrop, onDragStart }) {
+                   dragOver, onDragOver, onDragLeave, onDrop, onDragStart,
+                   mode, isHidden, onInfoClick, isHighlighted }) {
   const value = placed[node.id];
-  const isCorrect = submitted && value && (
-    value === node.label || (node.synonyms || []).includes(value)
-  );
-  const isWrong = submitted && value && !isCorrect;
+  const lv    = node.level ?? 0;
 
-  let bg     = 'rgba(255,255,255,0.92)';
-  let border = '1.5px solid rgba(0,0,0,0.18)';
-  let shadow = '0 3px 10px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08)';
+  /* ── Visual hierarchy by depth ── */
+  const cardW  = lv <= 1 ? ASS_CARD_W + 12 : lv >= 4 ? ASS_CARD_W - 10 : ASS_CARD_W;
+  const minH   = lv <= 1 ? 64 : lv >= 4 ? 44 : 52;
+  const fW     = lv <= 1 ? 700 : lv >= 4 ? 400 : 500;
+  const fS     = lv <= 1 ? 13.5 : lv >= 4 ? 11 : 12.5;
+  const bpx    = lv <= 1 ? 2 : 1.5;
+  const opac   = lv >= 4 ? 0.87 : 1;
 
-  if (dragOver) {
-    bg     = 'rgba(200,230,255,0.90)';
-    border = '2px solid #5b9bd5';
+  /* ── State-driven colours ── */
+  const isCorrect = submitted && isHidden && value &&
+    (value === node.label || (node.synonyms || []).includes(value));
+  const isWrong   = submitted && isHidden && value && !isCorrect;
+
+  let bg     = lv <= 1 ? 'rgba(255,255,255,0.97)' : 'rgba(255,255,255,0.91)';
+  let border = `${bpx}px solid rgba(0,0,0,${lv <= 1 ? 0.22 : 0.14})`;
+  let shadow = lv <= 1
+    ? '0 4px 14px rgba(0,0,0,0.14), 0 1px 4px rgba(0,0,0,0.09)'
+    : '0 2px 8px rgba(0,0,0,0.09), 0 1px 3px rgba(0,0,0,0.05)';
+
+  if (!isHidden && mode !== 'exam') {
+    /* Pre-filled slot (practice / learn) */
+    bg     = 'rgba(245,245,245,0.85)';
+    border = `${bpx}px solid rgba(0,0,0,0.08)`;
+    shadow = '0 1px 4px rgba(0,0,0,0.04)';
+  } else if (dragOver && isHidden) {
+    bg = 'rgba(200,230,255,0.90)'; border = '2px solid #5b9bd5';
     shadow = '0 4px 16px rgba(91,155,213,0.35)';
   } else if (isCorrect) {
-    bg     = 'rgba(180,240,190,0.95)';
-    border = '2px solid #4caf50';
+    bg = 'rgba(180,240,190,0.95)'; border = '2px solid #4caf50';
     shadow = '0 3px 12px rgba(76,175,80,0.30)';
   } else if (isWrong) {
-    bg     = 'rgba(255,200,200,0.95)';
-    border = '2px solid #e53935';
+    bg = 'rgba(255,200,200,0.95)'; border = '2px solid #e53935';
     shadow = '0 3px 12px rgba(229,57,53,0.28)';
-  } else if (value) {
-    bg     = 'rgba(230,240,255,0.95)';
-    border = '2px solid rgba(80,120,200,0.55)';
-    shadow = '0 4px 14px rgba(80,120,200,0.18)';
-  } else if (selectedVessel) {
-    bg     = 'rgba(255,248,220,0.95)';
-    border = '2px dashed rgba(160,120,40,0.65)';
-    shadow = '0 3px 10px rgba(160,120,40,0.15)';
+  } else if (value && isHidden) {
+    bg = 'rgba(230,240,255,0.95)'; border = '2px solid rgba(80,120,200,0.50)';
+    shadow = '0 4px 14px rgba(80,120,200,0.15)';
+  } else if (selectedVessel && isHidden && !value) {
+    bg = 'rgba(255,248,220,0.95)'; border = '2px dashed rgba(160,120,40,0.60)';
+    shadow = '0 3px 10px rgba(160,120,40,0.12)';
   }
 
-  /* Type pill colour */
-  const typeColour = { continuation: '#5b8', branch: '#88b', terminal: '#b88', anastomosis: '#8bb' };
+  if (isHighlighted) {
+    border = '2px solid rgba(180,140,0,0.80)';
+    shadow = `0 0 0 3px rgba(200,160,0,0.18), ${shadow}`;
+  }
+
+  /* What text to show */
+  const showLabel  = mode === 'learn' || !isHidden;
+  const labelText  = mode === 'learn' ? node.label : (!isHidden ? node.label : null);
+  const placedText = isHidden ? value : null;
 
   return (
     <div
-      draggable={!!value && !submitted}
-      onDragStart={value && !submitted ? (e) => onDragStart(e, value, node.id) : undefined}
-      onDragOver={onDragOver}
-      onDragLeave={onDragLeave}
-      onDrop={onDrop}
-      onClick={() => onSlotClick(node.id)}
+      draggable={!!value && isHidden && !submitted && mode !== 'learn'}
+      onDragStart={value && isHidden && !submitted && mode !== 'learn'
+        ? (e) => onDragStart(e, value, node.id) : undefined}
+      onDragOver={isHidden && mode !== 'learn' ? onDragOver : undefined}
+      onDragLeave={isHidden && mode !== 'learn' ? onDragLeave : undefined}
+      onDrop={isHidden && mode !== 'learn' ? onDrop : undefined}
+      onClick={() => {
+        if (mode === 'learn') { onInfoClick(node); return; }
+        if (!submitted && isHidden) onSlotClick(node.id);
+      }}
       style={{
-        width: ASS_CARD_W, minHeight: 52,
-        borderRadius: 10, border, background: bg,
+        width: cardW, minHeight: minH,
+        borderRadius: 10, border, background: bg, opacity: opac,
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
-        padding: '6px 8px', cursor: submitted ? 'default' : 'pointer',
-        fontSize: 12.5, fontWeight: 500, textAlign: 'center', lineHeight: 1.3,
+        padding: '6px 8px',
+        cursor: mode === 'learn' ? 'pointer' : (isHidden && !submitted ? 'pointer' : 'default'),
+        fontSize: fS, fontWeight: fW, textAlign: 'center', lineHeight: 1.3,
         transition: 'background 0.14s, border 0.14s, box-shadow 0.14s',
-        boxSizing: 'border-box', userSelect: 'none',
-        boxShadow: shadow,
+        boxSizing: 'border-box', userSelect: 'none', boxShadow: shadow,
       }}
     >
-      {value
-        ? <span style={{ color: isCorrect ? '#1b5e20' : isWrong ? '#b71c1c' : '#333' }}>{value}</span>
-        : <span style={{ color: '#c0b8b0', fontWeight: 400, fontSize: 13 }}>?</span>
+      {labelText !== null
+        ? <span style={{ color: mode === 'learn' ? '#222' : '#666', fontStyle: !isHidden ? 'italic' : 'normal' }}>
+            {labelText}
+          </span>
+        : placedText
+          ? <span style={{ color: isCorrect ? '#1b5e20' : isWrong ? '#b71c1c' : '#333' }}>{placedText}</span>
+          : <span style={{ color: '#c0b8b0', fontWeight: 400, fontSize: 13 }}>?</span>
       }
       <span style={{
         fontSize: 9.5, fontWeight: 400, marginTop: 3, letterSpacing: 0.4,
-        color: typeColour[node.type] || '#aaa', textTransform: 'uppercase',
+        color: '#aaa', textTransform: 'uppercase',
       }}>
         {node.type}
       </span>
@@ -5210,20 +5361,21 @@ function AssSlot({ node, placed, selectedVessel, onSlotClick, submitted,
 
 /* ── Recursive tree node (top-down) ── */
 function AssTreeNode({ node, byParent, placed, selectedVessel, onSlotClick, submitted,
-                       dragOverSlot, onSlotDragOver, onSlotDragLeave, onSlotDrop, onSlotDragStart }) {
-  const children   = byParent[node.id] || [];
-  const totalW     = assLeafWidth(node.id, byParent);
+                       dragOverSlot, onSlotDragOver, onSlotDragLeave, onSlotDrop, onSlotDragStart,
+                       mode, hiddenSet, onInfoClick, highlightSet }) {
+  const children    = byParent[node.id] || [];
+  const totalW      = assLeafWidth(node.id, byParent);
   const childWidths = children.map(c => assLeafWidth(c.id, byParent));
+  const isHidden    = hiddenSet.has(node.id);
 
-  const connH    = 28;   /* total connector section height */
-  const midLine  = 14;   /* where T-bar sits inside connH */
+  const connH    = 28;
+  const midLine  = 14;
   const LINE_CLR = 'rgba(0,0,0,0.32)';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center',
                   width: totalW * ASS_UNIT }}>
 
-      {/* ── Current slot ── */}
       <AssSlot
         node={node}
         placed={placed}
@@ -5235,19 +5387,18 @@ function AssTreeNode({ node, byParent, placed, selectedVessel, onSlotClick, subm
         onDragLeave={() => onSlotDragLeave(node.id)}
         onDrop={(e) => onSlotDrop(e, node.id)}
         onDragStart={onSlotDragStart}
+        mode={mode}
+        isHidden={isHidden}
+        onInfoClick={onInfoClick}
+        isHighlighted={highlightSet ? highlightSet.has(node.id) : false}
       />
 
-      {/* ── Connector: vertical stem → T-bar → per-child ticks ── */}
       {children.length > 0 && (
         <div style={{ position: 'relative', width: totalW * ASS_UNIT, height: connH, flexShrink: 0 }}>
-
-          {/* Vertical stem down from node */}
           <div style={{
             position: 'absolute', top: 0, left: '50%', transform: 'translateX(-1px)',
             width: 2, height: midLine, background: LINE_CLR,
           }} />
-
-          {/* Horizontal T-bar (only when 2+ children) */}
           {children.length > 1 && (
             <div style={{
               position: 'absolute', top: midLine, height: 2, background: LINE_CLR,
@@ -5255,8 +5406,6 @@ function AssTreeNode({ node, byParent, placed, selectedVessel, onSlotClick, subm
               right: Math.floor(childWidths[childWidths.length - 1] * ASS_UNIT / 2) - 1,
             }} />
           )}
-
-          {/* Per-child vertical ticks down from T-bar */}
           {(() => {
             let x = 0;
             return children.map((child, i) => {
@@ -5267,8 +5416,7 @@ function AssTreeNode({ node, byParent, placed, selectedVessel, onSlotClick, subm
                 <div key={child.id} style={{
                   position: 'absolute',
                   top:    children.length > 1 ? midLine : 0,
-                  left:   cx - 1,
-                  width:  2,
+                  left:   cx - 1, width: 2,
                   height: children.length > 1 ? (connH - midLine) : connH,
                   background: LINE_CLR,
                 }} />
@@ -5278,7 +5426,6 @@ function AssTreeNode({ node, byParent, placed, selectedVessel, onSlotClick, subm
         </div>
       )}
 
-      {/* ── Children row ── */}
       {children.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start' }}>
           {children.map(child => (
@@ -5295,6 +5442,10 @@ function AssTreeNode({ node, byParent, placed, selectedVessel, onSlotClick, subm
               onSlotDragLeave={onSlotDragLeave}
               onSlotDrop={onSlotDrop}
               onSlotDragStart={onSlotDragStart}
+              mode={mode}
+              hiddenSet={hiddenSet}
+              onInfoClick={onInfoClick}
+              highlightSet={highlightSet}
             />
           ))}
         </div>
@@ -5308,6 +5459,7 @@ function ArteryAssemblyGame({ onBack }) {
   const modules    = window.ARTERY_ASSEMBLY_MODULES || {};
   const moduleKeys = Object.keys(modules);
 
+  /* Core game state */
   const [moduleKey,      setModuleKey]      = useState(moduleKeys[0] || null);
   const [placed,         setPlaced]         = useState({});
   const [selectedVessel, setSelectedVessel] = useState(null);
@@ -5317,60 +5469,165 @@ function ArteryAssemblyGame({ onBack }) {
   const [feedback,       setFeedback]       = useState(null);
   const [allVessels,     setAllVessels]     = useState([]);
   const [treeScale,      setTreeScale]      = useState(1);
-  const [treeH,          setTreeH]          = useState(0);
+
+  /* Phase 1 additions */
+  const [mode,        setMode]        = useState('exam');  /* 'learn' | 'practice' | 'exam' */
+  const [difficulty,  setDifficulty]  = useState(3);       /* 1 = Core, 2 = Mid, 3 = Full */
+  const [focusNodeId, setFocusNodeId] = useState(null);
+  const [infoNode,    setInfoNode]    = useState(null);
+
+  /* Phase 2 additions */
+  const [treeSearch,    setTreeSearch]    = useState('');   /* search within tree */
+  const [hint,          setHint]          = useState(null); /* {text,nodeId} | null */
+  const [hintTimer,     setHintTimer]     = useState(null);
+  const [allProgress,   setAllProgress]   = useState(() => loadAllProgress()); /* {[modKey]:{[nodeId]:{w,m,c}}} */
+  const [weakOnly,      setWeakOnly]      = useState(false); /* practice weak arteries mode */
+  const [pinchScale,    setPinchScale]    = useState(1);     /* user pinch zoom */
+
   const treeContainerRef = useRef(null);
   const treeInnerRef     = useRef(null);
+  const pinchRef         = useRef({ dist: null, scale: 1 });
 
   const mod   = moduleKey ? modules[moduleKey] : null;
   const nodes = mod ? mod.nodes : [];
 
-  /* Build byParent lookup */
+  /* ── Difficulty filter: keep nodes up to level N ── */
+  const maxLevel      = difficulty === 1 ? 1 : difficulty === 2 ? 3 : Infinity;
+  const filteredNodes = nodes.filter(n => (n.level ?? 0) <= maxLevel);
+
+  /* ── Focus filter: keep only the focused subtree ── */
+  const displayNodes = focusNodeId
+    ? filteredNodes.filter(n => isDescendantOf(n.id, focusNodeId, filteredNodes))
+    : filteredNodes;
+
+  /* ── byParent lookup (treat nodes whose parent was filtered out as roots) ── */
   const byParent = {};
-  nodes.forEach(n => {
-    const key = n.parent === null ? '__root__' : n.parent;
+  displayNodes.forEach(n => {
+    const parentInDisplay = n.parent && displayNodes.find(x => x.id === n.parent);
+    const key = parentInDisplay ? n.parent : '__root__';
     if (!byParent[key]) byParent[key] = [];
     byParent[key].push(n);
   });
 
-  /* Shuffle vessel bank once per module */
+  /* ── Progress helpers ── */
+  const modProgress = allProgress[moduleKey] || {};
+  function isWeakNode(nodeId) {
+    const s = modProgress[nodeId];
+    return s && (s.w + (s.m || 0)) >= 2;
+  }
+  const weakIds = new Set(displayNodes.filter(n => isWeakNode(n.id)).map(n => n.id));
+
+  /* ── Which nodes the student must fill (depends on mode + weakOnly) ── */
+  const baseHiddenNodes =
+    mode === 'exam'     ? displayNodes
+    : mode === 'practice'
+      ? displayNodes.filter(n => n.type === 'branch' || n.type === 'terminal')
+    : [];  /* learn */
+  const hiddenSet = new Set(
+    weakOnly && weakIds.size > 0
+      ? baseHiddenNodes.filter(n => weakIds.has(n.id)).map(n => n.id)
+      : baseHiddenNodes.map(n => n.id)
+  );
+
+  /* ── Search highlight set ── */
+  const trimSearch = treeSearch.trim().toLowerCase();
+  const highlightSet = trimSearch.length >= 2
+    ? new Set(displayNodes
+        .filter(n =>
+          n.label.toLowerCase().includes(trimSearch) ||
+          (n.synonyms || []).some(s => s.toLowerCase().includes(trimSearch))
+        )
+        .map(n => n.id))
+    : new Set();
+
+  /* ── Shuffle vessel bank whenever context changes ── */
   useEffect(() => {
-    if (!nodes.length) { setAllVessels([]); return; }
-    const arr = nodes.map(n => n.label);
+    const hiddenNodes = displayNodes.filter(n => hiddenSet.has(n.id));
+    if (!hiddenNodes.length) { setAllVessels([]); setPlaced({}); setSubmitted(false); setFeedback(null); return; }
+    const arr = hiddenNodes.map(n => n.label);
     for (let i = arr.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [arr[i], arr[j]] = [arr[j], arr[i]];
     }
     setAllVessels(arr);
-  }, [moduleKey]);
+    setPlaced({});
+    setSelectedVessel(null);
+    setSubmitted(false);
+    setFeedback(null);
+    setBankSearch('');
+    setInfoNode(null);
+    setTreeSearch('');
+    setHint(null);
+  }, [moduleKey, mode, difficulty, focusNodeId, weakOnly]);  /* eslint-disable-line */
 
-  /* Scale tree to fit the main panel width (no horizontal scroll needed) */
+  /* ── Scale tree to fit panel ── */
   useEffect(() => {
     function measure() {
       const outer = treeContainerRef.current;
       const inner = treeInnerRef.current;
       if (!outer || !inner) return;
-      /* temporarily reset scale to measure true natural size */
       inner.style.transform = 'scale(1)';
-      const availW   = outer.clientWidth - 40;   /* 40px breathing room */
+      const availW   = outer.clientWidth - 40;
       const contentW = inner.scrollWidth;
       const scale    = contentW > availW ? availW / contentW : 1;
-      inner.style.transform = '';                /* restore — React will set it */
+      inner.style.transform = '';
       setTreeScale(scale);
-      setTreeH(inner.scrollHeight * scale);
     }
     const raf = requestAnimationFrame(measure);
     window.addEventListener('resize', measure);
     return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', measure); };
-  }, [moduleKey, nodes.length]);
+  }, [moduleKey, displayNodes.length, mode, focusNodeId]);
 
-  /* Filtered bank (exclude already placed, apply search) */
-  const placedSet     = new Set(Object.values(placed));
-  const filteredBank  = allVessels.filter(v =>
+  /* ── Pinch zoom on tree ── */
+  useEffect(() => {
+    const el = treeContainerRef.current;
+    if (!el) return;
+    function onTouchStart(e) {
+      if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        pinchRef.current.dist  = Math.hypot(dx, dy);
+        pinchRef.current.scale = pinchScale;
+        e.preventDefault();
+      }
+    }
+    function onTouchMove(e) {
+      if (e.touches.length === 2 && pinchRef.current.dist !== null) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const newDist  = Math.hypot(dx, dy);
+        const ratio    = newDist / pinchRef.current.dist;
+        const next     = Math.min(4, Math.max(0.25, pinchRef.current.scale * ratio));
+        setPinchScale(next);
+        e.preventDefault();
+      }
+    }
+    function onTouchEnd(e) {
+      if (e.touches.length < 2) pinchRef.current.dist = null;
+    }
+    el.addEventListener('touchstart', onTouchStart, { passive: false });
+    el.addEventListener('touchmove',  onTouchMove,  { passive: false });
+    el.addEventListener('touchend',   onTouchEnd,   { passive: true });
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchmove',  onTouchMove);
+      el.removeEventListener('touchend',   onTouchEnd);
+    };
+  }, [pinchScale]);  /* eslint-disable-line */
+
+  /* Filtered bank */
+  const placedSet    = new Set(Object.values(placed));
+  const filteredBank = allVessels.filter(v =>
     !placedSet.has(v) &&
     (!bankSearch || v.toLowerCase().includes(bankSearch.toLowerCase()))
   );
 
-  /* ── Click-to-place ── */
+  /* ── Info panel helpers ── */
+  const infoNodeChildren = infoNode ? (byParent[infoNode.id] || []) : [];
+  const infoNodeParent   = infoNode && infoNode.parent
+    ? displayNodes.find(n => n.id === infoNode.parent) : null;
+
+  /* ── Handlers ── */
   function handleVesselClick(vessel) {
     if (submitted) return;
     setSelectedVessel(prev => prev === vessel ? null : vessel);
@@ -5390,12 +5647,33 @@ function ArteryAssemblyGame({ onBack }) {
       });
       setSelectedVessel(null);
     } else if (placed[nodeId]) {
-      /* Click occupied slot → return vessel to bank */
       setPlaced(prev => { const n = { ...prev }; delete n[nodeId]; return n; });
     }
   }
 
-  /* ── Drag-and-drop ── */
+  function handleInfoClick(node) {
+    setInfoNode(prev => prev?.id === node.id ? null : node);
+  }
+
+  /* ── Hint ── */
+  function handleHint() {
+    const unfilled = displayNodes.filter(n => hiddenSet.has(n.id) && !placed[n.id]);
+    if (!unfilled.length) return;
+    /* Prefer weak nodes */
+    const weakUnfilled = unfilled.filter(n => isWeakNode(n.id));
+    const pool = weakUnfilled.length ? weakUnfilled : unfilled;
+    const target = pool[Math.floor(Math.random() * pool.length)];
+    const parent = target.parent ? displayNodes.find(n => n.id === target.parent) : null;
+    const text = parent
+      ? `"${target.label}" is a branch of the ${parent.label}.`
+      : `"${target.label}" is a root vessel.`;
+    if (hintTimer) clearTimeout(hintTimer);
+    setHint({ text, nodeId: target.id });
+    const t = setTimeout(() => setHint(null), 6000);
+    setHintTimer(t);
+  }
+
+  /* Drag and drop */
   function bankDragStart(e, vessel) {
     e.dataTransfer.setData('vessel', vessel);
     e.dataTransfer.setData('fromSlot', '');
@@ -5407,9 +5685,8 @@ function ArteryAssemblyGame({ onBack }) {
     e.dataTransfer.effectAllowed = 'move';
   }
   function slotDrop(e, nodeId) {
-    e.preventDefault();
-    setDragOverSlot(null);
-    const vessel   = e.dataTransfer.getData('vessel');
+    e.preventDefault(); setDragOverSlot(null);
+    const vessel = e.dataTransfer.getData('vessel');
     const fromSlot = e.dataTransfer.getData('fromSlot');
     if (!vessel) return;
     setPlaced(prev => {
@@ -5427,74 +5704,93 @@ function ArteryAssemblyGame({ onBack }) {
     if (fromSlot) setPlaced(prev => { const n = { ...prev }; delete n[fromSlot]; return n; });
   }
 
-  /* ── Submit / check ── */
+  /* ── Submit ── */
   function handleSubmit() {
-    /* Map label (and synonyms) → node for misplacement analysis */
     const labelToNode = {};
-    nodes.forEach(n => {
+    displayNodes.forEach(n => {
       labelToNode[n.label] = n;
       (n.synonyms || []).forEach(s => { labelToNode[s] = n; });
     });
 
-    function getAncestorIds(nodeId) {
-      const ids = [];
-      let cur = nodes.find(n => n.id === nodeId);
-      while (cur) {
-        ids.push(cur.id);
-        cur = cur.parent ? nodes.find(n => n.id === cur.parent) : null;
-      }
+    function ancestorIds(nodeId) {
+      const ids = []; let cur = displayNodes.find(n => n.id === nodeId);
+      while (cur) { ids.push(cur.id); cur = cur.parent ? displayNodes.find(n => n.id === cur.parent) : null; }
       return ids;
     }
 
     const correct    = [];
-    const wrongBranch = [];
-    const wrongOrder  = [];
-    const wrongPlace  = [];
-    const missing     = [];
+    const wrongItems = [];
+    const missing    = [];
 
-    nodes.forEach(node => {
+    displayNodes.filter(n => hiddenSet.has(n.id)).forEach(node => {
       const value = placed[node.id];
-      if (!value) {
-        const suffix = node.type === 'terminal' ? ' (terminal)'
-                     : node.type === 'anastomosis' ? ' (anastomosis)' : '';
-        missing.push(node.label + suffix);
-        return;
-      }
+      if (!value) { missing.push({ label: node.label, type: node.type }); return; }
       const ok = value === node.label || (node.synonyms || []).includes(value);
       if (ok) { correct.push(node.label); return; }
 
       const expNode = labelToNode[value];
+      let category = 'wrong_place', detail = 'These vessels are in different parts of the tree.';
+
       if (expNode) {
         if (expNode.parent === node.parent) {
-          wrongBranch.push(`"${value}" → placed at "${node.label}" slot (same-level branch swap)`);
+          category = 'branch_swap';
+          detail   = 'Both arise from the same parent vessel — you swapped two siblings.';
         } else {
-          const expAnc  = getAncestorIds(expNode.id);
-          const nodeAnc = getAncestorIds(node.id);
-          if (expAnc.includes(node.id) || nodeAnc.includes(expNode.id)) {
-            wrongOrder.push(`"${value}" → placed at "${node.label}" slot (wrong continuation order)`);
-          } else {
-            wrongPlace.push(`"${value}" → placed at "${node.label}" slot`);
+          const expAnc  = ancestorIds(expNode.id);
+          const nodeAnc = ancestorIds(node.id);
+          if (expAnc.includes(node.id)) {
+            category = 'order_downstream';
+            detail   = `"${value}" is actually downstream from this slot — it arises later in the tree.`;
+          } else if (nodeAnc.includes(expNode.id)) {
+            category = 'order_upstream';
+            detail   = `"${value}" is actually upstream — it should appear before this slot.`;
           }
         }
+        const belongsParent = expNode.parent
+          ? (displayNodes.find(n => n.id === expNode.parent)?.label || 'unknown parent')
+          : 'root of tree';
+        wrongItems.push({ placed: value, slot: node.label, belongs: belongsParent, category, detail });
       } else {
-        wrongPlace.push(`"${value}" → placed at "${node.label}" slot`);
+        wrongItems.push({ placed: value, slot: node.label, belongs: '—', category, detail: '' });
       }
     });
 
-    setFeedback({ correct, wrongBranch, wrongOrder, wrongPlace, missing });
+    /* ── Save progress to localStorage ── */
+    if (moduleKey) {
+      const updated = { ...(allProgress[moduleKey] || {}) };
+      displayNodes.filter(n => hiddenSet.has(n.id)).forEach(node => {
+        const prev = updated[node.id] || { w: 0, m: 0, c: 0 };
+        const value = placed[node.id];
+        const ok = value && (value === node.label || (node.synonyms || []).includes(value));
+        if (!value) updated[node.id] = { ...prev, m: prev.m + 1 };
+        else if (ok)  updated[node.id] = { ...prev, c: prev.c + 1 };
+        else          updated[node.id] = { ...prev, w: prev.w + 1 };
+      });
+      saveModuleProgress(moduleKey, updated);
+      setAllProgress(loadAllProgress());
+    }
+
+    setFeedback({ correct, wrongItems, missing });
     setSubmitted(true);
   }
 
-  /* ── Reset current module ── */
+  /* ── Reset ── */
   function handleReset() {
+    const hiddenNodes = displayNodes.filter(n => hiddenSet.has(n.id));
+    const arr = hiddenNodes.map(n => n.label);
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    setAllVessels(arr);
     setPlaced({});
     setSelectedVessel(null);
     setSubmitted(false);
     setFeedback(null);
     setBankSearch('');
+    setInfoNode(null);
   }
 
-  /* ── No modules loaded yet ── */
+  /* ── No modules ── */
   if (moduleKeys.length === 0) {
     return (
       <div className="app">
@@ -5502,37 +5798,54 @@ function ArteryAssemblyGame({ onBack }) {
           <button className="topbar-back" onClick={onBack}>← Back</button>
           <span>Artery Assembly</span>
         </div>
-        <div className="content" style={{
-          padding: 32, textAlign: 'center', color: '#aaa', fontSize: 15,
-        }}>
-          No modules loaded yet — modules will be added one by one.
+        <div className="content" style={{ padding: 32, textAlign: 'center', color: '#aaa', fontSize: 15 }}>
+          No modules loaded yet.
         </div>
       </div>
     );
   }
 
-  const roots          = byParent['__root__'] || [];
-  const totalRootWidth = roots.reduce((s, r) => s + assLeafWidth(r.id, byParent), 0);
-  const scoreCorrect   = feedback ? feedback.correct.length : 0;
+  const roots        = byParent['__root__'] || [];
+  const totalHidden  = hiddenSet.size;
+  const scoreCorrect = feedback ? feedback.correct.length : 0;
+  const BANK_H       = mode === 'learn' ? 0 : 148;
+  const SIDEBAR_W    = 210;
 
-  /* bottom bank height — used to pad the diagram so it isn't hidden */
-  const BANK_H = 148;
-  const SIDEBAR_W = 210;
+  /* Major branches available for focus (level-1 nodes that have children) */
+  const majorBranches = filteredNodes.filter(n =>
+    (n.level ?? 0) === 1 && (byParent[n.id] || filteredNodes.filter(x => x.parent === n.id)).length > 0
+  );
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden',
                   background: 'rgba(242,237,232,0.30)' }}>
 
       {/* ── Top bar ── */}
-      <div className="topbar" style={{ flexShrink: 0 }}>
-        {/* Back button forced to left */}
+      <div className="topbar" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 0 }}>
         <button className="topbar-back" onClick={onBack}
-          style={{ marginLeft: 0, marginRight: 12 }}>← Back</button>
-        <span style={{ fontWeight: 600 }}>Artery Assembly</span>
+          style={{ marginLeft: 0, marginRight: 10, flexShrink: 0 }}>← Back</button>
+        <span style={{ fontWeight: 600, fontSize: 13, marginRight: 12, flexShrink: 0 }}>Artery Assembly</span>
+
+        {/* Mode tabs */}
+        <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+          {[['learn','Learn'],['practice','Practice'],['exam','Exam']].map(([m, lbl]) => (
+            <button key={m}
+              onClick={() => { setMode(m); setSubmitted(false); setFeedback(null); setInfoNode(null); }}
+              style={{
+                padding: '3px 11px', borderRadius: 20, border: 'none', fontSize: 11.5, fontWeight: 600,
+                background: mode === m ? '#1a1a1a' : 'rgba(0,0,0,0.07)',
+                color:      mode === m ? '#fff'    : '#555',
+                cursor: 'pointer', transition: 'all .12s',
+              }}>
+              {lbl}
+            </button>
+          ))}
+        </div>
+
         {submitted && (
-          <span style={{ marginLeft: 'auto', marginRight: 12, fontSize: 14,
-                         fontWeight: 600, color: scoreCorrect === nodes.length ? '#2e7d32' : '#555' }}>
-            {scoreCorrect} / {nodes.length}
+          <span style={{ marginLeft: 'auto', marginRight: 12, fontSize: 14, fontWeight: 600,
+                         color: scoreCorrect === totalHidden ? '#2e7d32' : '#555', flexShrink: 0 }}>
+            {scoreCorrect} / {totalHidden}
           </span>
         )}
       </div>
@@ -5540,53 +5853,250 @@ function ArteryAssemblyGame({ onBack }) {
       {/* ── Body: sidebar + main ── */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
 
-        {/* ── Left sidebar: module list ── */}
+        {/* ── Left sidebar ── */}
         <div style={{
           width: SIDEBAR_W, flexShrink: 0, overflowY: 'auto',
           borderRight: '1px solid rgba(0,0,0,0.10)',
           background: 'rgba(242,237,232,0.70)',
-          paddingTop: 8, paddingBottom: BANK_H,
+          paddingTop: 6, paddingBottom: BANK_H + 8,
         }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.2,
-                        color: '#aaa', padding: '6px 14px 8px', textTransform: 'uppercase' }}>
+
+          {/* Difficulty selector */}
+          <div style={{ padding: '6px 10px 8px', borderBottom: '1px solid rgba(0,0,0,0.07)', marginBottom: 4 }}>
+            <div style={{ fontSize: 9.5, fontWeight: 700, color: '#aaa', letterSpacing: 1.1,
+                          textTransform: 'uppercase', marginBottom: 5 }}>Difficulty</div>
+            <div style={{ display: 'flex', gap: 4 }}>
+              {[[1,'Core'],[2,'Mid'],[3,'Full']].map(([d, lbl]) => (
+                <button key={d}
+                  onClick={() => { setDifficulty(d); setFocusNodeId(null); }}
+                  style={{
+                    flex: 1, padding: '3px 0', borderRadius: 6, border: 'none',
+                    fontSize: 10.5, fontWeight: 600,
+                    background: difficulty === d ? '#1a1a1a' : 'rgba(0,0,0,0.07)',
+                    color:      difficulty === d ? '#fff'    : '#666',
+                    cursor: 'pointer',
+                  }}>
+                  {lbl}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Tree search */}
+          <div style={{ padding: '6px 10px 8px', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
+            <input
+              type="text"
+              placeholder="Search artery…"
+              value={treeSearch}
+              onChange={e => setTreeSearch(e.target.value)}
+              style={{
+                width: '100%', boxSizing: 'border-box',
+                border: '1px solid rgba(0,0,0,0.14)', borderRadius: 8,
+                padding: '5px 10px', fontSize: 12, background: 'rgba(255,255,255,0.90)',
+                outline: 'none',
+              }}
+            />
+            {highlightSet.size > 0 && (
+              <div style={{ fontSize: 10.5, color: '#888', marginTop: 4, paddingLeft: 2 }}>
+                {highlightSet.size} match{highlightSet.size !== 1 ? 'es' : ''} highlighted
+              </div>
+            )}
+          </div>
+
+          {/* Search results list */}
+          {trimSearch.length >= 2 && highlightSet.size > 0 && (
+            <div style={{ borderBottom: '1px solid rgba(0,0,0,0.07)', maxHeight: 160, overflowY: 'auto' }}>
+              {displayNodes.filter(n => highlightSet.has(n.id)).map(n => {
+                const parent = n.parent ? displayNodes.find(x => x.id === n.parent) : null;
+                const children = byParent[n.id] || [];
+                return (
+                  <div key={n.id}
+                    onClick={() => { setInfoNode(n); setMode('learn'); }}
+                    style={{
+                      padding: '5px 12px', cursor: 'pointer', fontSize: 11,
+                      borderLeft: '3px solid rgba(180,140,0,0.60)',
+                      background: infoNode?.id === n.id ? 'rgba(200,160,0,0.08)' : 'transparent',
+                    }}>
+                    <div style={{ fontWeight: 600, color: '#333' }}>{n.label}</div>
+                    <div style={{ color: '#999', fontSize: 10, marginTop: 1 }}>
+                      {parent ? `↑ ${parent.label}` : 'root'}{children.length ? ` · ${children.length} branches` : ''}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Module list */}
+          <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: 1.1, color: '#aaa',
+                        padding: '6px 14px 4px', textTransform: 'uppercase' }}>
             Modules
           </div>
-          {moduleKeys.map((k, i) => (
-            <button key={k}
-              onClick={() => { setModuleKey(k); setPlaced({}); setSelectedVessel(null);
-                               setSubmitted(false); setFeedback(null); setBankSearch(''); }}
-              style={{
-                display: 'block', width: '100%', textAlign: 'left',
-                padding: '7px 14px 7px 12px',
-                background: k === moduleKey ? 'rgba(55,55,55,0.88)' : 'transparent',
-                color: k === moduleKey ? '#fff' : '#444',
-                border: 'none',
-                borderLeft: k === moduleKey ? '3px solid #333' : '3px solid transparent',
-                cursor: 'pointer', fontSize: 12, fontWeight: k === moduleKey ? 600 : 400,
-                lineHeight: 1.35,
-              }}>
-              <span style={{ color: k === moduleKey ? 'rgba(255,255,255,0.5)' : '#bbb',
-                             fontSize: 10, marginRight: 5 }}>
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              {modules[k].title}
-            </button>
-          ))}
+          {moduleKeys.map((k, i) => {
+            const prog = allProgress[k] || {};
+            const modNodes = (modules[k]?.nodes || []);
+            const weakCount = modNodes.filter(n => { const s = prog[n.id]; return s && (s.w + (s.m||0)) >= 2; }).length;
+            return (
+              <button key={k}
+                onClick={() => { setModuleKey(k); setFocusNodeId(null); setInfoNode(null); setWeakOnly(false); }}
+                style={{
+                  display: 'block', width: '100%', textAlign: 'left',
+                  padding: '6px 14px 6px 12px',
+                  background: k === moduleKey ? 'rgba(55,55,55,0.88)' : 'transparent',
+                  color: k === moduleKey ? '#fff' : '#444', border: 'none',
+                  borderLeft: k === moduleKey ? '3px solid #333' : '3px solid transparent',
+                  cursor: 'pointer', fontSize: 11.5, fontWeight: k === moduleKey ? 600 : 400,
+                  lineHeight: 1.35, display: 'flex', alignItems: 'center', gap: 4,
+                }}>
+                <span style={{ color: k === moduleKey ? 'rgba(255,255,255,0.45)' : '#bbb',
+                               fontSize: 10, marginRight: 3, flexShrink: 0 }}>
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <span style={{ flex: 1 }}>{modules[k].title}</span>
+                {weakCount > 0 && (
+                  <span style={{
+                    background: '#c62828', color: '#fff', borderRadius: 10,
+                    fontSize: 9, fontWeight: 700, padding: '1px 5px', flexShrink: 0,
+                  }}>{weakCount}</span>
+                )}
+              </button>
+            );
+          })}
+
+          {/* Weak arteries practice */}
+          {weakIds.size > 0 && mode !== 'learn' && (
+            <div style={{ padding: '8px 10px', borderTop: '1px solid rgba(0,0,0,0.07)', marginTop: 4 }}>
+              <button
+                onClick={() => { setWeakOnly(v => !v); setFocusNodeId(null); }}
+                style={{
+                  width: '100%', padding: '5px 0', borderRadius: 7, border: 'none',
+                  background: weakOnly ? '#c62828' : 'rgba(198,40,40,0.10)',
+                  color: weakOnly ? '#fff' : '#c62828',
+                  fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                }}>
+                {weakOnly ? '✕ Stop weak practice' : `⚡ Practice weak (${weakIds.size})`}
+              </button>
+            </div>
+          )}
+
+          {/* Pinch zoom reset */}
+          {pinchScale !== 1 && (
+            <div style={{ padding: '4px 10px' }}>
+              <button
+                onClick={() => setPinchScale(1)}
+                style={{
+                  width: '100%', padding: '4px 0', borderRadius: 7, border: '1px solid rgba(0,0,0,0.10)',
+                  background: 'rgba(0,0,0,0.04)', color: '#666',
+                  fontSize: 10.5, fontWeight: 600, cursor: 'pointer',
+                }}>
+                Reset zoom ({Math.round(pinchScale * 100)}%)
+              </button>
+            </div>
+          )}
+
+          {/* Focus branch section */}
+          {majorBranches.length > 0 && (
+            <>
+              <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: 1.1, color: '#aaa',
+                            padding: '10px 14px 4px', textTransform: 'uppercase',
+                            borderTop: '1px solid rgba(0,0,0,0.07)', marginTop: 6 }}>
+                Focus Branch
+              </div>
+              {focusNodeId && (
+                <button onClick={() => setFocusNodeId(null)}
+                  style={{
+                    display: 'block', width: '100%', textAlign: 'left',
+                    padding: '5px 14px', background: 'rgba(180,30,30,0.07)',
+                    color: '#a00', border: 'none', borderLeft: '3px solid #c00',
+                    cursor: 'pointer', fontSize: 10.5, fontWeight: 600,
+                  }}>
+                  ✕ Clear focus
+                </button>
+              )}
+              {majorBranches.map(branch => (
+                <button key={branch.id}
+                  onClick={() => setFocusNodeId(focusNodeId === branch.id ? null : branch.id)}
+                  style={{
+                    display: 'block', width: '100%', textAlign: 'left',
+                    padding: '5px 14px 5px 12px',
+                    background: focusNodeId === branch.id ? 'rgba(0,0,0,0.08)' : 'transparent',
+                    color: focusNodeId === branch.id ? '#1a1a1a' : '#555',
+                    border: 'none',
+                    borderLeft: focusNodeId === branch.id ? '3px solid #555' : '3px solid transparent',
+                    cursor: 'pointer', fontSize: 10.5, lineHeight: 1.35,
+                  }}>
+                  {branch.label}
+                </button>
+              ))}
+            </>
+          )}
         </div>
 
-        {/* ── Main: diagram area (scrollable) ── */}
+        {/* ── Main: diagram area ── */}
         <div ref={treeContainerRef}
-          style={{
-            flex: 1, overflow: 'auto',
-            padding: '20px 20px',
-            paddingBottom: BANK_H + 20,
-          }}>
+          style={{ flex: 1, overflow: 'auto', padding: '16px 20px', paddingBottom: BANK_H + 20 }}>
 
-          {/* Tree diagram — full-size, let the panel scroll */}
+          {/* Placing banner (mobile) */}
+          {selectedVessel && !submitted && (
+            <div style={{
+              position: 'sticky', top: 0, zIndex: 50, marginBottom: 8,
+              padding: '7px 14px', borderRadius: 10,
+              background: 'rgba(55,55,55,0.88)', color: '#fff',
+              fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 10,
+            }}>
+              <span style={{ flex: 1 }}>Placing: {selectedVessel} — tap a slot</span>
+              <button onClick={() => setSelectedVessel(null)}
+                style={{ border: 'none', background: 'none', color: 'rgba(255,255,255,0.65)',
+                         cursor: 'pointer', fontSize: 15, padding: 0 }}>✕</button>
+            </div>
+          )}
+
+          {/* Hint banner */}
+          {hint && (
+            <div style={{
+              marginBottom: 8, padding: '8px 14px', borderRadius: 10,
+              background: 'rgba(240,220,100,0.25)', border: '1.5px solid rgba(180,140,0,0.35)',
+              fontSize: 12.5, color: '#5a4800', display: 'flex', alignItems: 'center', gap: 10,
+            }}>
+              <span style={{ flex: 1 }}>💡 {hint.text}</span>
+              <button onClick={() => { setHint(null); if (hintTimer) clearTimeout(hintTimer); }}
+                style={{ border: 'none', background: 'none', color: '#bba000', cursor: 'pointer', fontSize: 14 }}>
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Focus indicator banner */}
+          {focusNodeId && (
+            <div style={{ marginBottom: 10, padding: '5px 14px', background: 'rgba(0,0,0,0.05)',
+                          borderRadius: 8, fontSize: 12, color: '#555', display: 'inline-flex',
+                          alignItems: 'center', gap: 8 }}>
+              <span>Focused on:</span>
+              <strong>{displayNodes.find(n => n.id === focusNodeId)?.label}</strong>
+              <button onClick={() => setFocusNodeId(null)}
+                style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#999', fontSize: 11 }}>
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Mode hints */}
+          {mode === 'learn' && !infoNode && (
+            <div style={{ marginBottom: 10, fontSize: 12, color: '#999', fontStyle: 'italic' }}>
+              Learn mode — tap any vessel to see its path, parent, children, and clinical notes.
+            </div>
+          )}
+          {mode === 'practice' && !submitted && (
+            <div style={{ marginBottom: 10, fontSize: 12, color: '#999', fontStyle: 'italic' }}>
+              Practice mode — place the branch and terminal vessels. Continuations are pre-filled.
+            </div>
+          )}
+
+          {/* ── Tree ── */}
           <div ref={treeInnerRef}
             style={{
               display: 'inline-flex', flexDirection: 'row', alignItems: 'flex-start',
-              transform: `scale(${treeScale})`, transformOrigin: 'top left',
+              transform: `scale(${treeScale * pinchScale})`, transformOrigin: 'top left',
               minWidth: 'max-content',
             }}>
             {roots.map(root => (
@@ -5603,27 +6113,101 @@ function ArteryAssemblyGame({ onBack }) {
                 onSlotDragLeave={id => setDragOverSlot(prev => prev === id ? null : prev)}
                 onSlotDrop={slotDrop}
                 onSlotDragStart={slotDragStart}
+                mode={mode}
+                hiddenSet={hiddenSet}
+                onInfoClick={handleInfoClick}
+                highlightSet={highlightSet}
               />
             ))}
           </div>
 
-          {/* Feedback panel */}
+          {/* ── Learn mode info panel ── */}
+          {infoNode && mode === 'learn' && (
+            <div style={{
+              marginTop: 24, background: 'rgba(255,255,255,0.96)', borderRadius: 14,
+              border: '1.5px solid rgba(0,0,0,0.10)', padding: '16px 20px', maxWidth: 560,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>{infoNode.label}</div>
+                <button onClick={() => setInfoNode(null)}
+                  style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 15, color: '#bbb', padding: '0 0 0 10px' }}>
+                  ✕
+                </button>
+              </div>
+
+              {/* Path */}
+              <div style={{ fontSize: 12, marginBottom: 10, lineHeight: 1.7 }}>
+                <span style={{ fontWeight: 600, color: '#555' }}>Path: </span>
+                {getArteryPath(infoNode.id, displayNodes).map((seg, i, arr) => (
+                  <span key={i}>
+                    <span style={{ color: i === arr.length - 1 ? '#1a1a1a' : '#777',
+                                   fontWeight: i === arr.length - 1 ? 600 : 400 }}>
+                      {seg}
+                    </span>
+                    {i < arr.length - 1 && <span style={{ color: '#ccc', margin: '0 5px' }}>→</span>}
+                  </span>
+                ))}
+              </div>
+
+              {infoNodeParent && (
+                <div style={{ fontSize: 12, color: '#666', marginBottom: 5 }}>
+                  <span style={{ fontWeight: 600, color: '#555' }}>Arises from: </span>
+                  {infoNodeParent.label}
+                </div>
+              )}
+              {infoNodeChildren.length > 0 && (
+                <div style={{ fontSize: 12, color: '#666', marginBottom: 5 }}>
+                  <span style={{ fontWeight: 600, color: '#555' }}>Gives rise to: </span>
+                  {infoNodeChildren.map(c => c.label).join(', ')}
+                </div>
+              )}
+              <div style={{ fontSize: 11, color: '#bbb', marginBottom: infoNode.clinicalNote ? 8 : 0 }}>
+                Type: {infoNode.type} · Depth: {infoNode.level ?? 0}
+                {infoNode.sexSpecific ? ` · ${infoNode.sexSpecific} only` : ''}
+              </div>
+
+              {infoNode.clinicalNote && (
+                <div style={{
+                  marginTop: 8, padding: '8px 12px', background: 'rgba(0,0,0,0.04)',
+                  borderRadius: 8, fontSize: 12, color: '#444', lineHeight: 1.65,
+                  borderLeft: '3px solid rgba(0,0,0,0.12)',
+                }}>
+                  <span style={{ fontWeight: 600 }}>Clinical: </span>
+                  {infoNode.clinicalNote}
+                </div>
+              )}
+
+              {infoNodeChildren.length > 0 && (
+                <button
+                  onClick={() => { setFocusNodeId(infoNode.id); setInfoNode(null); }}
+                  style={{
+                    marginTop: 12, padding: '5px 14px', borderRadius: 8,
+                    border: '1px solid rgba(0,0,0,0.14)', background: 'rgba(0,0,0,0.04)',
+                    color: '#444', fontSize: 12, cursor: 'pointer', fontWeight: 600,
+                  }}>
+                  Focus on this branch →
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* ── Feedback panel ── */}
           {feedback && (
             <div style={{
               marginTop: 28, background: 'rgba(255,255,255,0.88)', borderRadius: 14,
-              border: '1.5px solid rgba(0,0,0,0.09)', padding: '18px 22px',
-              maxWidth: 680,
+              border: '1.5px solid rgba(0,0,0,0.09)', padding: '18px 22px', maxWidth: 680,
             }}>
               <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 14, color: '#333' }}>
-                {scoreCorrect === nodes.length
-                  ? '🎉 Perfect! All correct.'
-                  : `${scoreCorrect} / ${nodes.length} correct`}
+                {scoreCorrect === totalHidden
+                  ? 'Perfect! All correct.'
+                  : `${scoreCorrect} / ${totalHidden} correct`}
               </div>
 
               {feedback.correct.length > 0 && (
-                <div style={{ marginBottom: 12 }}>
+                <div style={{ marginBottom: 14 }}>
                   <div style={{ color: '#2e7d32', fontWeight: 600, fontSize: 13, marginBottom: 4 }}>
-                    ✓ Correct ({feedback.correct.length})
+                    Correct ({feedback.correct.length})
                   </div>
                   <div style={{ fontSize: 12, color: '#555', lineHeight: 1.85 }}>
                     {feedback.correct.join(' · ')}
@@ -5631,46 +6215,39 @@ function ArteryAssemblyGame({ onBack }) {
                 </div>
               )}
 
-              {feedback.wrongBranch.length > 0 && (
-                <div style={{ marginBottom: 12 }}>
-                  <div style={{ color: '#e65100', fontWeight: 600, fontSize: 13, marginBottom: 4 }}>
-                    ⇄ Wrong branch position ({feedback.wrongBranch.length})
+              {feedback.wrongItems.length > 0 && (
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ color: '#c62828', fontWeight: 600, fontSize: 13, marginBottom: 8 }}>
+                    Errors ({feedback.wrongItems.length})
                   </div>
-                  {feedback.wrongBranch.map((m, i) => (
-                    <div key={i} style={{ fontSize: 12, color: '#555', lineHeight: 1.85 }}>{m}</div>
-                  ))}
-                </div>
-              )}
-
-              {feedback.wrongOrder.length > 0 && (
-                <div style={{ marginBottom: 12 }}>
-                  <div style={{ color: '#5c6bc0', fontWeight: 600, fontSize: 13, marginBottom: 4 }}>
-                    ↕ Wrong continuation order ({feedback.wrongOrder.length})
-                  </div>
-                  {feedback.wrongOrder.map((m, i) => (
-                    <div key={i} style={{ fontSize: 12, color: '#555', lineHeight: 1.85 }}>{m}</div>
-                  ))}
-                </div>
-              )}
-
-              {feedback.wrongPlace.length > 0 && (
-                <div style={{ marginBottom: 12 }}>
-                  <div style={{ color: '#c62828', fontWeight: 600, fontSize: 13, marginBottom: 4 }}>
-                    ✗ Wrong position ({feedback.wrongPlace.length})
-                  </div>
-                  {feedback.wrongPlace.map((m, i) => (
-                    <div key={i} style={{ fontSize: 12, color: '#555', lineHeight: 1.85 }}>{m}</div>
+                  {feedback.wrongItems.map((item, i) => (
+                    <div key={i} style={{
+                      marginBottom: 10, padding: '10px 14px', borderRadius: 8,
+                      background: 'rgba(180,0,0,0.04)', borderLeft: '3px solid rgba(180,0,0,0.18)',
+                    }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: '#b71c1c', marginBottom: 3 }}>
+                        You placed "{item.placed}" into the "{item.slot}" slot
+                      </div>
+                      <div style={{ fontSize: 11.5, color: '#555', marginBottom: 2 }}>
+                        "{item.placed}" actually belongs under: <strong>{item.belongs}</strong>
+                      </div>
+                      {item.detail && (
+                        <div style={{ fontSize: 11, color: '#888', fontStyle: 'italic', marginTop: 2 }}>
+                          {item.detail}
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               )}
 
               {feedback.missing.length > 0 && (
-                <div style={{ marginBottom: 4 }}>
+                <div>
                   <div style={{ color: '#9e9e9e', fontWeight: 600, fontSize: 13, marginBottom: 4 }}>
-                    ○ Not placed ({feedback.missing.length})
+                    Not placed ({feedback.missing.length})
                   </div>
                   <div style={{ fontSize: 12, color: '#888', lineHeight: 1.85 }}>
-                    {feedback.missing.join(' · ')}
+                    {feedback.missing.map(m => m.label + (m.type === 'terminal' ? ' (terminal)' : '')).join(' · ')}
                   </div>
                 </div>
               )}
@@ -5679,69 +6256,74 @@ function ArteryAssemblyGame({ onBack }) {
         </div>
       </div>
 
-      {/* ── Fixed bottom: vessel bank ── */}
-      <div
-        onDragOver={e => e.preventDefault()}
-        onDrop={bankDrop}
-        style={{
-          position: 'fixed', bottom: 0, left: SIDEBAR_W, right: 0,
-          height: BANK_H,
-          background: 'rgba(242,237,232,0.97)',
-          borderTop: '1.5px solid rgba(0,0,0,0.12)',
-          padding: '8px 14px 10px',
-          zIndex: 200,
-          display: 'flex', flexDirection: 'column', gap: 6,
-          backdropFilter: 'blur(6px)',
-        }}
-      >
-        {/* Top row: label + search + count + action button */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          <span style={{ fontWeight: 700, fontSize: 12.5, color: '#555', whiteSpace: 'nowrap' }}>
-            Vessel Bank
-          </span>
-          <input
-            type="text"
-            placeholder="Type to filter…"
-            value={bankSearch}
-            onChange={e => setBankSearch(e.target.value)}
-            style={{
-              flex: 1, border: '1px solid rgba(0,0,0,0.14)', borderRadius: 8,
-              padding: '4px 10px', fontSize: 12.5, background: 'rgba(255,255,255,0.90)',
-              outline: 'none',
-            }}
-          />
-          <span style={{ fontSize: 11, color: '#bbb', whiteSpace: 'nowrap' }}>
-            {filteredBank.length}/{allVessels.length}
-          </span>
-          {!submitted ? (
-            <button onClick={handleSubmit} style={{
-              padding: '6px 22px', borderRadius: 20, border: 'none',
-              background: 'rgba(55,55,55,0.85)', color: '#fff',
-              fontWeight: 600, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap',
-            }}>
-              Check Answers
-            </button>
-          ) : (
-            <button onClick={handleReset} style={{
-              padding: '6px 22px', borderRadius: 20, border: 'none',
-              background: 'rgba(100,75,55,0.85)', color: '#fff',
-              fontWeight: 600, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap',
-            }}>
-              Try Again
-            </button>
-          )}
-        </div>
-
-        {/* Vessel pills */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, overflowY: 'auto', flex: 1 }}>
-          {filteredBank.map(v => (
-            <div key={v}
-              draggable={!submitted}
-              onDragStart={e => bankDragStart(e, v)}
-              onClick={() => handleVesselClick(v)}
+      {/* ── Fixed bottom: vessel bank (hidden in learn mode) ── */}
+      {mode !== 'learn' && (
+        <div
+          onDragOver={e => e.preventDefault()}
+          onDrop={bankDrop}
+          style={{
+            position: 'fixed', bottom: 0, left: SIDEBAR_W, right: 0,
+            height: BANK_H,
+            background: 'rgba(242,237,232,0.97)',
+            borderTop: '1.5px solid rgba(0,0,0,0.12)',
+            padding: '8px 14px 10px',
+            zIndex: 200, display: 'flex', flexDirection: 'column', gap: 6,
+            backdropFilter: 'blur(6px)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <span style={{ fontWeight: 700, fontSize: 12.5, color: '#555', whiteSpace: 'nowrap' }}>
+              Vessel Bank
+            </span>
+            <input
+              type="text" placeholder="Filter…" value={bankSearch}
+              onChange={e => setBankSearch(e.target.value)}
               style={{
-                padding: '4px 12px', borderRadius: 20,
-                background: selectedVessel === v ? 'rgba(55,55,55,0.88)' : 'rgba(255,255,255,0.92)',
+                flex: 1, border: '1px solid rgba(0,0,0,0.14)', borderRadius: 8,
+                padding: '4px 10px', fontSize: 12.5, background: 'rgba(255,255,255,0.90)',
+                outline: 'none',
+              }}
+            />
+            <span style={{ fontSize: 11, color: '#bbb', whiteSpace: 'nowrap' }}>
+              {filteredBank.length}/{allVessels.length}
+            </span>
+            {!submitted && hiddenSet.size > 0 && (
+              <button onClick={handleHint} style={{
+                padding: '5px 13px', borderRadius: 20, border: '1px solid rgba(0,0,0,0.14)',
+                background: 'rgba(240,220,140,0.35)', color: '#7a6300',
+                fontWeight: 600, fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap',
+              }}>
+                Hint
+              </button>
+            )}
+            {!submitted ? (
+              <button onClick={handleSubmit} style={{
+                padding: '6px 22px', borderRadius: 20, border: 'none',
+                background: 'rgba(55,55,55,0.85)', color: '#fff',
+                fontWeight: 600, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap',
+              }}>
+                Check Answers
+              </button>
+            ) : (
+              <button onClick={handleReset} style={{
+                padding: '6px 22px', borderRadius: 20, border: 'none',
+                background: 'rgba(100,75,55,0.85)', color: '#fff',
+                fontWeight: 600, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap',
+              }}>
+                Try Again
+              </button>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, overflowY: 'auto', flex: 1 }}>
+            {filteredBank.map(v => (
+              <div key={v}
+                draggable={!submitted}
+                onDragStart={e => bankDragStart(e, v)}
+                onClick={() => handleVesselClick(v)}
+                style={{
+                  padding: '4px 12px', borderRadius: 20,
+                  background: selectedVessel === v ? 'rgba(55,55,55,0.88)' : 'rgba(255,255,255,0.92)',
                 color:      selectedVessel === v ? '#fff' : '#333',
                 border:     selectedVessel === v ? '1.5px solid rgba(0,0,0,0.25)' : '1.5px solid rgba(0,0,0,0.09)',
                 fontSize: 11.5, cursor: submitted ? 'default' : 'pointer',
@@ -5759,8 +6341,9 @@ function ArteryAssemblyGame({ onBack }) {
           )}
         </div>
       </div>
+    )}
 
-    </div>
+  </div>
   );
 }
 
@@ -5814,7 +6397,7 @@ function App() {
           : specialMode?.type === 'vertebral_game'
             ? <VertebralRibGame onBack={handleBack} />
           : specialMode?.type === 'artery_assembly'
-            ? <ArteryAssemblyGame onBack={handleBack} />
+            ? <ArteryErrorBoundary><ArteryAssemblyGame onBack={handleBack} /></ArteryErrorBoundary>
           : !subject
             ? <HomeScreen
                 onSelectSubject={handleSelectSubject}
