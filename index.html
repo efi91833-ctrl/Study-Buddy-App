@@ -6074,8 +6074,8 @@ function ArteryAssemblyGame({ onBack }) {
   }, [placed, displayNodes, hiddenSet, mode]);
 
   /* ── Search highlight set ── */
+  const trimSearch = treeSearch.trim().toLowerCase();
   const highlightSet = React.useMemo(() => {
-    const trimSearch = treeSearch.trim().toLowerCase();
     if (trimSearch.length < 2) return new Set();
     return new Set(displayNodes
       .filter(n =>
@@ -6083,7 +6083,7 @@ function ArteryAssemblyGame({ onBack }) {
         (n.synonyms || []).some(s => s.toLowerCase().includes(trimSearch))
       )
       .map(n => n.id));
-  }, [treeSearch, displayNodes]);
+  }, [treeSearch, displayNodes]);  /* eslint-disable-line */
 
   /* ── Shuffle vessel bank whenever context changes ── */
   useEffect(() => {
