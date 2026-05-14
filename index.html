@@ -2409,10 +2409,35 @@ async function photoDbGetByTopic(topicId) {
   });
 }
 
+/* ── Shared zoom control used by all content screens ── */
+function ZoomControl({ zoom, setZoom }) {
+  const ZBTN = {
+    border: '1px solid #d0d0d0', borderRadius: 6, background: '#f5f5f5',
+    color: '#444', cursor: 'pointer', fontSize: 14, padding: '1px 9px',
+    fontWeight: 700, lineHeight: 1.6, userSelect: 'none',
+  };
+  return (
+    <div style={{ display:'flex', alignItems:'center', gap:3, flexShrink:0 }}>
+      <button style={ZBTN} onClick={() => setZoom(z => Math.max(0.3, +(z - 0.2).toFixed(1)))}>-</button>
+      <span style={{ fontSize:10, color:'#999', minWidth:32, textAlign:'center', userSelect:'none' }}>
+        {Math.round(zoom * 100)}%
+      </span>
+      <button style={ZBTN} onClick={() => setZoom(z => Math.min(3.0, +(z + 0.2).toFixed(1)))}>+</button>
+      {zoom !== 1 && (
+        <button onClick={() => setZoom(1)}
+          style={{...ZBTN, fontSize:9, padding:'1px 6px', color:'#aaa', background:'transparent', border:'1px solid #ddd', fontWeight:400}}>
+          1:1
+        </button>
+      )}
+    </div>
+  );
+}
+
 function AnatomyTest({ onBack }) {
   const [selectedTest, setSelectedTest] = React.useState(ANATOMY_SLIDE_TESTS[0] || null);
   const [slideIdx, setSlideIdx]         = React.useState(0);
   const [revealedIds, setRevealedIds]   = React.useState({});
+  const [slideZoom, setSlideZoom]       = React.useState(1);
 
   // Edit/positioning state
   const [editMode, setEditMode]       = React.useState(false);
@@ -2877,6 +2902,9 @@ function AnatomyTest({ onBack }) {
               </button>
             </>
           )}
+          <div style={{marginLeft:'auto'}}>
+            <ZoomControl zoom={slideZoom} setZoom={setSlideZoom} />
+          </div>
         </div>
 
         {/* ── Photo management panel (custom topics only) ── */}
@@ -3003,6 +3031,7 @@ function AnatomyTest({ onBack }) {
             cursor: editMode ? 'crosshair' : 'default', userSelect:'none',
             touchAction: editMode ? 'none' : 'pan-y',
             WebkitUserSelect: 'none',
+            zoom: slideZoom !== 1 ? slideZoom : undefined,
           }}
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMove}
@@ -4206,6 +4235,7 @@ function FlipCard({ label, content }) {
 // ─────────────────────────────────────────────────────────────
 function MuscleLab({ onBack }) {
   const bank = window.MUSCLE_BANK || [];
+  const [labZoom, setLabZoom] = React.useState(1);
   const [idx, setIdx] = React.useState(0);
   const [imageFlipped, setImageFlipped] = React.useState(false);
   const muscle = bank[idx];
@@ -4330,8 +4360,13 @@ function MuscleLab({ onBack }) {
       <div style={{ flex: 1, padding: '32px 36px', overflowY: 'auto',
         display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 
+        {/* Zoom control row */}
+        <div style={{ width: '100%', maxWidth: 700, display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
+          <ZoomControl zoom={labZoom} setZoom={setLabZoom} />
+        </div>
+
         {/* Inner column — capped width, centred */}
-        <div style={{ width: '100%', maxWidth: 700 }}>
+        <div style={{ width: '100%', maxWidth: 700, zoom: labZoom !== 1 ? labZoom : undefined }}>
 
           {/* Name / Image flip card — height driven by the image */}
           <div
@@ -4601,6 +4636,7 @@ function VertebralRibGame({ onBack }) {
   const [result,   setResult]   = useState(null);   // 'correct'|'accepted'|'wrong'
   const [score,    setScore]    = useState({c:0,a:0});
   const [openGroup,setOpenGroup]= useState(null);   // 'C'|'T'|'L'|'S'|null
+  const [gameZoom, setGameZoom] = useState(1);
 
   const q        = ITEMS[idx];
   const normAcc  = q.acceptedAnswers.map(norm);
@@ -4669,12 +4705,15 @@ function VertebralRibGame({ onBack }) {
       <div style={{position:'sticky',top:0,zIndex:10,background:'rgba(250,250,250,0.97)',
         paddingTop:16,paddingBottom:10,marginBottom:14,borderBottom:'1px solid #e8e8e8'}}>
         <button className="topbar-back" onClick={onBack}>← Anatomy</button>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginTop:8}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:8}}>
           <h2 style={{fontSize:19,fontWeight:700,color:'#1a1a1a'}}>Vertebral & Rib Level Matcher <span style={{fontSize:11,color:'#ccc',fontWeight:400}}>v38</span></h2>
-          <span style={{fontSize:13,color:'#999'}}>
-            Score: <strong style={{color:'#1a1a1a'}}>{score.c}</strong> / {score.a}
-            &nbsp;·&nbsp; {idx+1} / {ITEMS.length}
-          </span>
+          <div style={{display:'flex',alignItems:'center',gap:14}}>
+            <span style={{fontSize:13,color:'#999'}}>
+              Score: <strong style={{color:'#1a1a1a'}}>{score.c}</strong> / {score.a}
+              &nbsp;·&nbsp; {idx+1} / {ITEMS.length}
+            </span>
+            <ZoomControl zoom={gameZoom} setZoom={setGameZoom} />
+          </div>
         </div>
       </div>
 
@@ -4688,7 +4727,7 @@ function VertebralRibGame({ onBack }) {
       </div>
 
       {/* ── 3-column layout ── */}
-      <div style={{display:'flex',gap:10,alignItems:'flex-start'}}>
+      <div style={{display:'flex',gap:10,alignItems:'flex-start',zoom: gameZoom !== 1 ? gameZoom : undefined}}>
 
         {/* Left — Vertebral column */}
         <div style={{width:150,flexShrink:0}}>
@@ -4878,6 +4917,7 @@ function PeriotonealGame({ onBack }) {
   const [selected, setSelected] = useState(null);
   const [checked, setChecked]   = useState(false);
   const [narrow, setNarrow]     = useState(window.innerWidth < 768);
+  const [gameZoom, setGameZoom] = useState(1);
 
   useEffect(() => {
     const h = () => setNarrow(window.innerWidth < 768);
@@ -4964,7 +5004,10 @@ function PeriotonealGame({ onBack }) {
 
         {/* Sticky header */}
         <div style={{ position: 'sticky', top: 0, zIndex: 10, background: 'rgba(250,250,250,0.97)', paddingTop: 16, paddingBottom: 12, marginBottom: 18, borderBottom: '1px solid #e8e8e8' }}>
-          <button className="topbar-back" onClick={onBack}>← Anatomy</button>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <button className="topbar-back" onClick={onBack}>← Anatomy</button>
+            <ZoomControl zoom={gameZoom} setZoom={setGameZoom} />
+          </div>
           <h2 style={{ margin: '8px 0 3px', fontSize: 20, fontWeight: 700, color: '#1a1a1a' }}>Match the Organ — Peritoneal Relations</h2>
           <div style={{ fontSize: 15, color: '#999' }}>
             {checked
@@ -4972,6 +5015,9 @@ function PeriotonealGame({ onBack }) {
               : <span>{totalPlaced} of {ORGANS.length} placed{selected ? <span style={{ color: '#555', fontWeight: 600 }}> — tap a zone to place</span> : ''}</span>}
           </div>
         </div>
+
+        {/* Organ bank + board — zoomed together */}
+        <div style={{ zoom: gameZoom !== 1 ? gameZoom : undefined }}>
 
         {/* Organ bank */}
         <div
@@ -5089,6 +5135,7 @@ function PeriotonealGame({ onBack }) {
               : `${correctCount} of ${ORGANS.length} correct — incorrect organs highlighted in red. Click them to return to the bank.`}
           </div>
         )}
+        </div>{/* end zoom wrapper */}
       </div>
 
       {/* ── Reference image ── */}
@@ -5257,6 +5304,7 @@ function ArteryGame({ onBack }) {
   const [shuffled,    setShuffled]    = useState([]);
   const [dragOverSlot, setDragOverSlot] = useState(null); // nodeId currently hovered while dragging
   const [dragOverBank, setDragOverBank] = useState(false);
+  const [gameZoom,    setGameZoom]    = useState(1);
 
   const region = regionKey ? games[regionKey] : null;
 
@@ -5433,9 +5481,10 @@ function ArteryGame({ onBack }) {
             {score}/{region.nodes.length}
           </div>
         )}
+        <ZoomControl zoom={gameZoom} setZoom={setGameZoom} />
       </div>
 
-      <div className="content" style={{ maxWidth: 900, paddingTop: 24 }}>
+      <div className="content" style={{ maxWidth: 900, paddingTop: 24, zoom: gameZoom !== 1 ? gameZoom : undefined }}>
 
         {/* Instruction / status banner */}
         {!submitted ? (
@@ -6298,6 +6347,9 @@ function ArteryAssemblyGame({ onBack }) {
             {scoreCorrect} / {totalHidden}
           </span>
         )}
+        <div style={{ marginLeft: 'auto' }}>
+          <ZoomControl zoom={pinchScale} setZoom={setPinchScale} />
+        </div>
       </div>
 
       {/* ── Body: sidebar + main ── */}
