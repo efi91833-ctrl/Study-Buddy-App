@@ -917,7 +917,7 @@
     .cover-box:active { opacity: 0.7 !important; }
 
     /* ── Scroll smoothness ── */
-    * { scroll-behavior: smooth; }
+    html { scroll-behavior: smooth; }
     *::-webkit-scrollbar { width: 4px; height: 4px; }
     *::-webkit-scrollbar-track { background: transparent; }
     *::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.18); border-radius: 4px; }
@@ -1731,7 +1731,7 @@ function ExamScreen({ subject, examIndex, onBack }) {
   }
 
   function handleNext() {
-    window.location.reload();
+    onBack();
   }
 
   const answeredCount = Object.keys(answers).length;
@@ -4706,7 +4706,7 @@ function VertebralRibGame({ onBack }) {
         paddingTop:16,paddingBottom:10,marginBottom:14,borderBottom:'1px solid #e8e8e8'}}>
         <button className="topbar-back" onClick={onBack}>← Anatomy</button>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:8}}>
-          <h2 style={{fontSize:19,fontWeight:700,color:'#1a1a1a'}}>Vertebral & Rib Level Matcher <span style={{fontSize:11,color:'#ccc',fontWeight:400}}>v38</span></h2>
+          <h2 style={{fontSize:19,fontWeight:700,color:'#1a1a1a'}}>Vertebral & Rib Level Matcher</h2>
           <div style={{display:'flex',alignItems:'center',gap:14}}>
             <span style={{fontSize:13,color:'#999'}}>
               Score: <strong style={{color:'#1a1a1a'}}>{score.c}</strong> / {score.a}
@@ -4872,6 +4872,41 @@ function VertebralRibGame({ onBack }) {
   );
 }
 
+/* ── Peritoneal game sub-components (defined outside to avoid remount on every render) ── */
+function PeriOrganCard({ o, selected, checked, placed, onDragStart, clickPlaced, clickOrgan }) {
+  const isSel   = selected === o.id;
+  const correct = checked && placed[o.id] === o.category;
+  const wrong   = checked && placed[o.id] && placed[o.id] !== o.category;
+  return (
+    <div
+      draggable
+      onDragStart={e => onDragStart(e, o.id)}
+      onClick={e => placed[o.id] ? clickPlaced(e, o.id) : clickOrgan(o.id)}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 7,
+        padding: '6px 10px 6px 7px', margin: '3px', borderRadius: 10,
+        background: correct ? '#d4edda' : wrong ? '#f8d7da' : isSel ? '#1a1a1a' : '#fff',
+        border: `1.5px solid ${correct ? '#b8dfc5' : wrong ? '#f0b8be' : isSel ? '#1a1a1a' : '#e0e0e0'}`,
+        boxShadow: isSel ? '0 2px 8px rgba(0,0,0,0.18)' : '0 1px 3px rgba(0,0,0,0.07)',
+        cursor: 'grab', userSelect: 'none', transition: 'all 0.12s',
+      }}
+      title={placed[o.id] ? 'Click to return to bank' : 'Drag or tap to place'}
+    >
+      <OrganSticker type={o.sticker} inv={isSel} />
+      <span style={{ fontSize: 15, fontWeight: 500, color: isSel ? '#fff' : '#1a1a1a', lineHeight: 1.2 }}>{o.name}</span>
+    </div>
+  );
+}
+
+function PeriZoneHeader({ cat }) {
+  return (
+    <div style={{ marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
+      <div style={{ fontWeight: 700, fontSize: 14, color: '#1a1a1a', textTransform: 'uppercase', letterSpacing: '.02em' }}>{cat.title}</div>
+      <div style={{ fontSize: 12, color: '#b0b0b0', marginTop: 3, lineHeight: 1.4 }}>{cat.explanation}</div>
+    </div>
+  );
+}
+
 function PeriotonealGame({ onBack }) {
   const CATEGORIES = [
     { id: 'intraperitoneal', title: 'Intraperitoneal', explanation: 'Organs covered almost completely by visceral peritoneum and usually suspended by a mesentery.' },
@@ -4925,10 +4960,24 @@ function PeriotonealGame({ onBack }) {
     return () => window.removeEventListener('resize', h);
   }, []);
 
-  const bankOrgans   = shuffled.filter(o => !placed[o.id]);
-  const inCat        = (catId) => ORGANS.filter(o => placed[o.id] === catId);
-  const correctCount = ORGANS.filter(o => placed[o.id] === o.category).length;
-  const totalPlaced  = Object.keys(placed).length;
+  /* Memoize all per-placed-state derived data in one pass */
+  const { bankOrgans, byCategory, correctCount, totalPlaced } = React.useMemo(() => {
+    const byCategory = {};
+    let correct = 0;
+    ORGANS.forEach(o => {
+      if (!placed[o.id]) return;
+      if (!byCategory[placed[o.id]]) byCategory[placed[o.id]] = [];
+      byCategory[placed[o.id]].push(o);
+      if (placed[o.id] === o.category) correct++;
+    });
+    return {
+      bankOrgans:   shuffled.filter(o => !placed[o.id]),
+      byCategory,
+      correctCount: correct,
+      totalPlaced:  Object.keys(placed).length,
+    };
+  }, [placed, shuffled]);
+  const inCat = (catId) => byCategory[catId] || [];
 
   const onDragStart = (e, id) => { e.dataTransfer.setData('organId', id); e.dataTransfer.effectAllowed='move'; };
   const onDragOver  = (e) => { e.preventDefault(); e.dataTransfer.dropEffect='move'; };
@@ -4966,27 +5015,8 @@ function PeriotonealGame({ onBack }) {
     boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
   });
 
-  /* Organ card element (reused in bank and zones) */
-  const OrganCard = ({ o, fromZone }) => (
-    <div
-      draggable
-      onDragStart={e => { if(fromZone) e.stopPropagation(); onDragStart(e, o.id); }}
-      onClick={e => fromZone ? clickPlaced(e, o.id) : clickOrgan(o.id)}
-      style={cardStyle(o)}
-      title={fromZone ? 'Click to return to bank' : 'Drag or tap to place'}
-    >
-      <OrganSticker type={o.sticker} inv={selected===o.id} />
-      <span style={{ fontSize: 15, fontWeight: 500, color: selected===o.id ? '#fff' : '#1a1a1a', lineHeight: 1.2 }}>{o.name}</span>
-    </div>
-  );
-
-  /* Zone header */
-  const ZoneHeader = ({ cat }) => (
-    <div style={{ marginBottom: 12, paddingBottom: 10, borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
-      <div style={{ fontWeight: 700, fontSize: 15, color: '#1a1a1a', letterSpacing: '.02em', textTransform: 'uppercase' }}>{cat.title}</div>
-      <div style={{ fontSize: 13, color: '#b0b0b0', marginTop: 4, lineHeight: 1.5, fontWeight: 400, letterSpacing: '.01em' }}>{cat.explanation}</div>
-    </div>
-  );
+  /* Shared props for organ cards */
+  const organCardProps = { selected, checked, placed, onDragStart, clickPlaced, clickOrgan };
 
   const refImg = (
     <img
@@ -5029,7 +5059,7 @@ function PeriotonealGame({ onBack }) {
             {bankOrgans.length > 0 ? `Organ bank — ${bankOrgans.length} remaining` : 'All organs placed — drag here to return'}
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-            {bankOrgans.map(o => <OrganCard key={o.id} o={o} fromZone={false} />)}
+            {bankOrgans.map(o => <PeriOrganCard key={o.id} o={o} {...organCardProps} />)}
           </div>
         </div>
 
@@ -5044,11 +5074,11 @@ function PeriotonealGame({ onBack }) {
             onClick={() => clickCat('intraperitoneal')}
             style={{ ...zoneStyle(!!selected), background: selected ? 'rgba(60,120,220,0.05)' : '#eef1fa', border: `2px ${selected ? 'dashed #7799dd' : 'solid #ccd5ee'}` }}
           >
-            <ZoneHeader cat={CATEGORIES[0]} />
+            <PeriZoneHeader cat={CATEGORIES[0]} />
             <div style={{ display: 'flex', flexWrap: 'wrap', minHeight: 52 }}>
               {inCat('intraperitoneal').length === 0
                 ? <span style={{ color: '#b8c2d8', fontSize: 12, alignSelf: 'center' }}>Drop intraperitoneal organs here</span>
-                : inCat('intraperitoneal').map(o => <OrganCard key={o.id} o={o} fromZone={true} />)}
+                : inCat('intraperitoneal').map(o => <PeriOrganCard key={o.id} o={o} {...organCardProps} />)}
             </div>
           </div>
 
@@ -5067,11 +5097,11 @@ function PeriotonealGame({ onBack }) {
               onClick={() => clickCat('primary-retroperitoneal')}
               style={{ ...zoneStyle(!!selected), flex: 1, background: selected ? 'rgba(0,0,0,0.02)' : '#f3f2ef', border: `2px ${selected ? 'dashed #aaa' : 'solid #dbd8d2'}` }}
             >
-              <ZoneHeader cat={CATEGORIES[1]} />
+              <PeriZoneHeader cat={CATEGORIES[1]} />
               <div style={{ display: 'flex', flexWrap: 'wrap', minHeight: 52 }}>
                 {inCat('primary-retroperitoneal').length === 0
                   ? <span style={{ color: '#c8c4bc', fontSize: 12, alignSelf: 'center' }}>Drop here</span>
-                  : inCat('primary-retroperitoneal').map(o => <OrganCard key={o.id} o={o} fromZone={true} />)}
+                  : inCat('primary-retroperitoneal').map(o => <PeriOrganCard key={o.id} o={o} {...organCardProps} />)}
               </div>
             </div>
             {/* Secondary retroperitoneal */}
@@ -5081,11 +5111,11 @@ function PeriotonealGame({ onBack }) {
               onClick={() => clickCat('secondary-retroperitoneal')}
               style={{ ...zoneStyle(!!selected), flex: 1, background: selected ? 'rgba(0,0,0,0.02)' : '#f3f2ef', border: `2px ${selected ? 'dashed #aaa' : 'solid #dbd8d2'}` }}
             >
-              <ZoneHeader cat={CATEGORIES[2]} />
+              <PeriZoneHeader cat={CATEGORIES[2]} />
               <div style={{ display: 'flex', flexWrap: 'wrap', minHeight: 52 }}>
                 {inCat('secondary-retroperitoneal').length === 0
                   ? <span style={{ color: '#c8c4bc', fontSize: 12, alignSelf: 'center' }}>Drop here</span>
-                  : inCat('secondary-retroperitoneal').map(o => <OrganCard key={o.id} o={o} fromZone={true} />)}
+                  : inCat('secondary-retroperitoneal').map(o => <PeriOrganCard key={o.id} o={o} {...organCardProps} />)}
               </div>
             </div>
           </div>
@@ -5103,11 +5133,11 @@ function PeriotonealGame({ onBack }) {
             onClick={() => clickCat('subperitoneal')}
             style={{ ...zoneStyle(!!selected), background: selected ? 'rgba(120,60,180,0.04)' : '#f2f0f8', border: `2px ${selected ? 'dashed #aa88cc' : 'solid #d8d0ec'}` }}
           >
-            <ZoneHeader cat={CATEGORIES[3]} />
+            <PeriZoneHeader cat={CATEGORIES[3]} />
             <div style={{ display: 'flex', flexWrap: 'wrap', minHeight: 52 }}>
               {inCat('subperitoneal').length === 0
                 ? <span style={{ color: '#c0b8d4', fontSize: 12, alignSelf: 'center' }}>Drop subperitoneal organs here</span>
-                : inCat('subperitoneal').map(o => <OrganCard key={o.id} o={o} fromZone={true} />)}
+                : inCat('subperitoneal').map(o => <PeriOrganCard key={o.id} o={o} {...organCardProps} />)}
             </div>
           </div>
         </div>
@@ -5794,9 +5824,11 @@ function AssSlot({ node, placed, selectedVessel, onSlotClick, submitted,
             </span>
           : <span style={{ fontSize: 12, color: '#c0b8b0', fontWeight: 400 }}>?</span>
         }
-        <span style={{ fontSize: 8, color: '#bbb', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 1 }}>
-          {node.type}
-        </span>
+        {mode === 'learn' && (
+          <span style={{ fontSize: 8, color: '#bbb', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 1 }}>
+            {node.type}
+          </span>
+        )}
       </div>
     </div>
   );
@@ -5896,7 +5928,7 @@ function AssTreeNode({ node, byParent, placed, selectedVessel, onSlotClick, subm
           {/* Landmark divider (e.g. Diaphragm) */}
           {node.landmark && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '3px 0',
-                          width: '100vw', maxWidth: 600, alignSelf: 'center' }}>
+                          width: '100%', alignSelf: 'center' }}>
               <div style={{ flex: 1, height: 2, background: 'rgba(200,160,0,0.28)', borderRadius: 2 }} />
               <span style={{ fontSize: 9, fontWeight: 800, color: '#b89000',
                              textTransform: 'uppercase', letterSpacing: 1.2, flexShrink: 0 }}>
@@ -5957,68 +5989,78 @@ function ArteryAssemblyGame({ onBack }) {
   const treeContainerRef = useRef(null);
   const treeInnerRef     = useRef(null);
   const pinchRef         = useRef({ dist: null, scale: 1 });
+  const pinchScaleRef    = useRef(1);  /* mirrors pinchScale state — used inside stable effect */
 
   const mod   = moduleKey ? modules[moduleKey] : null;
   const nodes = mod ? mod.nodes : [];
 
-  /* ── Difficulty filter: keep nodes up to level N ── */
-  const maxLevel      = difficulty === 1 ? 1 : difficulty === 2 ? 3 : Infinity;
-  const filteredNodes = nodes.filter(n => (n.level ?? 0) <= maxLevel);
+  /* ── Difficulty filter ── */
+  const filteredNodes = React.useMemo(() => {
+    const maxLevel = difficulty === 1 ? 1 : difficulty === 2 ? 3 : Infinity;
+    return nodes.filter(n => (n.level ?? 0) <= maxLevel);
+  }, [nodes, difficulty]);
 
-  /* ── Focus filter: keep only the focused subtree ── */
-  const displayNodes = focusNodeId
-    ? filteredNodes.filter(n => isDescendantOf(n.id, focusNodeId, filteredNodes))
-    : filteredNodes;
+  /* ── Focus filter ── */
+  const displayNodes = React.useMemo(() =>
+    focusNodeId
+      ? filteredNodes.filter(n => isDescendantOf(n.id, focusNodeId, filteredNodes))
+      : filteredNodes,
+  [filteredNodes, focusNodeId]);
 
-  /* ── byParent lookup (treat nodes whose parent was filtered out as roots) ── */
-  const byParent = {};
-  displayNodes.forEach(n => {
-    const parentInDisplay = n.parent && displayNodes.find(x => x.id === n.parent);
-    const key = parentInDisplay ? n.parent : '__root__';
-    if (!byParent[key]) byParent[key] = [];
-    byParent[key].push(n);
-  });
+  /* ── byParent lookup ── */
+  const byParent = React.useMemo(() => {
+    const map = {};
+    displayNodes.forEach(n => {
+      const parentInDisplay = n.parent && displayNodes.find(x => x.id === n.parent);
+      const key = parentInDisplay ? n.parent : '__root__';
+      if (!map[key]) map[key] = [];
+      map[key].push(n);
+    });
+    return map;
+  }, [displayNodes]);
 
   /* ── Progress helpers ── */
   const modProgress = allProgress[moduleKey] || {};
-  function isWeakNode(nodeId) {
-    const s = modProgress[nodeId];
-    return s && (s.w + (s.m || 0)) >= 2;
-  }
-  const weakIds = new Set(displayNodes.filter(n => isWeakNode(n.id)).map(n => n.id));
+  const weakIds = React.useMemo(() => {
+    return new Set(displayNodes.filter(n => {
+      const s = modProgress[n.id];
+      return s && (s.w + (s.m || 0)) >= 2;
+    }).map(n => n.id));
+  }, [displayNodes, modProgress]);  /* eslint-disable-line */
 
-  /* ── Which nodes the student must fill (depends on mode + weakOnly) ── */
-  const baseHiddenNodes =
-    mode === 'exam'     ? displayNodes
-    : mode === 'practice'
-      ? displayNodes.filter(n => n.type === 'branch' || n.type === 'terminal')
-    : [];  /* learn */
-  const hiddenSet = new Set(
-    weakOnly && weakIds.size > 0
-      ? baseHiddenNodes.filter(n => weakIds.has(n.id)).map(n => n.id)
-      : baseHiddenNodes.map(n => n.id)
-  );
+  /* ── Which nodes the student must fill ── */
+  const hiddenSet = React.useMemo(() => {
+    const base =
+      mode === 'exam'     ? displayNodes
+      : mode === 'practice'
+        ? displayNodes.filter(n => n.type === 'branch' || n.type === 'terminal')
+      : [];
+    const candidates = weakOnly && weakIds.size > 0
+      ? base.filter(n => weakIds.has(n.id))
+      : base;
+    return new Set(candidates.map(n => n.id));
+  }, [displayNodes, mode, weakOnly, weakIds]);
 
-  /* ── Label → node map (for bank card parent lookup) ── */
+  /* ── Label → node map ── */
   const labelToNodeMap = React.useMemo(() => {
     const m = {};
     displayNodes.forEach(n => { m[n.label] = n; (n.synonyms || []).forEach(s => { m[s] = n; }); });
     return m;
-  }, [displayNodes]);  /* eslint-disable-line */
+  }, [displayNodes]);
 
-  /* ── Progressive unlock: a slot is unlocked when every ancestor is correctly placed ── */
+  /* ── Progressive unlock ── */
   const unlockedSet = React.useMemo(() => {
     if (mode !== 'exam') return new Set(displayNodes.map(n => n.id));
     const unlocked = new Set();
+    const nodeById = Object.fromEntries(displayNodes.map(n => [n.id, n]));
     function tryUnlock(nodeId) {
       if (unlocked.has(nodeId)) return true;
-      const node = displayNodes.find(n => n.id === nodeId);
+      const node = nodeById[nodeId];
       if (!node) return false;
       if (!node.parent) { unlocked.add(nodeId); return true; }
-      const parent = displayNodes.find(n => n.id === node.parent);
+      const parent = nodeById[node.parent];
       if (!parent) { unlocked.add(nodeId); return true; }
       if (!tryUnlock(parent.id)) return false;
-      /* If parent is a hidden slot it must be correctly placed before children unlock */
       if (hiddenSet.has(parent.id)) {
         const val = placed[parent.id];
         const ok  = val && (val === parent.label || (parent.synonyms || []).includes(val));
@@ -6029,18 +6071,19 @@ function ArteryAssemblyGame({ onBack }) {
     }
     displayNodes.forEach(n => tryUnlock(n.id));
     return unlocked;
-  }, [placed, displayNodes, hiddenSet, mode]);  /* eslint-disable-line */
+  }, [placed, displayNodes, hiddenSet, mode]);
 
   /* ── Search highlight set ── */
-  const trimSearch = treeSearch.trim().toLowerCase();
-  const highlightSet = trimSearch.length >= 2
-    ? new Set(displayNodes
-        .filter(n =>
-          n.label.toLowerCase().includes(trimSearch) ||
-          (n.synonyms || []).some(s => s.toLowerCase().includes(trimSearch))
-        )
-        .map(n => n.id))
-    : new Set();
+  const highlightSet = React.useMemo(() => {
+    const trimSearch = treeSearch.trim().toLowerCase();
+    if (trimSearch.length < 2) return new Set();
+    return new Set(displayNodes
+      .filter(n =>
+        n.label.toLowerCase().includes(trimSearch) ||
+        (n.synonyms || []).some(s => s.toLowerCase().includes(trimSearch))
+      )
+      .map(n => n.id));
+  }, [treeSearch, displayNodes]);
 
   /* ── Shuffle vessel bank whenever context changes ── */
   useEffect(() => {
@@ -6063,6 +6106,9 @@ function ArteryAssemblyGame({ onBack }) {
   }, [moduleKey, mode, difficulty, focusNodeId, weakOnly]);  /* eslint-disable-line */
 
 
+  /* Keep ref in sync so the stable pinch effect always reads the latest scale */
+  React.useLayoutEffect(() => { pinchScaleRef.current = pinchScale; }, [pinchScale]);
+
   /* ── Pinch zoom on tree ── */
   useEffect(() => {
     const el = treeContainerRef.current;
@@ -6072,7 +6118,7 @@ function ArteryAssemblyGame({ onBack }) {
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
         pinchRef.current.dist  = Math.hypot(dx, dy);
-        pinchRef.current.scale = pinchScale;
+        pinchRef.current.scale = pinchScaleRef.current;
         e.preventDefault();
       }
     }
@@ -6098,20 +6144,22 @@ function ArteryAssemblyGame({ onBack }) {
       el.removeEventListener('touchmove',  onTouchMove);
       el.removeEventListener('touchend',   onTouchEnd);
     };
-  }, [pinchScale]);  /* eslint-disable-line */
+  }, []);  /* stable — reads pinchScaleRef instead of pinchScale state */
 
-  /* Filtered bank */
-  const placedSet    = new Set(Object.values(placed));
-  const filteredBank = allVessels.filter(v => {
-    if (placedSet.has(v)) return false;
-    /* In exam mode, only show vessels for unlocked slots */
-    if (mode === 'exam') {
-      const node = labelToNodeMap[v];
-      if (node && !unlockedSet.has(node.id)) return false;
-    }
-    if (bankSearch && !v.toLowerCase().includes(bankSearch.toLowerCase())) return false;
-    return true;
-  });
+  /* Filtered bank — memoized */
+  const filteredBank = React.useMemo(() => {
+    const placedSet = new Set(Object.values(placed));
+    const lc = bankSearch.toLowerCase();
+    return allVessels.filter(v => {
+      if (placedSet.has(v)) return false;
+      if (mode === 'exam') {
+        const node = labelToNodeMap[v];
+        if (node && !unlockedSet.has(node.id)) return false;
+      }
+      if (bankSearch && !v.toLowerCase().includes(lc)) return false;
+      return true;
+    });
+  }, [placed, allVessels, mode, labelToNodeMap, unlockedSet, bankSearch]);
 
   /* ── Info panel helpers ── */
   const infoNodeChildren = infoNode ? (byParent[infoNode.id] || []) : [];
