@@ -5812,25 +5812,25 @@ function AssSlot({ node, placed, selectedVessel, onSlotClick, submitted,
         if (!submitted && isHidden) onSlotClick(node.id);
       }}
       style={{
-        display: 'flex', alignItems: 'stretch', minHeight: 36,
-        borderRadius: 8, border, background: bg, overflow: 'hidden',
+        display: 'flex', alignItems: 'stretch', minHeight: 44,
+        borderRadius: 9, border, background: bg, overflow: 'hidden',
         cursor: mode === 'learn' ? 'pointer' : (isHidden && !submitted ? 'pointer' : 'default'),
-        boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+        boxShadow: '0 1px 5px rgba(0,0,0,0.07)',
         userSelect: 'none', transition: 'background 0.14s, border 0.14s',
       }}>
       {/* Left accent stripe — blue for continuations, grey for branches */}
-      <div style={{ width: 4, background: accent, flexShrink: 0 }} />
+      <div style={{ width: 5, background: accent, flexShrink: 0 }} />
       {/* Text content */}
-      <div style={{ flex: 1, padding: '5px 9px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+      <div style={{ flex: 1, padding: '7px 12px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         {displayText
-          ? <span style={{ fontSize: 12, fontWeight: 600, color: textColor, lineHeight: 1.3,
+          ? <span style={{ fontSize: 13, fontWeight: 600, color: textColor, lineHeight: 1.3,
                            fontStyle: !isHidden && mode !== 'learn' ? 'italic' : 'normal' }}>
               {displayText}
             </span>
-          : <span style={{ fontSize: 12, color: '#c0b8b0', fontWeight: 400 }}>?</span>
+          : <span style={{ fontSize: 13, color: '#c0b8b0', fontWeight: 400 }}>?</span>
         }
         {mode === 'learn' && (
-          <span style={{ fontSize: 8, color: '#bbb', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 1 }}>
+          <span style={{ fontSize: 9, color: '#bbb', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}>
             {node.type}
           </span>
         )}
@@ -5864,13 +5864,13 @@ function AssBranchSubTree({ node, byParent, placed, selectedVessel, onSlotClick,
         isLocked={isLocked}
       />
       {children.length > 0 && (
-        <div style={{ marginLeft: 8, paddingLeft: 6, marginTop: 2,
-                      borderLeft: '2px solid rgba(0,0,0,0.07)',
-                      display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <div style={{ marginLeft: 12, paddingLeft: 8, marginTop: 4,
+                      borderLeft: '2px solid rgba(0,0,0,0.08)',
+                      display: 'flex', flexDirection: 'column', gap: 4 }}>
           {children.map((child, i) => (
             <div key={child.id} style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: -13, top: '50%', transform: 'translateY(-50%)',
-                             fontSize: 7, fontWeight: 700, color: '#ccc' }}>{i + 1}</span>
+              <span style={{ position: 'absolute', left: -15, top: '50%', transform: 'translateY(-50%)',
+                             fontSize: 8, fontWeight: 700, color: '#ccc' }}>{i + 1}</span>
               <AssBranchSubTree node={child} byParent={byParent} {...shared} />
             </div>
           ))}
@@ -5903,17 +5903,17 @@ function AssTreeNode({ node, byParent, placed, selectedVessel, onSlotClick, subm
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
 
       {/* 3-column row */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', width: '100%', gap: 7 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', width: '100%', gap: 12 }}>
 
         {/* Left branches */}
-        <div style={{ flex: 1, minWidth: 0, maxWidth: 320, display: 'flex', flexDirection: 'column', gap: 3, paddingTop: 4 }}>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 6 }}>
           {leftBranches.map(b => (
             <AssBranchSubTree key={b.id} node={b} byParent={byParent} {...slotProps} />
           ))}
         </div>
 
         {/* Spine node */}
-        <div style={{ width: 185, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ width: 220, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <AssSlot
             node={node} placed={placed} selectedVessel={selectedVessel}
             onSlotClick={onSlotClick} submitted={submitted}
@@ -5928,7 +5928,7 @@ function AssTreeNode({ node, byParent, placed, selectedVessel, onSlotClick, subm
           />
           {/* Connector line to next continuation */}
           {continuations.length > 0 && (
-            <div style={{ width: 2, height: 14, background: 'rgba(91,155,213,0.35)' }} />
+            <div style={{ width: 2, height: 20, background: 'rgba(91,155,213,0.35)' }} />
           )}
           {/* Landmark divider (e.g. Diaphragm) */}
           {node.landmark && (
@@ -5945,7 +5945,7 @@ function AssTreeNode({ node, byParent, placed, selectedVessel, onSlotClick, subm
         </div>
 
         {/* Right branches */}
-        <div style={{ flex: 1, minWidth: 0, maxWidth: 320, display: 'flex', flexDirection: 'column', gap: 3, paddingTop: 4 }}>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 6 }}>
           {rightBranches.map(b => (
             <AssBranchSubTree key={b.id} node={b} byParent={byParent} {...slotProps} />
           ))}
@@ -6642,7 +6642,7 @@ function ArteryAssemblyGame({ onBack }) {
           {/* ── Tree — spine + left/right branches ── */}
           <div ref={treeInnerRef}
             style={{
-              display: 'flex', flexDirection: 'column', gap: 5,
+              display: 'flex', flexDirection: 'column', gap: 10,
               width: '100%',
               zoom: pinchScale !== 1 ? pinchScale : undefined,
             }}>
