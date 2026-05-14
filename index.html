@@ -6536,7 +6536,7 @@ function ArteryAssemblyGame({ onBack }) {
 
         {/* ── Main: diagram area ── */}
         <div ref={treeContainerRef}
-          style={{ flex: 1, overflow: 'auto', padding: '16px 20px', paddingBottom: BANK_H + 20 }}>
+          style={{ flex: 1, overflowX: 'auto', overflowY: 'auto', padding: '16px 20px', paddingBottom: BANK_H + 20 }}>
 
           {/* Placing banner (mobile) */}
           {selectedVessel && !submitted && (
@@ -6599,8 +6599,7 @@ function ArteryAssemblyGame({ onBack }) {
             style={{
               display: 'flex', flexDirection: 'column', gap: 10,
               width: '100%',
-              transform: pinchScale !== 1 ? `scale(${pinchScale})` : undefined,
-              transformOrigin: 'top center',
+              zoom: pinchScale !== 1 ? pinchScale : undefined,
             }}>
             {roots.map(root => (
               <AssTreeNode
