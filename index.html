@@ -5669,9 +5669,28 @@ class ArteryErrorBoundary extends React.Component {
 /* ── Single slot card ── */
 function AssSlot({ node, placed, selectedVessel, onSlotClick, submitted,
                    dragOver, onDragOver, onDragLeave, onDrop, onDragStart,
-                   mode, isHidden, onInfoClick, isHighlighted }) {
+                   mode, isHidden, onInfoClick, isHighlighted, isLocked }) {
   const value          = placed[node.id];
   const isContinuation = node.type === 'continuation';
+
+  /* Ghost placeholder — parent not yet correctly placed */
+  if (isLocked) {
+    return (
+      <div style={{
+        display: 'flex', alignItems: 'stretch', minHeight: 40,
+        borderRadius: 9, border: '1.5px dashed rgba(0,0,0,0.08)',
+        background: 'rgba(0,0,0,0.025)', overflow: 'hidden', opacity: 0.55,
+      }}>
+        <div style={{ width: 5, background: 'rgba(0,0,0,0.06)', flexShrink: 0 }} />
+        <div style={{ flex: 1, padding: '6px 12px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <span style={{ fontSize: 11, color: '#ccc', fontStyle: 'italic' }}>Place parent first</span>
+          <span style={{ fontSize: 9, color: '#ddd', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}>
+            {node.type}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   const isCorrect = submitted && isHidden && value &&
     (value === node.label || (node.synonyms || []).includes(value));
@@ -5742,12 +5761,13 @@ function AssSlot({ node, placed, selectedVessel, onSlotClick, submitted,
 /* ── Compact vertical sub-tree for branch children ── */
 function AssBranchSubTree({ node, byParent, placed, selectedVessel, onSlotClick, submitted,
                              dragOverSlot, onSlotDragOver, onSlotDragLeave, onSlotDrop, onSlotDragStart,
-                             mode, hiddenSet, onInfoClick, highlightSet }) {
+                             mode, hiddenSet, onInfoClick, highlightSet, unlockedSet }) {
   const children = byParent[node.id] || [];
   const isHidden = hiddenSet.has(node.id);
+  const isLocked = isHidden && unlockedSet && !unlockedSet.has(node.id);
   const shared   = { byParent, placed, selectedVessel, onSlotClick, submitted,
                      dragOverSlot, onSlotDragOver, onSlotDragLeave, onSlotDrop, onSlotDragStart,
-                     mode, hiddenSet, onInfoClick, highlightSet };
+                     mode, hiddenSet, onInfoClick, highlightSet, unlockedSet };
   return (
     <div>
       <AssSlot
@@ -5760,6 +5780,7 @@ function AssBranchSubTree({ node, byParent, placed, selectedVessel, onSlotClick,
         onDragStart={onSlotDragStart}
         mode={mode} isHidden={isHidden} onInfoClick={onInfoClick}
         isHighlighted={highlightSet ? highlightSet.has(node.id) : false}
+        isLocked={isLocked}
       />
       {children.length > 0 && (
         <div style={{ marginLeft: 12, paddingLeft: 8, marginTop: 3,
@@ -5781,11 +5802,12 @@ function AssBranchSubTree({ node, byParent, placed, selectedVessel, onSlotClick,
 /* ── Spine tree node — 3-column layout (left branches | spine | right branches) ── */
 function AssTreeNode({ node, byParent, placed, selectedVessel, onSlotClick, submitted,
                        dragOverSlot, onSlotDragOver, onSlotDragLeave, onSlotDrop, onSlotDragStart,
-                       mode, hiddenSet, onInfoClick, highlightSet }) {
+                       mode, hiddenSet, onInfoClick, highlightSet, unlockedSet }) {
   const children      = byParent[node.id] || [];
   const continuations = children.filter(c => c.type === 'continuation');
   const branches      = children.filter(c => c.type !== 'continuation');
   const isHidden      = hiddenSet.has(node.id);
+  const isLocked      = isHidden && unlockedSet && !unlockedSet.has(node.id);
 
   /* Split branches left / right */
   const mid           = Math.floor(branches.length / 2);
@@ -5794,7 +5816,7 @@ function AssTreeNode({ node, byParent, placed, selectedVessel, onSlotClick, subm
 
   const slotProps = { placed, selectedVessel, onSlotClick, submitted,
                       dragOverSlot, onSlotDragOver, onSlotDragLeave, onSlotDrop, onSlotDragStart,
-                      mode, hiddenSet, onInfoClick, highlightSet };
+                      mode, hiddenSet, onInfoClick, highlightSet, unlockedSet };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
@@ -5821,6 +5843,7 @@ function AssTreeNode({ node, byParent, placed, selectedVessel, onSlotClick, subm
             onDragStart={onSlotDragStart}
             mode={mode} isHidden={isHidden} onInfoClick={onInfoClick}
             isHighlighted={highlightSet ? highlightSet.has(node.id) : false}
+            isLocked={isLocked}
           />
           {/* Connector line to next continuation */}
           {continuations.length > 0 && (
@@ -5932,6 +5955,38 @@ function ArteryAssemblyGame({ onBack }) {
       : baseHiddenNodes.map(n => n.id)
   );
 
+  /* ── Label → node map (for bank card parent lookup) ── */
+  const labelToNodeMap = React.useMemo(() => {
+    const m = {};
+    displayNodes.forEach(n => { m[n.label] = n; (n.synonyms || []).forEach(s => { m[s] = n; }); });
+    return m;
+  }, [displayNodes]);  /* eslint-disable-line */
+
+  /* ── Progressive unlock: a slot is unlocked when every ancestor is correctly placed ── */
+  const unlockedSet = React.useMemo(() => {
+    if (mode !== 'exam') return new Set(displayNodes.map(n => n.id));
+    const unlocked = new Set();
+    function tryUnlock(nodeId) {
+      if (unlocked.has(nodeId)) return true;
+      const node = displayNodes.find(n => n.id === nodeId);
+      if (!node) return false;
+      if (!node.parent) { unlocked.add(nodeId); return true; }
+      const parent = displayNodes.find(n => n.id === node.parent);
+      if (!parent) { unlocked.add(nodeId); return true; }
+      if (!tryUnlock(parent.id)) return false;
+      /* If parent is a hidden slot it must be correctly placed before children unlock */
+      if (hiddenSet.has(parent.id)) {
+        const val = placed[parent.id];
+        const ok  = val && (val === parent.label || (parent.synonyms || []).includes(val));
+        if (!ok) return false;
+      }
+      unlocked.add(nodeId);
+      return true;
+    }
+    displayNodes.forEach(n => tryUnlock(n.id));
+    return unlocked;
+  }, [placed, displayNodes, hiddenSet, mode]);  /* eslint-disable-line */
+
   /* ── Search highlight set ── */
   const trimSearch = treeSearch.trim().toLowerCase();
   const highlightSet = trimSearch.length >= 2
@@ -6003,10 +6058,16 @@ function ArteryAssemblyGame({ onBack }) {
 
   /* Filtered bank */
   const placedSet    = new Set(Object.values(placed));
-  const filteredBank = allVessels.filter(v =>
-    !placedSet.has(v) &&
-    (!bankSearch || v.toLowerCase().includes(bankSearch.toLowerCase()))
-  );
+  const filteredBank = allVessels.filter(v => {
+    if (placedSet.has(v)) return false;
+    /* In exam mode, only show vessels for unlocked slots */
+    if (mode === 'exam') {
+      const node = labelToNodeMap[v];
+      if (node && !unlockedSet.has(node.id)) return false;
+    }
+    if (bankSearch && !v.toLowerCase().includes(bankSearch.toLowerCase())) return false;
+    return true;
+  });
 
   /* ── Info panel helpers ── */
   const infoNodeChildren = infoNode ? (byParent[infoNode.id] || []) : [];
@@ -6504,6 +6565,7 @@ function ArteryAssemblyGame({ onBack }) {
                 hiddenSet={hiddenSet}
                 onInfoClick={handleInfoClick}
                 highlightSet={highlightSet}
+                unlockedSet={unlockedSet}
               />
             ))}
           </div>
@@ -6703,24 +6765,33 @@ function ArteryAssemblyGame({ onBack }) {
           </div>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, overflowY: 'auto', flex: 1 }}>
-            {filteredBank.map(v => (
-              <div key={v}
-                draggable={!submitted}
-                onDragStart={e => bankDragStart(e, v)}
-                onClick={() => handleVesselClick(v)}
-                style={{
-                  padding: '4px 12px', borderRadius: 20,
-                  background: selectedVessel === v ? 'rgba(55,55,55,0.88)' : 'rgba(255,255,255,0.92)',
-                color:      selectedVessel === v ? '#fff' : '#333',
-                border:     selectedVessel === v ? '1.5px solid rgba(0,0,0,0.25)' : '1.5px solid rgba(0,0,0,0.09)',
-                fontSize: 11.5, cursor: submitted ? 'default' : 'pointer',
-                fontWeight: selectedVessel === v ? 600 : 400,
-                userSelect: 'none', transition: 'background 0.12s',
-              }}
-            >
-              {v}
-            </div>
-          ))}
+            {filteredBank.map(v => {
+              const vNode   = labelToNodeMap[v];
+              const vParent = vNode?.parent ? displayNodes.find(n => n.id === vNode.parent) : null;
+              const sel     = selectedVessel === v;
+              return (
+                <div key={v}
+                  draggable={!submitted}
+                  onDragStart={e => bankDragStart(e, v)}
+                  onClick={() => handleVesselClick(v)}
+                  style={{
+                    padding: '5px 12px', borderRadius: 8,
+                    background: sel ? 'rgba(55,55,55,0.88)' : 'rgba(255,255,255,0.92)',
+                    color:      sel ? '#fff' : '#333',
+                    border:     sel ? '1.5px solid rgba(0,0,0,0.25)' : '1.5px solid rgba(0,0,0,0.09)',
+                    cursor: submitted ? 'default' : 'pointer',
+                    userSelect: 'none', transition: 'background 0.12s',
+                    display: 'flex', flexDirection: 'column',
+                  }}>
+                  <span style={{ fontSize: 11.5, fontWeight: sel ? 600 : 500, lineHeight: 1.25 }}>{v}</span>
+                  {vParent && (
+                    <span style={{ fontSize: 9.5, color: sel ? 'rgba(255,255,255,0.55)' : '#aaa', marginTop: 1, lineHeight: 1 }}>
+                      From: {vParent.label}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           {filteredBank.length === 0 && (
             <span style={{ fontSize: 13, color: '#bbb', fontStyle: 'italic', alignSelf: 'center' }}>
               {bankSearch ? 'No matches' : 'All vessels placed!'}
