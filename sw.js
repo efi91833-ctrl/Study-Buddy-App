@@ -5,7 +5,7 @@
    - Cache-first strategy for all GET requests
    ============================================================ */
 
-const CACHE_NAME = 'study-buddy-v71';
+const CACHE_NAME = 'study-buddy-v73';
 
 /* All local files to pre-cache on install */
 const LOCAL_ASSETS = [
@@ -62,6 +62,7 @@ const LOCAL_ASSETS = [
   '/Blood%20vessels/Portal%20Vein.jpg',
   '/Blood%20vessels/Thoracic%20Aorta.jpg',
   '/Blood%20vessels/Veneus%20Drainage.jpg',
+  '/Blood%20vessels/Screenshot%202026-05-14%20at%206.40.03.png',
   /* Cardiac Vessels */
   '/CardiacVessels/cardiac-vessels.jpg',
   /* Cross section */
@@ -119,6 +120,8 @@ const LOCAL_ASSETS = [
   '/Topography/Mediastinum.jpg',
   '/Topography/Orbit.jpg',
   '/Topography/Uterus%20Angles.jpg',
+  '/Topography/Screenshot%202026-05-14%20at%206.29.06.png',
+  '/Topography/Screenshot%202026-05-14%20at%206.36.29.png',
   /* Upper limb muscles */
   '/images/muscles/trapezius-levator-rhomboids.jpg',
   '/images/muscles/latissimus-teres-major.jpg',
