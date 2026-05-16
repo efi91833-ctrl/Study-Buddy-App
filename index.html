@@ -2335,8 +2335,52 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
                 </>
               )}
 
-              {/* Regular MCQ exams */}
-              {regularExams.map((exam, i) => {
+              {/* Regular MCQ exams — grouped for Histology, flat for everything else */}
+              {subject === 'Histology' ? (() => {
+                const HISTO_GROUPS = [
+                  {
+                    label: 'Fundamentals',
+                    names: ['Histological Techniques', 'Cell Biology', 'Epithelial Tissue', 'Epithelial Tissue 2023', 'Connective Tissue', 'Blood & Hematopoiesis', 'Nerve Tissue', 'Skin I', 'Skin II'],
+                  },
+                  {
+                    label: 'Systems',
+                    names: ['GIT I', 'GIT II', 'Cardiovascular', 'Respiratory I', 'Respiratory II', 'Urinary', 'Reproductive', 'Endocrine'],
+                  },
+                  {
+                    label: 'Embryology',
+                    names: ['General Embryology', 'Development: Cardiovascular', 'Placenta & Fetal Membranes'],
+                  },
+                  {
+                    label: 'Mixed & Mock Tests',
+                    names: ['Histo 1','Histo 2','Histo 3','Histo 4','Histo 5','Histo 6','Histo 7','Histo 8','Histo 9','Histo 10',
+                            'Mock Credit Test A', 'Mock Credit Test B', 'Mock Credit Test C', 'Mock Credit Test D'],
+                  },
+                ];
+                const nameToExam = Object.fromEntries(regularExams.map(e => [e.name, e]));
+                const sp = getSubjectProgress(subject);
+                const labelStyle = { gridColumn: '1 / -1', fontSize: 12, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '.07em', marginTop: 10, marginBottom: -2 };
+                return HISTO_GROUPS.map(group => {
+                  const groupExams = group.names.map(n => nameToExam[n]).filter(Boolean);
+                  if (!groupExams.length) return null;
+                  return (
+                    <React.Fragment key={group.label}>
+                      <div style={labelStyle}>{group.label}</div>
+                      {groupExams.map((exam, i) => {
+                        const done = exam.questions.length > 0 && exam.questions.every(q => sp.masteredIds.includes(q.id));
+                        return (
+                          <button key={group.label+i} onClick={() => onSelectExam(meta.exams.indexOf(exam))}
+                            style={{ ...cardStyle, background: done ? '#e8f5e9' : 'rgba(255,255,255,0.85)' }}>
+                            {exam.name}
+                            <div style={{ fontSize: 12, fontWeight: 400, color: '#888', marginTop: 4 }}>
+                              {exam.questions.length === 0 ? 'Coming soon' : `${exam.questions.length} questions${done ? ' · mastered' : ''}`}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </React.Fragment>
+                  );
+                });
+              })() : regularExams.map((exam, i) => {
                 const sp = getSubjectProgress(subject);
                 const done = exam.questions.length > 0 && exam.questions.every(q => sp.masteredIds.includes(q.id));
                 return (
