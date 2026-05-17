@@ -5,7 +5,7 @@
    - Cache-first strategy for all GET requests
    ============================================================ */
 
-const CACHE_NAME = 'study-buddy-v77';
+const CACHE_NAME = 'study-buddy-v78';
 
 /* All local files to pre-cache on install */
 const LOCAL_ASSETS = [
@@ -14,6 +14,7 @@ const LOCAL_ASSETS = [
   '/labels.json',
   '/histology-questions.js',
   '/anatomy-questions.js',
+  '/embryo-questions.js',
   '/czech-questions.js',
   '/czechQuestionBanks.js',
   '/muscle-bank.js',
