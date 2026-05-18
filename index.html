@@ -7132,11 +7132,12 @@ function TimelineGame({ onBack }) {
     'Eye and Ear Development',
   ];
 
-  const [phase, setPhase]             = React.useState('pick');
-  const [system, setSystem]           = React.useState(null);
-  const [tlg, dispatch]               = React.useReducer(tlgReducer, { slots: [], pool: [] });
-  const [score, setScore]             = React.useState(0);
-  const [resultSlots, setResultSlots] = React.useState([]);
+  const [phase, setPhase]               = React.useState('pick');
+  const [system, setSystem]             = React.useState(null);
+  const [tlg, dispatch]                 = React.useReducer(tlgReducer, { slots: [], pool: [] });
+  const [score, setScore]               = React.useState(0);
+  const [resultSlots, setResultSlots]   = React.useState([]);
+  const [correctOrder, setCorrectOrder] = React.useState([]);
 
   const dragSrc = React.useRef(null);
   const ghostEl = React.useRef(null);
@@ -7152,9 +7153,27 @@ function TimelineGame({ onBack }) {
     return a.every((e, i) => e.order === sorted[i].order) ? shuffle(arr) : a;
   }
 
+  /* ── format a week string into two short lines for the tick label ── */
+  function fmtWeek(weekStr) {
+    if (!weekStr) return { top: '', bot: '' };
+    if (weekStr.startsWith('Birth')) {
+      return weekStr.includes('8 year') || weekStr.includes('year')
+        ? { top: 'Birth', bot: '– 8 yr' }
+        : { top: 'Birth', bot: '' };
+    }
+    const wm = weekStr.match(/Week\s+(\d+)(?:\s*[–\-]\s*(?:Week\s+)?(\d+))?/);
+    const dm = weekStr.match(/Day\s+([\d]+(?:[–\-][\d]+)?)/);
+    const top = wm ? 'Wk ' + wm[1] + (wm[2] ? '–' + wm[2] : '') : weekStr.slice(0, 10);
+    let bot = dm ? 'D ' + dm[1] : '';
+    if (!bot && (weekStr.includes('Postnatal') || weekStr.includes('postnatal'))) bot = 'postnatal';
+    return { top, bot };
+  }
+
   function startSystem(sys) {
     const data = (window.TIMELINE_DATA || {})[sys] || [];
     if (!data.length) return;
+    const sorted = [...data].sort((a, b) => a.order - b.order);
+    setCorrectOrder(sorted);
     dispatch({ type: 'INIT', count: data.length, pool: shuffle(data) });
     setSystem(sys);
     setPhase('play');
@@ -7302,165 +7321,198 @@ function TimelineGame({ onBack }) {
   /* ── PLAY phase — horizontal drag-and-drop timeline ── */
   if (phase === 'play') {
     const { slots, pool } = tlg;
-    const N    = slots.length;   // 10
-    const SW   = 118;            // slot width px
-    const SH   = 80;             // slot height px
-    const G    = 14;             // gap between columns px
-    const CONN = 14;             // connector height px
-    const DOT  = 12;             // dot diameter px
+    const N    = slots.length;
+    const SW   = 122;   // slot width px
+    const SH   = 84;    // slot height px
+    const G    = 16;    // gap between columns px
+    const CONN = 16;    // connector height px
+    const DOT  = 14;    // dot diameter px
     const canSubmit = slots.every(s => s !== null);
+
+    /* Frosted-glass shared token */
+    const glass = {
+      background: 'rgba(255,255,255,0.72)',
+      backdropFilter: 'blur(10px)',
+      WebkitBackdropFilter: 'blur(10px)',
+    };
 
     return (
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column',
-                    overflow: 'hidden', background: '#f9f9f9' }}>
+                    overflow: 'hidden', background: 'transparent' }}>
 
-        {/* ── Header ── */}
-        <div style={{ padding: '12px 20px', borderBottom: '1px solid #e0e0e0',
-                      background: '#fff', flexShrink: 0,
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        {/* ── Header — frosted glass matching topbar ── */}
+        <div style={{ ...glass, padding: '13px 20px', paddingRight: 56,
+                      borderBottom: '1px solid rgba(0,0,0,0.08)', flexShrink: 0,
+                      display: 'flex', alignItems: 'center', gap: 12 }}>
           <button onClick={() => { setPhase('pick'); setSystem(null); }}
-            style={{ border: 'none', background: 'none', cursor: 'pointer',
-                     fontSize: 14, color: '#666', padding: 0 }}>
+            style={{ border: '1px solid rgba(0,0,0,0.18)', background: 'none',
+                     borderRadius: 8, cursor: 'pointer', fontSize: 13,
+                     color: '#555', padding: '5px 13px', flexShrink: 0,
+                     transition: 'border-color .15s, color .15s' }}>
             ← Systems
           </button>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#111' }}>{system}</div>
-          <button onClick={handleSubmit} disabled={!canSubmit}
-            style={{ background: canSubmit ? '#111' : '#e0e0e0',
-                     color: canSubmit ? '#fff' : '#bbb',
-                     border: 'none', borderRadius: 8, padding: '8px 18px',
-                     fontSize: 13, fontWeight: 700,
-                     cursor: canSubmit ? 'pointer' : 'default',
-                     transition: 'background .15s' }}>
-            Submit
-          </button>
+          <div style={{ flex: 1, textAlign: 'center' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#aaa',
+                          letterSpacing: '.1em', textTransform: 'uppercase' }}>
+              Time-Line
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a', marginTop: 1 }}>
+              {system}
+            </div>
+          </div>
+          {/* spacer so title stays centered */}
+          <div style={{ width: 90, flexShrink: 0 }} />
         </div>
 
-        {/* ── Horizontal timeline (scrollable) ── */}
-        <div style={{ overflowX: 'auto', padding: '20px 24px 16px', flexShrink: 0,
-                      background: '#fff', borderBottom: '1px solid #e8e8e8' }}>
+        {/* ── Middle: timeline centered vertically ── */}
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center',
+                      overflow: 'hidden', position: 'relative' }}>
+          <div style={{ width: '100%', overflowX: 'auto', padding: '0 28px' }}>
 
-          {/* Outer position:relative wrapper so we can absolutely-position the line */}
-          <div style={{ position: 'relative', display: 'inline-flex', gap: G }}>
+            {/* position:relative wrapper for the absolute line */}
+            <div style={{ position: 'relative', display: 'inline-flex', gap: G }}>
 
-            {/* Horizontal connecting line: from center of col 0 to center of col N-1 */}
-            <div style={{
-              position: 'absolute',
-              left:   SW / 2,
-              width:  (N - 1) * (SW + G),
-              top:    SH + CONN + DOT / 2 - 1,
-              height: 2,
-              background: '#333',
-              zIndex: 0,
-            }} />
+              {/* Horizontal line — from center of col 0 to center of col N-1 */}
+              <div style={{
+                position: 'absolute',
+                left:   SW / 2,
+                width:  (N - 1) * (SW + G),
+                top:    SH + CONN + DOT / 2 - 1,
+                height: 2,
+                background: 'rgba(26,26,26,0.35)',
+                zIndex: 0,
+              }} />
 
-            {Array(N).fill(null).map((_, i) => {
-              const item  = slots[i];
-              const above = i % 2 === 0;   // positions 1,3,5,7,9 sit above the line
+              {Array(N).fill(null).map((_, i) => {
+                const item  = slots[i];
+                const above = i % 2 === 0;
 
-              return (
-                /* Column — data-tlslot on the whole column so any drop within it hits slot i */
-                <div key={i} data-tlslot={i}
-                  style={{ width: SW, flexShrink: 0,
-                           display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                const slotStyle = (active) => ({
+                  width: SW, height: SH, flexShrink: 0,
+                  borderRadius: 12,
+                  border: active
+                    ? (item
+                        ? '1px solid rgba(0,0,0,0.14)'
+                        : '1.5px dashed rgba(0,0,0,0.18)')
+                    : 'none',
+                  background: active
+                    ? (item
+                        ? 'rgba(255,255,255,0.88)'
+                        : 'rgba(255,255,255,0.28)')
+                    : 'transparent',
+                  boxShadow: active && item
+                    ? '0 2px 12px rgba(0,0,0,0.09)'
+                    : 'none',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  padding: active ? '7px 9px' : 0,
+                  boxSizing: 'border-box',
+                  cursor: active && item ? 'grab' : active ? 'default' : 'default',
+                  userSelect: 'none', WebkitUserSelect: 'none',
+                  fontSize: 11, fontWeight: item && active ? 600 : 400,
+                  color: item && active ? '#1a1a1a' : 'rgba(0,0,0,0.22)',
+                  lineHeight: 1.35, textAlign: 'center',
+                  transition: 'background .15s, box-shadow .15s',
+                });
 
-                  {/* ── TOP SLOT (active for even indices → positions 1,3,5,7,9) ── */}
-                  <div style={{
-                    width: SW, height: SH, flexShrink: 0,
-                    border: above
-                      ? (item ? '1.5px solid #333' : '1.5px dashed #ccc')
-                      : 'none',
-                    borderRadius: 8,
-                    background: above ? (item ? '#fff' : '#fafafa') : 'transparent',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: above ? '6px 8px' : 0,
-                    boxSizing: 'border-box',
-                    cursor: above && item ? 'grab' : 'default',
-                    userSelect: 'none', WebkitUserSelect: 'none',
-                    fontSize: 11, fontWeight: item && above ? 600 : 400,
-                    color: item && above ? '#111' : '#bbb',
-                    lineHeight: 1.3, textAlign: 'center',
-                  }}
-                    onMouseDown={above && item
-                      ? (e) => { e.preventDefault(); beginDrag('slot', i, e.clientX, e.clientY, e.currentTarget); }
-                      : undefined}
-                    onTouchStart={above && item
-                      ? (e) => { e.preventDefault(); beginDrag('slot', i, e.touches[0].clientX, e.touches[0].clientY, e.currentTarget); }
-                      : undefined}
-                  >
-                    {above ? (item ? item.shortLabel : '') : null}
+                return (
+                  <div key={i} data-tlslot={i}
+                    style={{ width: SW, flexShrink: 0,
+                             display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+
+                    {/* TOP slot */}
+                    <div style={slotStyle(above)}
+                      onMouseDown={above && item
+                        ? (e) => { e.preventDefault(); beginDrag('slot', i, e.clientX, e.clientY, e.currentTarget); }
+                        : undefined}
+                      onTouchStart={above && item
+                        ? (e) => { e.preventDefault(); beginDrag('slot', i, e.touches[0].clientX, e.touches[0].clientY, e.currentTarget); }
+                        : undefined}>
+                      {above && item ? item.shortLabel : null}
+                    </div>
+
+                    {/* Connector top → dot */}
+                    <div style={{ width: 2, height: CONN, flexShrink: 0,
+                                  background: above
+                                    ? 'rgba(26,26,26,0.35)' : 'transparent' }} />
+
+                    {/* Dot */}
+                    <div style={{ width: DOT, height: DOT, borderRadius: '50%',
+                                  background: '#1a1a1a', flexShrink: 0,
+                                  border: '2.5px solid rgba(255,255,255,0.9)',
+                                  boxShadow: '0 0 0 1.5px rgba(0,0,0,0.2)',
+                                  position: 'relative', zIndex: 1 }} />
+
+                    {/* Week label — replaces generic position number */}
+                    {(() => {
+                      const wk = correctOrder[i] ? fmtWeek(correctOrder[i].week) : { top: String(i+1), bot: '' };
+                      return (
+                        <div style={{ margin: '4px 0 3px', lineHeight: 1.2,
+                                      flexShrink: 0, textAlign: 'center', width: SW }}>
+                          <div style={{ fontSize: 9, fontWeight: 800,
+                                        color: 'rgba(0,0,0,0.55)',
+                                        letterSpacing: '.04em' }}>
+                            {wk.top}
+                          </div>
+                          {wk.bot && (
+                            <div style={{ fontSize: 8, fontWeight: 600,
+                                          color: 'rgba(0,0,0,0.35)',
+                                          marginTop: 1 }}>
+                              {wk.bot}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Connector dot → bottom */}
+                    <div style={{ width: 2, height: CONN, flexShrink: 0,
+                                  background: !above
+                                    ? 'rgba(26,26,26,0.35)' : 'transparent' }} />
+
+                    {/* BOTTOM slot */}
+                    <div style={slotStyle(!above)}
+                      onMouseDown={!above && item
+                        ? (e) => { e.preventDefault(); beginDrag('slot', i, e.clientX, e.clientY, e.currentTarget); }
+                        : undefined}
+                      onTouchStart={!above && item
+                        ? (e) => { e.preventDefault(); beginDrag('slot', i, e.touches[0].clientX, e.touches[0].clientY, e.currentTarget); }
+                        : undefined}>
+                      {!above && item ? item.shortLabel : null}
+                    </div>
+
                   </div>
-
-                  {/* Connector: top slot → dot */}
-                  <div style={{ width: 2, height: CONN, flexShrink: 0,
-                                background: above ? '#555' : 'transparent' }} />
-
-                  {/* Dot */}
-                  <div style={{ width: DOT, height: DOT, borderRadius: '50%',
-                                background: '#333', flexShrink: 0,
-                                position: 'relative', zIndex: 1 }} />
-
-                  {/* Position number */}
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#888',
-                                margin: '4px 0 2px', lineHeight: 1, flexShrink: 0 }}>
-                    {i + 1}
-                  </div>
-
-                  {/* Connector: dot → bottom slot */}
-                  <div style={{ width: 2, height: CONN, flexShrink: 0,
-                                background: !above ? '#555' : 'transparent' }} />
-
-                  {/* ── BOTTOM SLOT (active for odd indices → positions 2,4,6,8,10) ── */}
-                  <div style={{
-                    width: SW, height: SH, flexShrink: 0,
-                    border: !above
-                      ? (item ? '1.5px solid #333' : '1.5px dashed #ccc')
-                      : 'none',
-                    borderRadius: 8,
-                    background: !above ? (item ? '#fff' : '#fafafa') : 'transparent',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: !above ? '6px 8px' : 0,
-                    boxSizing: 'border-box',
-                    cursor: !above && item ? 'grab' : 'default',
-                    userSelect: 'none', WebkitUserSelect: 'none',
-                    fontSize: 11, fontWeight: item && !above ? 600 : 400,
-                    color: item && !above ? '#111' : '#bbb',
-                    lineHeight: 1.3, textAlign: 'center',
-                  }}
-                    onMouseDown={!above && item
-                      ? (e) => { e.preventDefault(); beginDrag('slot', i, e.clientX, e.clientY, e.currentTarget); }
-                      : undefined}
-                    onTouchStart={!above && item
-                      ? (e) => { e.preventDefault(); beginDrag('slot', i, e.touches[0].clientX, e.touches[0].clientY, e.currentTarget); }
-                      : undefined}
-                  >
-                    {!above ? (item ? item.shortLabel : '') : null}
-                  </div>
-
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        {/* ── Card pool ── */}
+        {/* ── Pool bar — frosted glass strip at bottom ── */}
         <div data-tlpool="1"
-          style={{ flex: 1, overflowY: 'auto', padding: '14px 20px' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#aaa',
-                        letterSpacing: '.08em', textTransform: 'uppercase',
-                        marginBottom: 10 }}>
+          style={{ ...glass, flexShrink: 0, minHeight: 110, maxHeight: 160,
+                   borderTop: '1px solid rgba(0,0,0,0.07)',
+                   padding: '10px 20px 16px',
+                   paddingRight: 130,   /* keep clear of submit button */
+                   overflowY: 'auto' }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(0,0,0,0.35)',
+                        letterSpacing: '.1em', textTransform: 'uppercase',
+                        marginBottom: 8 }}>
             {pool.length > 0
-              ? pool.length + ' remaining — drag onto the timeline'
-              : 'All placed — press Submit above'}
+              ? pool.length + ' remaining — drag to timeline'
+              : 'All placed'}
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
             {pool.map((item, i) => (
               <div key={item.id}
-                style={{ padding: '9px 12px', background: '#fff',
-                         border: '1.5px solid #ccc', borderRadius: 8,
+                style={{ padding: '8px 11px',
+                         background: 'rgba(255,255,255,0.82)',
+                         border: '1px solid rgba(0,0,0,0.1)',
+                         borderRadius: 10,
+                         boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
                          cursor: 'grab', fontSize: 11, fontWeight: 600,
-                         color: '#111', lineHeight: 1.3,
+                         color: '#1a1a1a', lineHeight: 1.3,
                          userSelect: 'none', WebkitUserSelect: 'none',
-                         maxWidth: 180, boxSizing: 'border-box' }}
+                         maxWidth: 178, boxSizing: 'border-box' }}
                 onMouseDown={(e) => { e.preventDefault(); beginDrag('pool', i, e.clientX, e.clientY, e.currentTarget); }}
                 onTouchStart={(e) => { e.preventDefault(); beginDrag('pool', i, e.touches[0].clientX, e.touches[0].clientY, e.currentTarget); }}
               >
@@ -7469,6 +7521,20 @@ function TimelineGame({ onBack }) {
             ))}
           </div>
         </div>
+
+        {/* ── Submit — fixed lower-right, clear of search button ── */}
+        <button onClick={handleSubmit} disabled={!canSubmit}
+          style={{ position: 'fixed', bottom: 28, right: 24, zIndex: 200,
+                   background: canSubmit ? '#1a1a1a' : 'rgba(0,0,0,0.12)',
+                   color: canSubmit ? '#fff' : 'rgba(0,0,0,0.28)',
+                   border: 'none', borderRadius: 24,
+                   padding: '13px 28px',
+                   fontSize: 14, fontWeight: 700, letterSpacing: '.03em',
+                   cursor: canSubmit ? 'pointer' : 'default',
+                   boxShadow: canSubmit ? '0 4px 18px rgba(0,0,0,0.22)' : 'none',
+                   transition: 'background .2s, box-shadow .2s' }}>
+          Submit
+        </button>
 
       </div>
     );
@@ -7541,7 +7607,8 @@ function TimelineGame({ onBack }) {
       </div>
 
       {resultSlots.map((item, idx) => {
-        const isCorrect = item && item.order === idx + 1;
+        const expected  = correctOrder[idx];
+        const isCorrect = item && expected && item.id === expected.id;
         return (
           <div key={item ? item.id : idx} style={{
             ...baseCard,
@@ -7552,28 +7619,47 @@ function TimelineGame({ onBack }) {
             gap: 10,
           }}>
             <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-              <div style={{ minWidth: 30, height: 30, borderRadius: '50%',
-                            border: isCorrect ? '2px solid #333' : '1.5px solid #ccc',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: 13, fontWeight: 700,
-                            color: isCorrect ? '#111' : '#aaa', flexShrink: 0 }}>
-                {idx + 1}
+              {/* Week badge */}
+              <div style={{ flexShrink: 0, minWidth: 52, textAlign: 'center',
+                            padding: '5px 7px', borderRadius: 8,
+                            background: isCorrect ? '#1a1a1a' : '#f0f0f0',
+                            border: isCorrect ? 'none' : '1px solid #ddd' }}>
+                {(() => {
+                  const wk = expected ? fmtWeek(expected.week) : { top: String(idx+1), bot: '' };
+                  return (
+                    <React.Fragment>
+                      <div style={{ fontSize: 9, fontWeight: 800,
+                                    color: isCorrect ? '#fff' : '#999',
+                                    letterSpacing: '.04em', lineHeight: 1.2 }}>
+                        {wk.top}
+                      </div>
+                      {wk.bot && (
+                        <div style={{ fontSize: 8, fontWeight: 600,
+                                      color: isCorrect ? 'rgba(255,255,255,0.7)' : '#bbb',
+                                      marginTop: 1 }}>
+                          {wk.bot}
+                        </div>
+                      )}
+                    </React.Fragment>
+                  );
+                })()}
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: '#aaa',
-                                letterSpacing: '.06em', textTransform: 'uppercase' }}>
-                    {item ? item.week : '—'}
+                <div style={{ display: 'flex', justifyContent: 'space-between',
+                              alignItems: 'flex-start', gap: 8 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#111', lineHeight: 1.4 }}>
+                    {item ? item.shortLabel : '—'}
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 700,
-                                color: isCorrect ? '#333' : '#aaa' }}>
-                    {isCorrect ? 'correct' : item ? 'should be #' + item.order : 'empty'}
+                  <div style={{ fontSize: 12, fontWeight: 700, flexShrink: 0,
+                                color: isCorrect ? '#333' : '#bbb' }}>
+                    {isCorrect ? 'correct' : item ? 'wrong slot' : 'empty'}
                   </div>
                 </div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#111',
-                              marginTop: 3, lineHeight: 1.4 }}>
-                  {item ? item.shortLabel : '—'}
-                </div>
+                {!isCorrect && expected && (
+                  <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
+                    Expected here: <span style={{ fontWeight: 600, color: '#555' }}>{expected.shortLabel}</span>
+                  </div>
+                )}
               </div>
             </div>
             {item && (
@@ -7601,29 +7687,34 @@ function TimelineGame({ onBack }) {
                         margin: '28px 0 12px' }}>
             Correct order
           </div>
-          {sortedCorrect.map((item, idx) => (
-            <div key={item.id} style={{
-              display: 'flex', alignItems: 'center', gap: 14,
-              padding: '10px 14px', borderRadius: 8,
-              border: '1px solid #eee', marginBottom: 6, background: '#fafafa',
-            }}>
-              <div style={{ minWidth: 26, height: 26, borderRadius: '50%',
-                            border: '1.5px solid #ccc',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: 12, fontWeight: 700, color: '#555', flexShrink: 0 }}>
-                {idx + 1}
-              </div>
-              <div>
-                <div style={{ fontSize: 11, color: '#aaa', fontWeight: 600,
-                              letterSpacing: '.05em', textTransform: 'uppercase' }}>
-                  {item.week}
+          {correctOrder.map((item, idx) => {
+            const wk = fmtWeek(item.week);
+            return (
+              <div key={item.id} style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '10px 14px', borderRadius: 10,
+                border: '1px solid #eee', marginBottom: 6, background: '#fafafa',
+              }}>
+                <div style={{ flexShrink: 0, minWidth: 44, textAlign: 'center',
+                              padding: '4px 6px', borderRadius: 7,
+                              background: '#1a1a1a' }}>
+                  <div style={{ fontSize: 9, fontWeight: 800, color: '#fff',
+                                letterSpacing: '.04em', lineHeight: 1.2 }}>
+                    {wk.top}
+                  </div>
+                  {wk.bot && (
+                    <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.6)',
+                                  marginTop: 1 }}>
+                      {wk.bot}
+                    </div>
+                  )}
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#222' }}>
                   {item.shortLabel}
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </React.Fragment>
       )}
 
