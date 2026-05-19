@@ -950,151 +950,7 @@ const { useState, useEffect, useRef } = React;
 // ─────────────────────────────────────────────────────────────
 // ANATOMY SLIDE TESTS — nested structure (test → slides)
 // ─────────────────────────────────────────────────────────────
-const ANATOMY_SLIDE_TESTS = [
-  {
-    testId: "cardiac-vessels-existing",
-    title: "Cardiac Vessels",
-    folder: "CardiacVessels",
-    subject: "Anatomy",
-    slides: [
-      { slideId: 1, title: "Cardiac Vessels", image: "CardiacVessels/cardiac-vessels.jpg", labels: [] }
-    ]
-  },
-  {
-    testId: "blood-vessels",
-    title: "Blood Vessels",
-    folder: "Blood vessels",
-    subject: "Anatomy",
-    slides: [
-      { slideId: "blood-vessels-1",  title: "Abdominal Aorta & External Iliac Artery (old)", image: "Blood vessels/Abdomenal Aorta.jpg",      labels: [] },
-      { slideId: "blood-vessels-2",  title: "Abdominal Aorta",                                image: "Blood vessels/Abdominal Aorta.jpg",      labels: [] },
-      { slideId: "blood-vessels-3",  title: "Ascending Aorta & Aortic Arch",                  image: "Blood vessels/Aortic Arch.jpg",           labels: [] },
-      { slideId: "blood-vessels-4",  title: "Brain",                                           image: "Blood vessels/Brain.jpg",                 labels: [] },
-      { slideId: "blood-vessels-5",  title: "Female Reproductive",                             image: "Blood vessels/Femail Repoductive.jpg",    labels: [] },
-      { slideId: "blood-vessels-6",  title: "Head",                                            image: "Blood vessels/Head .jpg",                 labels: [] },
-      { slideId: "blood-vessels-7",  title: "Head Blood Supply",                               image: "Blood vessels/Head Blood Supply.jpg",     labels: [] },
-      { slideId: "blood-vessels-8",  title: "Head Venous Drainage",                            image: "Blood vessels/Head Drainage.jpg",         labels: [] },
-      { slideId: "blood-vessels-9",  title: "Maxillary Artery",                                image: "Blood vessels/Maxillary Artery.jpg",      labels: [] },
-      { slideId: "blood-vessels-10", title: "Portal Vein",                                     image: "Blood vessels/Portal Vein.jpg",           labels: [] },
-      { slideId: "blood-vessels-11", title: "Thoracic Aorta",                                  image: "Blood vessels/Thoracic Aorta.jpg",        labels: [] },
-      { slideId: "blood-vessels-12", title: "Venous Drainage of Thorax & Abdomen",             image: "Blood vessels/Veneus Drainage.jpg",       labels: [] },
-      { slideId: "blood-vessels-13", title: "Blood Vessels Overview",                          image: "Blood vessels/Screenshot 2026-05-14 at 6.40.03.png", labels: [] }
-    ]
-  },
-  {
-    testId: "cross-section",
-    title: "Cross Section",
-    folder: "Cross section",
-    subject: "Anatomy",
-    slides: [
-      { slideId: "cross-section-1", title: "Cross Section 1", image: "Cross section/Cross-section1.jpg", labels: [] },
-      { slideId: "cross-section-2", title: "Cross Section 2", image: "Cross section/Cross-section2.jpg", labels: [] },
-      { slideId: "cross-section-3", title: "Cross Section 3", image: "Cross section/Cross-section3.jpg", labels: [] },
-      { slideId: "cross-section-4", title: "Cross Section 4", image: "Cross section/Cross-section4.jpg", labels: [] },
-      { slideId: "cross-section-5", title: "Cross Section 5", image: "Cross section/Cross-section5.jpg", labels: [] }
-    ]
-  },
-  {
-    testId: "general",
-    title: "General",
-    folder: "General",
-    subject: "Anatomy",
-    slides: [
-      { slideId: "general-1", title: "General 1", image: "General/11.jpg", labels: [] },
-      { slideId: "general-2", title: "General 2", image: "General/12.jpg", labels: [] },
-      { slideId: "general-3", title: "General 3", image: "General/13.jpg", labels: [] },
-      { slideId: "general-4", title: "General 4", image: "General/14.jpg", labels: [] },
-      { slideId: "general-5", title: "General 5", image: "General/15.jpg", labels: [] },
-      { slideId: "general-6", title: "General 6", image: "General/16.jpg", labels: [] },
-      { slideId: "general-7", title: "General 7", image: "General/17.jpg", labels: [] },
-      { slideId: "general-8", title: "General 8", image: "General/18.jpg", labels: [] }
-    ]
-  },
-  {
-    testId: "skull-openings",
-    title: "Skull Openings",
-    folder: "Skull Openings",
-    subject: "Anatomy",
-    slides: [
-      { slideId: "skull-openings-1", title: "External Cranial Base Openings", image: "Skull Openings/External.jpg", labels: [] },
-      { slideId: "skull-openings-2", title: "Internal Cranial Base Openings", image: "Skull Openings/Internal.jpg", labels: [] }
-    ]
-  },
-  {
-    testId: "nerve",
-    title: "Nerve",
-    folder: "Nerve",
-    subject: "Anatomy",
-    slides: [
-      { slideId: "nerve-1", title: "Nerve 1", image: "Nerve/11.jpg", labels: [] },
-      { slideId: "nerve-2", title: "Nerve 2", image: "Nerve/12.jpg", labels: [] },
-      { slideId: "nerve-3", title: "Nerve 3", image: "Nerve/13.jpg", labels: [] },
-      { slideId: "nerve-4", title: "Nerve 4", image: "Nerve/14.jpg", labels: [] },
-      { slideId: "nerve-5", title: "Nerve 5", image: "Nerve/15.jpg", labels: [] }
-    ]
-  },
-  {
-    testId: "organs-syntopy",
-    title: "Organs Syntopy",
-    folder: "Oragns Sytopy",
-    subject: "Anatomy",
-    slides: [
-      { slideId: "organs-syntopy-1", title: "Lung Impressions", image: "Oragns Sytopy/Lung Impression.jpg", labels: [] }
-    ]
-  },
-  {
-    testId: "topography",
-    title: "Topography",
-    folder: "Topography",
-    subject: "Anatomy",
-    slides: [
-      { slideId: "topography-1", title: "Heart Auscultation Points",  image: "Topography/Heart Asscultation.png",       labels: [] },
-      { slideId: "topography-2", title: "Lung Recesses",              image: "Topography/Lung recesses.jpg",            labels: [] },
-      { slideId: "topography-3", title: "Mediastinum",                image: "Topography/Mediastinum.jpg",              labels: [] },
-      { slideId: "topography-4", title: "Abdominal Projections",      image: "Topography/Abdominal Projections.jpg",    labels: [] },
-      { slideId: "topography-5", title: "Carotid Triangle",           image: "Topography/Carotid triangle.jpeg",        labels: [] },
-      { slideId: "topography-6", title: "Infra-temporal Fossa",       image: "Topography/Infra-temporal fossa.JPG",     labels: [] },
-      { slideId: "topography-7", title: "Liver Segments",             image: "Topography/Liver segments.jpg",           labels: [] },
-      { slideId: "topography-8", title: "Orbit",                      image: "Topography/Orbit.jpg",                    labels: [] },
-      { slideId: "topography-9",  title: "Uterus Angles",              image: "Topography/Uterus Angles.jpg",                          labels: [] },
-      { slideId: "topography-10", title: "Topography Overview 1",    image: "Topography/Screenshot 2026-05-14 at 6.29.06.png",        labels: [] },
-      { slideId: "topography-11", title: "Topography Overview 2",    image: "Topography/Screenshot 2026-05-14 at 6.36.29.png",        labels: [] }
-    ]
-  },
-  {
-    testId: "lymph-drainage",
-    title: "Lymph Drainage",
-    folder: "Lymph drainage",
-    subject: "Anatomy",
-    slides: [
-      { slideId: "lymph-drainage-1", title: "Lower Part Lymph Drainage", image: "Lymph drainage/Lower part.jpg", labels: [] },
-      { slideId: "lymph-drainage-2", title: "Upper Part Lymph Drainage", image: "Lymph drainage/Upper part.jpg", labels: [] }
-    ]
-  },
-  {
-    testId: "radiography",
-    title: "Radiography",
-    folder: "Radiography",
-    subject: "Anatomy",
-    slides: [
-      { slideId: "radiography-1",  title: "Radiography 1",  image: "Radiography/Radiography1.jpg",  labels: [] },
-      { slideId: "radiography-2",  title: "Radiography 2",  image: "Radiography/Radiography2.jpg",  labels: [] },
-      { slideId: "radiography-3",  title: "Radiography 3",  image: "Radiography/Radiography3.jpg",  labels: [] },
-      { slideId: "radiography-4",  title: "Radiography 4",  image: "Radiography/Radiography4.jpg",  labels: [] },
-      { slideId: "radiography-5",  title: "Radiography 5",  image: "Radiography/Radiography5.jpg",  labels: [] },
-      { slideId: "radiography-6",  title: "Radiography 6",  image: "Radiography/Radiography6.jpg",  labels: [] },
-      { slideId: "radiography-7",  title: "Radiography 7",  image: "Radiography/Radiography7.jpg",  labels: [] },
-      { slideId: "radiography-8",  title: "Radiography 8",  image: "Radiography/Radiography8.jpg",  labels: [] },
-      { slideId: "radiography-9",  title: "Radiography 9",  image: "Radiography/Radiography9.jpg",  labels: [] },
-      { slideId: "radiography-10", title: "Radiography 10", image: "Radiography/Radiography10.jpg", labels: [] },
-      { slideId: "radiography-11", title: "Radiography 11", image: "Radiography/Radiography11.jpg", labels: [] },
-      { slideId: "radiography-12", title: "Radiography 12", image: "Radiography/Radiography12.jpg", labels: [] },
-      { slideId: "radiography-13", title: "Radiography 13", image: "Radiography/Radiography13.jpg", labels: [] },
-      { slideId: "radiography-14", title: "Radiography 14", image: "Radiography/Radiography14.jpg", labels: [] },
-      { slideId: "radiography-15", title: "Radiography 15", image: "Radiography/Radiography15.jpg", labels: [] }
-    ]
-  }
-];
+const ANATOMY_SLIDE_TESTS = [];
 
 // ── Custom label storage (user-drawn boxes override built-in placeholders) ──
 function getCustomLabels() {
@@ -2313,7 +2169,7 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
                      borderLeft: '4px solid #5c7cfa' }}>
             Anatomy Slides
             <div style={{ fontSize: 12, fontWeight: 400, color: '#888', marginTop: 4 }}>
-              {ANATOMY_SLIDE_TESTS.length} topics · label and study anatomy images
+              Upload your own photos · swipe to practice
             </div>
           </button>
         )}
@@ -4424,11 +4280,11 @@ function MuscleLab({ onBack }) {
   const bank = window.MUSCLE_BANK || [];
   const [labZoom, setLabZoom] = React.useState(1);
   const [idx, setIdx] = React.useState(0);
-  const [imageFlipped, setImageFlipped] = React.useState(false);
+  const [imageFlipped, setImageFlipped] = React.useState(true);
   const muscle = bank[idx];
 
-  /* Reset image flip whenever the selected muscle changes */
-  React.useEffect(() => { setImageFlipped(false); }, [idx]);
+  /* Reset to show image whenever the selected muscle changes */
+  React.useEffect(() => { setImageFlipped(true); }, [idx]);
 
   /* Build two-level sidebar: { regionName: { groupName: [muscleObj,...] } } */
   const regions = React.useMemo(() => {
@@ -4617,7 +4473,7 @@ function MuscleLab({ onBack }) {
                   {muscle.name}
                 </h2>
                 <div style={{ marginTop: 18, fontSize: '0.75rem', color: '#bbb', letterSpacing: '0.04em' }}>
-                  tap to reveal image
+                  tap to see name
                 </div>
               </div>
 
@@ -8197,7 +8053,7 @@ function Root() {
         <button
           onClick={() => setShowAdmin(true)}
           style={{
-            position: 'fixed', top: 14, left: 14, zIndex: 500,
+            position: 'fixed', bottom: 14, left: 14, zIndex: 500,
             background: 'rgba(255,255,255,0.9)', border: '1.5px solid rgba(0,0,0,0.12)',
             borderRadius: 20, padding: '6px 16px', fontSize: 12, fontWeight: 700,
             color: '#1a1a1a', cursor: 'pointer', backdropFilter: 'blur(8px)',
