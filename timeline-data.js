@@ -207,11 +207,11 @@
       }
     ],
 
-    /* ── Digestive System (11 events) ── */
-    'Digestive System': [
+    /* ── Gut Development (11 events) ── */
+    'Gut Development': [
       {
         id: 'gs-001',
-        system: 'Digestive System',
+        system: 'Gut Development',
         week: 'Week 3–4 (Day 18–25)',
         event: 'Gut tube forms from endoderm by cranial and caudal folding of the embryonic disc',
         shortLabel: 'Primitive gut tube forms',
@@ -221,7 +221,7 @@
       },
       {
         id: 'gs-002',
-        system: 'Digestive System',
+        system: 'Gut Development',
         week: 'Week 4 (Day 25–28)',
         event: 'Stomach forms as a fusiform dilation of the foregut and begins to rotate',
         shortLabel: 'Stomach forms and rotates',
@@ -231,7 +231,7 @@
       },
       {
         id: 'gs-003',
-        system: 'Digestive System',
+        system: 'Gut Development',
         week: 'Week 4–5',
         event: 'Liver and gallbladder arise from the hepatic diverticulum of the foregut',
         shortLabel: 'Liver bud appears',
@@ -241,7 +241,7 @@
       },
       {
         id: 'gs-004',
-        system: 'Digestive System',
+        system: 'Gut Development',
         week: 'Week 5',
         event: 'Dorsal and ventral pancreatic buds form; rotate and fuse to create the pancreas',
         shortLabel: 'Pancreatic buds fuse',
@@ -251,7 +251,7 @@
       },
       {
         id: 'gs-005',
-        system: 'Digestive System',
+        system: 'Gut Development',
         week: 'Week 5–6',
         event: 'Physiological umbilical herniation — midgut loop herniates into the umbilical cord',
         shortLabel: 'Midgut herniation',
@@ -261,7 +261,7 @@
       },
       {
         id: 'gs-006',
-        system: 'Digestive System',
+        system: 'Gut Development',
         week: 'Week 6–7',
         event: 'Duodenal lumen transiently obliterates then recanalizes',
         shortLabel: 'Duodenal recanalization',
@@ -271,7 +271,7 @@
       },
       {
         id: 'gs-007',
-        system: 'Digestive System',
+        system: 'Gut Development',
         week: 'Week 10',
         event: 'Midgut returns to abdominal cavity with further 180-degree counterclockwise rotation',
         shortLabel: 'Intestines return and rotate',
@@ -281,7 +281,7 @@
       },
       {
         id: 'gs-008',
-        system: 'Digestive System',
+        system: 'Gut Development',
         week: 'Week 5–8',
         event: 'Urorectal septum divides the cloaca into the rectum and urogenital sinus',
         shortLabel: 'Cloaca divided',
@@ -291,7 +291,7 @@
       },
       {
         id: 'gs-009',
-        system: 'Digestive System',
+        system: 'Gut Development',
         week: 'Week 9–12',
         event: 'Intestinal villi and crypts develop; gut epithelium differentiates into specialized cell types',
         shortLabel: 'Gut epithelium differentiates',
@@ -301,7 +301,7 @@
       },
       {
         id: 'gs-010',
-        system: 'Digestive System',
+        system: 'Gut Development',
         week: 'Week 16–Birth',
         event: 'Meconium accumulates; fetal swallowing and gut motility established',
         shortLabel: 'Fetal gut function begins',
@@ -311,7 +311,7 @@
       },
       {
         id: 'gs-011',
-        system: 'Digestive System',
+        system: 'Gut Development',
         week: 'Birth',
         event: 'Transition to independent digestion — gut colonization by microbiota begins',
         shortLabel: 'Gut colonization at birth',
@@ -321,11 +321,11 @@
       }
     ],
 
-    /* ── Respiratory System (8 events) ── */
-    'Respiratory System': [
+    /* ── Respiratory Development (8 events) ── */
+    'Respiratory Development': [
       {
         id: 'rs-001',
-        system: 'Respiratory System',
+        system: 'Respiratory Development',
         week: 'Week 4 (Day 26–28)',
         event: 'Respiratory diverticulum appears as a ventral outgrowth of the foregut endoderm',
         shortLabel: 'Lung bud appears',
@@ -335,7 +335,7 @@
       },
       {
         id: 'rs-002',
-        system: 'Respiratory System',
+        system: 'Respiratory Development',
         week: 'Week 5',
         event: 'Primary bronchial buds form; right and left lungs established',
         shortLabel: 'Primary bronchi form',
@@ -345,7 +345,7 @@
       },
       {
         id: 'rs-003',
-        system: 'Respiratory System',
+        system: 'Respiratory Development',
         week: 'Week 5–16',
         event: 'Pseudoglandular period — bronchial tree branches down to terminal bronchioles',
         shortLabel: 'Pseudoglandular period',
@@ -355,7 +355,7 @@
       },
       {
         id: 'rs-004',
-        system: 'Respiratory System',
+        system: 'Respiratory Development',
         week: 'Week 16–26',
         event: 'Canalicular period — respiratory bronchioles form and vascularization begins',
         shortLabel: 'Canalicular period',
@@ -365,7 +365,7 @@
       },
       {
         id: 'rs-005',
-        system: 'Respiratory System',
+        system: 'Respiratory Development',
         week: 'Week 26–36',
         event: 'Saccular period — terminal sacs form and surfactant production ramps up',
         shortLabel: 'Saccular period',
@@ -375,7 +375,7 @@
       },
       {
         id: 'rs-006',
-        system: 'Respiratory System',
+        system: 'Respiratory Development',
         week: 'Week 36–Birth',
         event: 'Alveolar period begins — true alveoli form with thin air–blood barriers',
         shortLabel: 'Alveolar maturation',
@@ -385,7 +385,7 @@
       },
       {
         id: 'rs-007',
-        system: 'Respiratory System',
+        system: 'Respiratory Development',
         week: 'Birth',
         event: 'First breath — lungs clear fetal fluid and gas exchange begins',
         shortLabel: 'First breath',
@@ -395,7 +395,7 @@
       },
       {
         id: 'rs-008',
-        system: 'Respiratory System',
+        system: 'Respiratory Development',
         week: 'Birth–8 years',
         event: 'Postnatal alveolarization — the majority of alveoli form after birth',
         shortLabel: 'Postnatal alveolarization',
@@ -405,11 +405,11 @@
       }
     ],
 
-    /* ── Urogenital System (9 events) ── */
-    'Urogenital System': [
+    /* ── Urogenital Development (9 events) ── */
+    'Urogenital Development': [
       {
         id: 'ug-001',
-        system: 'Urogenital System',
+        system: 'Urogenital Development',
         week: 'Week 3–4',
         event: 'Intermediate mesoderm forms the urogenital ridge; pronephros appears briefly',
         shortLabel: 'Pronephros appears',
@@ -419,7 +419,7 @@
       },
       {
         id: 'ug-002',
-        system: 'Urogenital System',
+        system: 'Urogenital Development',
         week: 'Week 4 (Day 24–28)',
         event: 'Mesonephros forms with functional glomeruli and Wolffian duct reaches the cloaca',
         shortLabel: 'Mesonephros forms',
@@ -429,7 +429,7 @@
       },
       {
         id: 'ug-003',
-        system: 'Urogenital System',
+        system: 'Urogenital Development',
         week: 'Week 5 (Day 28–32)',
         event: 'Ureteric bud sprouts from the Wolffian duct; metanephros (permanent kidney) induction begins',
         shortLabel: 'Ureteric bud sprouts',
@@ -439,7 +439,7 @@
       },
       {
         id: 'ug-004',
-        system: 'Urogenital System',
+        system: 'Urogenital Development',
         week: 'Week 5–10',
         event: 'Metanephric kidney develops; nephron number determined by ureteric bud branching cycles',
         shortLabel: 'Nephrons form',
@@ -449,7 +449,7 @@
       },
       {
         id: 'ug-005',
-        system: 'Urogenital System',
+        system: 'Urogenital Development',
         week: 'Week 6–9',
         event: 'Kidneys ascend from the sacral region to their adult lumbar position',
         shortLabel: 'Renal ascent',
@@ -459,7 +459,7 @@
       },
       {
         id: 'ug-006',
-        system: 'Urogenital System',
+        system: 'Urogenital Development',
         week: 'Week 10–12',
         event: 'Fetal urine production begins; bladder fills with urine and amniotic fluid is maintained',
         shortLabel: 'Fetal urine production',
@@ -469,7 +469,7 @@
       },
       {
         id: 'ug-007',
-        system: 'Urogenital System',
+        system: 'Urogenital Development',
         week: 'Week 4–7',
         event: 'Bladder forms from the urogenital sinus; trigone derived from mesonephric ducts',
         shortLabel: 'Bladder forms',
@@ -479,7 +479,7 @@
       },
       {
         id: 'ug-008',
-        system: 'Urogenital System',
+        system: 'Urogenital Development',
         week: 'Week 9–Birth',
         event: 'Ureter insertion matures; ureteral orifices migrate to their adult position on the trigone',
         shortLabel: 'Ureteral migration to trigone',
@@ -489,7 +489,7 @@
       },
       {
         id: 'ug-009',
-        system: 'Urogenital System',
+        system: 'Urogenital Development',
         week: 'Birth',
         event: 'Transition to postnatal renal function — the kidneys assume full homeostatic responsibility',
         shortLabel: 'Postnatal renal function',
@@ -499,11 +499,11 @@
       }
     ],
 
-    /* ── Reproductive System (10 events) ── */
-    'Reproductive System': [
+    /* ── Reproductive Development (10 events) ── */
+    'Reproductive Development': [
       {
         id: 'rp-001',
-        system: 'Reproductive System',
+        system: 'Reproductive Development',
         week: 'Week 3 (Day 24)',
         event: 'Primordial germ cells (PGCs) segregate in the epiblast and migrate to the yolk sac wall',
         shortLabel: 'Primordial germ cells form',
@@ -513,7 +513,7 @@
       },
       {
         id: 'rp-002',
-        system: 'Reproductive System',
+        system: 'Reproductive Development',
         week: 'Week 4–5',
         event: 'PGCs migrate along the hindgut mesentery to colonize the genital ridges',
         shortLabel: 'PGC migration to genital ridge',
@@ -523,7 +523,7 @@
       },
       {
         id: 'rp-003',
-        system: 'Reproductive System',
+        system: 'Reproductive Development',
         week: 'Week 5–6',
         event: 'Indifferent gonad forms on the urogenital ridge with cortex and medulla',
         shortLabel: 'Indifferent gonad forms',
@@ -533,7 +533,7 @@
       },
       {
         id: 'rp-004',
-        system: 'Reproductive System',
+        system: 'Reproductive Development',
         week: 'Week 6–7',
         event: 'Sex determination — SRY activates the testicular differentiation pathway in XY gonads',
         shortLabel: 'Sex determination (SRY)',
@@ -543,7 +543,7 @@
       },
       {
         id: 'rp-005',
-        system: 'Reproductive System',
+        system: 'Reproductive Development',
         week: 'Week 7–8',
         event: 'Sertoli cells produce AMH; Leydig cells produce testosterone — male ducts develop',
         shortLabel: 'Testicular hormones act',
@@ -553,7 +553,7 @@
       },
       {
         id: 'rp-006',
-        system: 'Reproductive System',
+        system: 'Reproductive Development',
         week: 'Week 6–10',
         event: 'Paramesonephric ducts form; in females persist to become uterus, tubes, and vagina',
         shortLabel: 'Mullerian ducts form',
@@ -563,7 +563,7 @@
       },
       {
         id: 'rp-007',
-        system: 'Reproductive System',
+        system: 'Reproductive Development',
         week: 'Week 9–12',
         event: 'External genitalia differentiate from the indifferent stage under androgen influence',
         shortLabel: 'External genitalia differentiate',
@@ -573,7 +573,7 @@
       },
       {
         id: 'rp-008',
-        system: 'Reproductive System',
+        system: 'Reproductive Development',
         week: 'Week 8–28',
         event: 'Testicular descent — testes move from abdomen to inguinal canal',
         shortLabel: 'Testes begin descending',
@@ -583,7 +583,7 @@
       },
       {
         id: 'rp-009',
-        system: 'Reproductive System',
+        system: 'Reproductive Development',
         week: 'Week 12–Birth',
         event: 'Ovarian follicles form; oocytes enter meiosis and arrest at prophase I',
         shortLabel: 'Oocytes enter meiosis',
@@ -593,7 +593,7 @@
       },
       {
         id: 'rp-010',
-        system: 'Reproductive System',
+        system: 'Reproductive Development',
         week: 'Birth',
         event: 'Reproductive system dormant until puberty; genital anatomy fully formed at birth',
         shortLabel: 'Genitalia fully formed',
