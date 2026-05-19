@@ -936,6 +936,12 @@
 <script src="artery-game.js"></script>
 <script src="artery-assembly-data.js"></script>
 <script src="timeline-data.js"></script>
+
+<!-- Firebase SDK (compat v9) — required for Google auth + user approval -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
 
@@ -7872,31 +7878,36 @@ function App() {
   );
 }
 
-/* ── Password Gate ── */
-const PW_HASH = '245f82d5bac6ed8186cd05a292cb97c86df2b7c4814d0d8fdaba18535a5b4127';
-const SESSION_KEY = 'sb_auth';
+/* ── Firebase Auth + User Approval System ── */
+const ADMIN_EMAIL = 'goldindoo@gmail.com';
 
-async function hashInput(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-}
+/* Fill in your Firebase project details here after creating the project */
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyCyqh2DzjlNEWROd0jujsZs4TU8ukXuxoQ",
+  authDomain:        "study-buddy-2d9e4.firebaseapp.com",
+  projectId:         "study-buddy-2d9e4",
+  storageBucket:     "study-buddy-2d9e4.firebasestorage.app",
+  messagingSenderId: "294806437700",
+  appId:             "1:294806437700:web:2f90a63fb1a1ad27566111",
+};
 
-function PasswordGate({ onUnlock }) {
-  const [pw, setPw]       = useState('');
-  const [error, setError] = useState(false);
-  const [loading, setLoading] = useState(false);
+if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+const fbAuth = firebase.auth();
+const fbDb   = firebase.firestore();
 
-  const attempt = async () => {
-    if (!pw) return;
-    setLoading(true);
-    const h = await hashInput(pw);
-    if (h === PW_HASH) {
-      sessionStorage.setItem(SESSION_KEY, '1');
-      onUnlock();
-    } else {
-      setError(true);
-      setLoading(false);
-      setTimeout(() => setError(false), 1800);
+/* ── Login Screen ── */
+function LoginScreen() {
+  const [busy, setBusy] = useState(false);
+  const [err,  setErr]  = useState('');
+
+  const signIn = async () => {
+    setBusy(true); setErr('');
+    try {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      await fbAuth.signInWithPopup(provider);
+    } catch (e) {
+      setErr('Sign-in failed. Please try again.');
+      setBusy(false);
     }
   };
 
@@ -7916,48 +7927,289 @@ function PasswordGate({ onUnlock }) {
         <div style={{ fontWeight: 700, fontSize: 22, color: '#1a1a1a', letterSpacing: 0.2 }}>
           Study Buddy
         </div>
-        <div style={{ fontSize: 13, color: '#888' }}>Enter password to continue</div>
-        <input
-          type="password"
-          placeholder="Password"
-          value={pw}
-          onChange={e => setPw(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && attempt()}
-          autoFocus
-          style={{
-            width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 15,
-            border: error ? '2px solid #e53935' : '1.5px solid rgba(0,0,0,0.15)',
-            outline: 'none', background: error ? '#fff5f5' : '#fff',
-            transition: 'border 0.15s, background 0.15s',
-            boxSizing: 'border-box',
-          }}
-        />
-        {error && (
-          <div style={{ color: '#e53935', fontSize: 13, marginTop: -8 }}>
-            Incorrect password
-          </div>
-        )}
+        <div style={{ fontSize: 13, color: '#888', textAlign: 'center' }}>
+          Sign in with your Google account to request access.
+        </div>
+        {err && <div style={{ color: '#e53935', fontSize: 13 }}>{err}</div>}
         <button
-          onClick={attempt}
-          disabled={loading || !pw}
+          onClick={signIn}
+          disabled={busy}
           style={{
-            width: '100%', padding: '10px 0', borderRadius: 10, border: 'none',
-            background: pw ? '#1a1a1a' : '#ddd', color: pw ? '#fff' : '#aaa',
-            fontWeight: 700, fontSize: 15, cursor: pw ? 'pointer' : 'default',
+            width: '100%', padding: '11px 0', borderRadius: 10, border: 'none',
+            background: busy ? '#ddd' : '#1a1a1a', color: busy ? '#aaa' : '#fff',
+            fontWeight: 700, fontSize: 15, cursor: busy ? 'default' : 'pointer',
             transition: 'background 0.15s',
           }}
         >
-          {loading ? 'Checking…' : 'Enter'}
+          {busy ? 'Signing in...' : 'Sign in with Google'}
         </button>
       </div>
     </div>
   );
 }
 
+/* ── Pending Screen ── */
+function PendingScreen({ user }) {
+  return (
+    <div style={{
+      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'rgba(242,237,232,1)',
+    }}>
+      <div style={{
+        background: 'rgba(255,255,255,0.92)', borderRadius: 18,
+        boxShadow: '0 8px 40px rgba(0,0,0,0.13)', padding: '40px 36px',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
+        minWidth: 300, maxWidth: 360, textAlign: 'center', backdropFilter: 'blur(8px)',
+      }}>
+        <div style={{ fontWeight: 700, fontSize: 20, color: '#1a1a1a' }}>Access Pending</div>
+        <div style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>
+          Your request has been sent. You will gain access once the admin approves your account.
+          This page will update automatically — no need to refresh.
+        </div>
+        <div style={{ fontSize: 12, color: '#aaa' }}>{user.email}</div>
+        <button
+          onClick={() => fbAuth.signOut()}
+          style={{
+            padding: '8px 22px', borderRadius: 10, border: '1.5px solid #ddd',
+            background: '#fff', color: '#555', fontWeight: 600, fontSize: 13, cursor: 'pointer',
+          }}
+        >
+          Sign out
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ── Denied Screen ── */
+function DeniedScreen({ user }) {
+  return (
+    <div style={{
+      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'rgba(242,237,232,1)',
+    }}>
+      <div style={{
+        background: 'rgba(255,255,255,0.92)', borderRadius: 18,
+        boxShadow: '0 8px 40px rgba(0,0,0,0.13)', padding: '40px 36px',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
+        minWidth: 300, maxWidth: 360, textAlign: 'center', backdropFilter: 'blur(8px)',
+      }}>
+        <div style={{ fontWeight: 700, fontSize: 20, color: '#e53935' }}>Access Revoked</div>
+        <div style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>
+          Your access to Study Buddy has been removed. Contact the admin if you think this is a mistake.
+        </div>
+        <div style={{ fontSize: 12, color: '#aaa' }}>{user.email}</div>
+        <button
+          onClick={() => fbAuth.signOut()}
+          style={{
+            padding: '8px 22px', borderRadius: 10, border: '1.5px solid #ddd',
+            background: '#fff', color: '#555', fontWeight: 600, fontSize: 13, cursor: 'pointer',
+          }}
+        >
+          Sign out
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ── Admin Panel ── */
+function UserRow({ doc, onApprove, onRevoke }) {
+  const d = doc.data();
+  const statusColor = d.status === 'approved' ? '#2e7d32' : d.status === 'denied' ? '#c62828' : '#e65100';
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 10,
+      padding: '10px 12px', borderRadius: 10, marginBottom: 8,
+      background: d.status === 'approved' ? 'rgba(46,125,50,0.07)' :
+                  d.status === 'denied'   ? 'rgba(198,40,40,0.07)' : 'rgba(230,81,0,0.07)',
+    }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {d.displayName || d.email}
+        </div>
+        <div style={{ fontSize: 11, color: '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.email}</div>
+      </div>
+      <div style={{
+        fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 20,
+        background: statusColor, color: '#fff', textTransform: 'uppercase', letterSpacing: 0.5, flexShrink: 0,
+      }}>
+        {d.status}
+      </div>
+      {d.status !== 'approved' && (
+        <button onClick={() => onApprove(doc.id)} style={{
+          padding: '5px 11px', borderRadius: 8, border: 'none',
+          background: '#1a1a1a', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0,
+        }}>Approve</button>
+      )}
+      {d.status !== 'denied' && (
+        <button onClick={() => onRevoke(doc.id)} style={{
+          padding: '5px 11px', borderRadius: 8, border: '1.5px solid #c62828',
+          background: '#fff', color: '#c62828', fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0,
+        }}>Revoke</button>
+      )}
+    </div>
+  );
+}
+
+function AdminPanel({ onClose }) {
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    return fbDb.collection('users').onSnapshot(snap => setUsers(snap.docs));
+  }, []);
+
+  const approve = id => fbDb.collection('users').doc(id).update({ status: 'approved' });
+  const revoke  = id => fbDb.collection('users').doc(id).update({ status: 'denied' });
+
+  const pending  = users.filter(d => d.data().status === 'pending');
+  const approved = users.filter(d => d.data().status === 'approved');
+  const denied   = users.filter(d => d.data().status === 'denied');
+
+  return (
+    <div
+      onClick={e => e.target === e.currentTarget && onClose()}
+      style={{
+        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 1000, padding: 20,
+      }}
+    >
+      <div style={{
+        background: '#fff', borderRadius: 18, padding: '24px 22px',
+        width: '100%', maxWidth: 480, maxHeight: '82vh',
+        display: 'flex', flexDirection: 'column', gap: 14,
+        boxShadow: '0 8px 40px rgba(0,0,0,0.22)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontWeight: 700, fontSize: 17, color: '#1a1a1a' }}>User Management</div>
+          <button onClick={onClose} style={{
+            background: 'none', border: 'none', fontSize: 24, cursor: 'pointer',
+            color: '#888', lineHeight: 1, padding: '0 4px',
+          }}>&times;</button>
+        </div>
+
+        <div style={{ overflowY: 'auto', flex: 1 }}>
+          {pending.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#e65100', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
+                Pending ({pending.length})
+              </div>
+              {pending.map(d => <UserRow key={d.id} doc={d} onApprove={approve} onRevoke={revoke} />)}
+            </div>
+          )}
+          {approved.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#2e7d32', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
+                Approved ({approved.length})
+              </div>
+              {approved.map(d => <UserRow key={d.id} doc={d} onApprove={approve} onRevoke={revoke} />)}
+            </div>
+          )}
+          {denied.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#c62828', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
+                Revoked ({denied.length})
+              </div>
+              {denied.map(d => <UserRow key={d.id} doc={d} onApprove={approve} onRevoke={revoke} />)}
+            </div>
+          )}
+          {users.length === 0 && (
+            <div style={{ color: '#bbb', fontSize: 13, textAlign: 'center', padding: '28px 0' }}>No users yet</div>
+          )}
+        </div>
+
+        <button
+          onClick={() => fbAuth.signOut()}
+          style={{
+            padding: '10px 0', borderRadius: 10, border: '1.5px solid #ddd',
+            background: '#fff', color: '#666', fontWeight: 600, fontSize: 13, cursor: 'pointer',
+          }}
+        >
+          Sign out
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ── Root: Firebase auth state machine ── */
 function Root() {
-  const [auth, setAuth] = useState(sessionStorage.getItem(SESSION_KEY) === '1');
-  if (!auth) return <PasswordGate onUnlock={() => setAuth(true)} />;
-  return <App />;
+  const [fbUser,     setFbUser]     = useState(undefined); // undefined = still loading
+  const [userDoc,    setUserDoc]    = useState(null);
+  const [showAdmin,  setShowAdmin]  = useState(false);
+
+  useEffect(() => {
+    let firestoreUnsub = null;
+
+    const authUnsub = fbAuth.onAuthStateChanged(async user => {
+      /* Clean up any previous Firestore listener */
+      if (firestoreUnsub) { firestoreUnsub(); firestoreUnsub = null; }
+
+      if (!user) { setFbUser(null); setUserDoc(null); return; }
+      setFbUser(user);
+
+      /* Admin is always approved — no Firestore doc needed */
+      if (user.email === ADMIN_EMAIL) {
+        setUserDoc({ status: 'approved', isAdmin: true });
+        return;
+      }
+
+      /* Create user doc on first sign-in, then subscribe for real-time approval updates */
+      const ref  = fbDb.collection('users').doc(user.uid);
+      const snap = await ref.get();
+      if (!snap.exists) {
+        await ref.set({
+          email:       user.email,
+          displayName: user.displayName || '',
+          status:      'pending',
+          createdAt:   firebase.firestore.FieldValue.serverTimestamp(),
+        });
+      }
+      /* Real-time listener: approval change → instant access, no refresh needed */
+      firestoreUnsub = ref.onSnapshot(s => { if (s.exists) setUserDoc(s.data()); });
+    });
+
+    return () => { authUnsub(); if (firestoreUnsub) firestoreUnsub(); };
+  }, []);
+
+  /* Still loading auth state */
+  if (fbUser === undefined) {
+    return (
+      <div style={{
+        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'rgba(242,237,232,1)',
+      }}>
+        <div style={{ color: '#aaa', fontSize: 14 }}>Loading...</div>
+      </div>
+    );
+  }
+
+  if (!fbUser || !userDoc)              return <LoginScreen />;
+  if (userDoc.status === 'pending')     return <PendingScreen user={fbUser} />;
+  if (userDoc.status === 'denied')      return <DeniedScreen  user={fbUser} />;
+
+  /* Approved — show the app */
+  return (
+    <>
+      <App />
+      {fbUser.email === ADMIN_EMAIL && (
+        <button
+          onClick={() => setShowAdmin(true)}
+          style={{
+            position: 'fixed', top: 14, left: 14, zIndex: 500,
+            background: 'rgba(255,255,255,0.9)', border: '1.5px solid rgba(0,0,0,0.12)',
+            borderRadius: 20, padding: '6px 16px', fontSize: 12, fontWeight: 700,
+            color: '#1a1a1a', cursor: 'pointer', backdropFilter: 'blur(8px)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+          }}
+        >
+          Admin
+        </button>
+      )}
+      {showAdmin && <AdminPanel onClose={() => setShowAdmin(false)} />}
+    </>
+  );
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<Root />);
