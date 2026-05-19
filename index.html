@@ -7747,9 +7747,20 @@ const FIREBASE_CONFIG = {
   appId:             "1:294806437700:web:2f90a63fb1a1ad27566111",
 };
 
-if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-const fbAuth = firebase.auth();
-const fbDb   = firebase.firestore();
+/* Safe Firebase initialization — if SDK fails to load the page still renders */
+let fbAuth = null;
+let fbDb   = null;
+let FIREBASE_OK = false;
+try {
+  if (typeof firebase !== 'undefined') {
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    fbAuth = firebase.auth();
+    fbDb   = firebase.firestore();
+    FIREBASE_OK = true;
+  }
+} catch(e) {
+  console.error('Firebase init failed:', e);
+}
 
 /* ── Login Screen ── */
 function LoginScreen() {
@@ -7991,11 +8002,38 @@ function AdminPanel({ onClose }) {
 
 /* ── Root: Firebase auth state machine ── */
 function Root() {
+  /* Hooks must always be called first — no early returns before this block */
   const [fbUser,     setFbUser]     = useState(undefined); // undefined = still loading
   const [userDoc,    setUserDoc]    = useState(null);
   const [showAdmin,  setShowAdmin]  = useState(false);
 
+  /* If Firebase SDK failed to load — show retry screen (hooks already called above) */
+  if (!FIREBASE_OK) return (
+    <div style={{
+      minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center',
+      background:'rgba(242,237,232,1)',
+    }}>
+      <div style={{
+        background:'rgba(255,255,255,0.92)', borderRadius:18,
+        boxShadow:'0 8px 40px rgba(0,0,0,0.13)', padding:'40px 36px',
+        maxWidth:340, textAlign:'center', backdropFilter:'blur(8px)',
+      }}>
+        <div style={{fontWeight:700, fontSize:20, color:'#1a1a1a', marginBottom:12}}>Connection Error</div>
+        <div style={{fontSize:13, color:'#666', lineHeight:1.6, marginBottom:20}}>
+          Could not connect to the authentication service. Please check your internet connection and try again.
+        </div>
+        <button
+          onClick={() => window.location.reload()}
+          style={{padding:'10px 24px', borderRadius:10, border:'none', background:'#1a1a1a', color:'#fff', fontWeight:700, fontSize:14, cursor:'pointer'}}
+        >
+          Try Again
+        </button>
+      </div>
+    </div>
+  );
+
   useEffect(() => {
+    if (!fbAuth) return;
     let firestoreUnsub = null;
 
     const authUnsub = fbAuth.onAuthStateChanged(async user => {
