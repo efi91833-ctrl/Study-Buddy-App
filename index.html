@@ -7138,6 +7138,7 @@ function TimelineGame({ onBack }) {
   const [score, setScore]               = React.useState(0);
   const [resultSlots, setResultSlots]   = React.useState([]);
   const [correctOrder, setCorrectOrder] = React.useState([]);
+  const [selectedSlot, setSelectedSlot] = React.useState(0);
 
   const dragSrc = React.useRef(null);
   const ghostEl = React.useRef(null);
@@ -7545,199 +7546,249 @@ function TimelineGame({ onBack }) {
     );
   }
 
-  /* ── RESULT phase ── */
+  /* ── RESULT phase — frozen timeline + tap-to-read explanations ── */
   const total   = resultSlots.length;
   const pct     = total > 0 ? Math.round((score / total) * 100) : 0;
   const perfect = score === total;
-  const sortedCorrect = [...resultSlots].filter(Boolean).sort((a, b) => a.order - b.order);
+
+  /* Layout constants (same as play phase) */
+  const RN    = resultSlots.length;
+  const RSW   = 158;
+  const RSH   = 120;
+  const RG    = 22;
+  const RCONN = 22;
+  const RDOT  = 18;
+
+  const selItem     = resultSlots[selectedSlot] || null;
+  const selExpected = correctOrder[selectedSlot] || null;
+  const selCorrect  = selItem && selExpected && selItem.id === selExpected.id;
 
   return (
-    <div style={{ maxWidth: 640, margin: '0 auto', padding: '24px 20px 80px' }}>
-      <button onClick={() => { setPhase('pick'); setSystem(null); }}
-        style={{ border: 'none', background: 'none', cursor: 'pointer',
-                 fontSize: 14, color: '#666', padding: 0, marginBottom: 20 }}>
-        ← Systems
-      </button>
-      <div style={{ fontSize: 11, fontWeight: 700, color: '#aaa',
-                    letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 4 }}>
-        Time-Line — Results
-      </div>
-      <h1 style={{ fontSize: 22, fontWeight: 700, color: '#111', margin: '0 0 20px' }}>
-        {system}
-      </h1>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column',
+                  background: 'transparent' }}>
 
-      {/* Score banner */}
-      <div style={{ border: '1px solid #e0e0e0', borderRadius: 10, padding: '16px 20px',
-                    marginBottom: 24, background: '#fafafa',
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <div style={{ fontSize: 28, fontWeight: 800, color: '#111' }}>{score} / {total}</div>
-          <div style={{ fontSize: 13, color: '#888', marginTop: 2 }}>
-            {perfect
-              ? 'Perfect — correct chronological order'
-              : pct >= 70 ? 'Good work — a few positions off'
-              : 'Keep reviewing — check the explanations below'}
+      {/* ── Frosted header ── */}
+      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center',
+                    padding: '10px 18px', gap: 12,
+                    background: 'rgba(255,255,255,0.82)',
+                    backdropFilter: 'blur(10px)',
+                    borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
+        <button onClick={() => { setPhase('pick'); setSystem(null); }}
+          style={{ border: '1px solid #ccc', background: 'rgba(255,255,255,0.7)',
+                   borderRadius: 8, cursor: 'pointer', fontSize: 13,
+                   color: '#555', padding: '5px 13px', flexShrink: 0 }}>
+          ← Systems
+        </button>
+        <div style={{ flex: 1, textAlign: 'center' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#aaa',
+                        letterSpacing: '.1em', textTransform: 'uppercase' }}>
+            Results — {system}
+          </div>
+          <div style={{ fontSize: 15, fontWeight: 800, color: '#1a1a1a', marginTop: 1 }}>
+            {score} / {total} correct &nbsp;·&nbsp; {pct}%
           </div>
         </div>
-        <div style={{ fontSize: 32, fontWeight: 800,
-                      color: perfect ? '#111' : pct >= 70 ? '#555' : '#999' }}>
-          {pct}%
+        <button onClick={resetPlay}
+          style={{ border: 'none', background: '#1a1a1a', borderRadius: 8,
+                   cursor: 'pointer', fontSize: 13, color: '#fff',
+                   padding: '6px 14px', flexShrink: 0 }}>
+          Try Again
+        </button>
+      </div>
+
+      {/* ── Frozen timeline (same layout as play phase, non-draggable) ── */}
+      <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center',
+                    overflow: 'hidden', paddingTop: 12, paddingBottom: 4 }}>
+        <div style={{ width: '100%', overflowX: 'auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'center',
+                        minWidth: 'max-content', padding: '0 40px' }}>
+            <div style={{ position: 'relative', display: 'inline-flex', gap: RG }}>
+
+              {/* Horizontal line */}
+              <div style={{
+                position: 'absolute',
+                left:   RSW / 2,
+                width:  (RN - 1) * (RSW + RG),
+                top:    RSH + RCONN + RDOT / 2 - 1,
+                height: 2,
+                background: 'rgba(26,26,26,0.35)',
+                zIndex: 0,
+              }} />
+
+              {resultSlots.map((item, i) => {
+                const above    = i % 2 === 0;
+                const expected = correctOrder[i];
+                const correct  = item && expected && item.id === expected.id;
+                const isSelected = i === selectedSlot;
+
+                const slotBg = item
+                  ? (correct ? 'rgba(26,26,26,0.10)' : 'rgba(255,220,220,0.55)')
+                  : 'rgba(255,255,255,0.28)';
+                const slotBorder = item
+                  ? (correct
+                      ? (isSelected ? '2px solid #1a1a1a' : '1.5px solid rgba(26,26,26,0.45)')
+                      : (isSelected ? '2px solid #c0392b' : '1.5px solid rgba(192,57,43,0.45)'))
+                  : '1.5px dashed rgba(0,0,0,0.18)';
+
+                const slotStyle = (active) => ({
+                  width: RSW, height: RSH, flexShrink: 0,
+                  borderRadius: 12,
+                  border: active ? slotBorder : 'none',
+                  background: active ? slotBg : 'transparent',
+                  boxShadow: active && isSelected ? '0 0 0 3px rgba(0,0,0,0.12)' : 'none',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  padding: active ? '7px 9px' : 0,
+                  boxSizing: 'border-box',
+                  cursor: active && item ? 'pointer' : 'default',
+                  userSelect: 'none', WebkitUserSelect: 'none',
+                  fontSize: 13, fontWeight: item && active ? 600 : 400,
+                  color: item && active ? '#1a1a1a' : 'rgba(0,0,0,0.22)',
+                  lineHeight: 1.35, textAlign: 'center',
+                  transition: 'border .15s, box-shadow .15s',
+                });
+
+                return (
+                  <div key={i}
+                    style={{ width: RSW, flexShrink: 0,
+                             display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+
+                    {/* TOP slot */}
+                    <div style={slotStyle(above)}
+                      onClick={above && item ? () => setSelectedSlot(i) : undefined}>
+                      {above && item ? item.shortLabel : null}
+                    </div>
+
+                    <div style={{ width: 2, height: RCONN, flexShrink: 0,
+                                  background: above ? 'rgba(26,26,26,0.35)' : 'transparent' }} />
+
+                    {/* Dot — filled dark=correct, red=wrong, white=empty */}
+                    <div style={{
+                      width: RDOT, height: RDOT, borderRadius: '50%', flexShrink: 0,
+                      background: item ? (correct ? '#1a1a1a' : '#c0392b') : 'rgba(200,200,200,0.5)',
+                      border: '2.5px solid rgba(255,255,255,0.9)',
+                      boxShadow: '0 0 0 1.5px rgba(0,0,0,0.2)',
+                      position: 'relative', zIndex: 1,
+                    }} />
+
+                    {/* Week label */}
+                    {(() => {
+                      const wk = correctOrder[i] ? fmtWeek(correctOrder[i].week) : { top: String(i+1), bot: '' };
+                      return (
+                        <div style={{ margin: '6px 0 4px', textAlign: 'center', width: RSW }}>
+                          <div style={{ fontSize: 12, fontWeight: 800,
+                                        color: 'rgba(0,0,0,0.6)' }}>{wk.top}</div>
+                          {wk.bot && <div style={{ fontSize: 11, fontWeight: 600,
+                                                   color: 'rgba(0,0,0,0.38)' }}>{wk.bot}</div>}
+                        </div>
+                      );
+                    })()}
+
+                    <div style={{ width: 2, height: RCONN, flexShrink: 0,
+                                  background: !above ? 'rgba(26,26,26,0.35)' : 'transparent' }} />
+
+                    {/* BOTTOM slot */}
+                    <div style={slotStyle(!above)}
+                      onClick={!above && item ? () => setSelectedSlot(i) : undefined}>
+                      {!above && item ? item.shortLabel : null}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Mini result timeline bar */}
-      <div style={{ overflowX: 'auto', marginBottom: 24, paddingBottom: 4 }}>
-        <div style={{ display: 'inline-flex', gap: 4 }}>
-          {resultSlots.map((item, i) => {
-            const correct = item && item.order === i + 1;
-            return (
-              <div key={i}
-                title={item ? item.shortLabel : '—'}
-                style={{ width: 28, height: 28, borderRadius: 6, flexShrink: 0,
-                         background: correct ? '#333' : item ? '#bbb' : '#eee',
-                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                         fontSize: 10, fontWeight: 700,
-                         color: correct ? '#fff' : '#888' }}>
-                {i + 1}
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      {/* ── Explanation panel (scrollable, replaces pool) ── */}
+      <div style={{ flex: 1, overflowY: 'auto', margin: '8px 12px 12px',
+                    borderRadius: 16,
+                    background: 'rgba(255,255,255,0.82)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(0,0,0,0.08)',
+                    boxShadow: '0 2px 16px rgba(0,0,0,0.07)',
+                    padding: '16px 18px' }}>
 
-      {/* Per-event result cards */}
-      <div style={{ fontSize: 12, fontWeight: 700, color: '#aaa',
-                    letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 12 }}>
-        Your order
-      </div>
-
-      {resultSlots.map((item, idx) => {
-        const expected  = correctOrder[idx];
-        const isCorrect = item && expected && item.id === expected.id;
-        return (
-          <div key={item ? item.id : idx} style={{
-            ...baseCard,
-            cursor: 'default',
-            borderLeft: isCorrect ? '3px solid #333' : '3px solid #ccc',
-            marginBottom: 16,
-            flexDirection: 'column',
-            gap: 10,
-          }}>
-            <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-              {/* Week badge */}
-              <div style={{ flexShrink: 0, minWidth: 52, textAlign: 'center',
-                            padding: '5px 7px', borderRadius: 8,
-                            background: isCorrect ? '#1a1a1a' : '#f0f0f0',
-                            border: isCorrect ? 'none' : '1px solid #ddd' }}>
+        {selItem ? (
+          <React.Fragment>
+            {/* Event header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <div style={{ flexShrink: 0, padding: '5px 9px', borderRadius: 8,
+                            background: selCorrect ? '#1a1a1a' : '#c0392b' }}>
                 {(() => {
-                  const wk = expected ? fmtWeek(expected.week) : { top: String(idx+1), bot: '' };
+                  const wk = selExpected ? fmtWeek(selExpected.week) : { top: '', bot: '' };
                   return (
                     <React.Fragment>
-                      <div style={{ fontSize: 9, fontWeight: 800,
-                                    color: isCorrect ? '#fff' : '#999',
-                                    letterSpacing: '.04em', lineHeight: 1.2 }}>
-                        {wk.top}
-                      </div>
-                      {wk.bot && (
-                        <div style={{ fontSize: 8, fontWeight: 600,
-                                      color: isCorrect ? 'rgba(255,255,255,0.7)' : '#bbb',
-                                      marginTop: 1 }}>
-                          {wk.bot}
-                        </div>
-                      )}
+                      <div style={{ fontSize: 10, fontWeight: 800, color: '#fff',
+                                    letterSpacing: '.04em', lineHeight: 1.2 }}>{wk.top}</div>
+                      {wk.bot && <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)',
+                                               marginTop: 1 }}>{wk.bot}</div>}
                     </React.Fragment>
                   );
                 })()}
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between',
-                              alignItems: 'flex-start', gap: 8 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: '#111', lineHeight: 1.4 }}>
-                    {item ? item.shortLabel : '—'}
-                  </div>
-                  <div style={{ fontSize: 12, fontWeight: 700, flexShrink: 0,
-                                color: isCorrect ? '#333' : '#bbb' }}>
-                    {isCorrect ? 'correct' : item ? 'wrong slot' : 'empty'}
-                  </div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#111',
+                              lineHeight: 1.3 }}>{selItem.event}</div>
+                <div style={{ fontSize: 11, marginTop: 3,
+                              color: selCorrect ? '#2e7d32' : '#c0392b', fontWeight: 600 }}>
+                  {selCorrect ? 'Correct position' : 'Wrong position'
+                  }{!selCorrect && selExpected
+                    ? ` — expected here: ${selExpected.shortLabel}` : ''}
                 </div>
-                {!isCorrect && expected && (
-                  <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
-                    Expected here: <span style={{ fontWeight: 600, color: '#555' }}>{expected.shortLabel}</span>
-                  </div>
-                )}
               </div>
             </div>
-            {item && (
-              <React.Fragment>
-                <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: 10,
-                              fontSize: 13, color: '#444', lineHeight: 1.6 }}>
-                  {item.explanation}
-                </div>
-                <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: 8,
-                              fontSize: 12, color: '#888', lineHeight: 1.5 }}>
-                  <span style={{ fontWeight: 700, color: '#555' }}>Clinical note: </span>
-                  {item.clinicalNote}
-                </div>
-              </React.Fragment>
-            )}
-          </div>
-        );
-      })}
 
-      {/* Correct order summary */}
-      {!perfect && (
-        <React.Fragment>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#aaa',
-                        letterSpacing: '.08em', textTransform: 'uppercase',
-                        margin: '28px 0 12px' }}>
-            Correct order
-          </div>
-          {correctOrder.map((item, idx) => {
-            const wk = fmtWeek(item.week);
-            return (
-              <div key={item.id} style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                padding: '10px 14px', borderRadius: 10,
-                border: '1px solid #eee', marginBottom: 6, background: '#fafafa',
-              }}>
-                <div style={{ flexShrink: 0, minWidth: 44, textAlign: 'center',
-                              padding: '4px 6px', borderRadius: 7,
-                              background: '#1a1a1a' }}>
-                  <div style={{ fontSize: 9, fontWeight: 800, color: '#fff',
-                                letterSpacing: '.04em', lineHeight: 1.2 }}>
-                    {wk.top}
-                  </div>
-                  {wk.bot && (
-                    <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.6)',
-                                  marginTop: 1 }}>
-                      {wk.bot}
-                    </div>
-                  )}
-                </div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#222' }}>
-                  {item.shortLabel}
-                </div>
-              </div>
-            );
-          })}
-        </React.Fragment>
-      )}
+            {/* 4-5 line explanation */}
+            <div style={{ fontSize: 14, color: '#333', lineHeight: 1.7,
+                          marginBottom: 14 }}>
+              {selItem.explanation}
+            </div>
 
-      {/* Action buttons */}
-      <div style={{ display: 'flex', gap: 10, marginTop: 28 }}>
-        <button onClick={resetPlay}
-          style={{ flex: 1, padding: '13px 0', background: '#111', color: '#fff',
-                   border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700,
-                   cursor: 'pointer' }}>
-          Try Again
-        </button>
-        <button onClick={() => { setPhase('pick'); setSystem(null); }}
-          style={{ flex: 1, padding: '13px 0', background: '#fff', color: '#111',
-                   border: '1.5px solid #ccc', borderRadius: 10,
-                   fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
-          New System
-        </button>
+            {/* Clinical note */}
+            <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: 12,
+                          fontSize: 13, color: '#666', lineHeight: 1.6 }}>
+              <span style={{ fontWeight: 700, color: '#444' }}>Clinical note: </span>
+              {selItem.clinicalNote}
+            </div>
+
+            {/* Slot navigation dots */}
+            <div style={{ display: 'flex', gap: 5, marginTop: 16,
+                          flexWrap: 'wrap', justifyContent: 'center' }}>
+              {resultSlots.map((it, i) => {
+                const exp = correctOrder[i];
+                const ok  = it && exp && it.id === exp.id;
+                return (
+                  <button key={i} onClick={() => setSelectedSlot(i)}
+                    style={{ width: 28, height: 28, borderRadius: 6, border: 'none',
+                             cursor: 'pointer', fontSize: 10, fontWeight: 700,
+                             background: i === selectedSlot
+                               ? '#1a1a1a'
+                               : ok ? 'rgba(26,26,26,0.18)' : 'rgba(192,57,43,0.18)',
+                             color: i === selectedSlot ? '#fff'
+                               : ok ? '#1a1a1a' : '#c0392b' }}>
+                    {i + 1}
+                  </button>
+                );
+              })}
+            </div>
+          </React.Fragment>
+        ) : (
+          <div style={{ textAlign: 'center', color: '#aaa', fontSize: 14, paddingTop: 20 }}>
+            Tap any card on the timeline to read its explanation
+          </div>
+        )}
       </div>
+
+      {/* New System button */}
+      <button onClick={() => { setPhase('pick'); setSystem(null); }}
+        style={{ flexShrink: 0, margin: '0 12px 16px',
+                 padding: '13px 0', background: 'rgba(255,255,255,0.82)',
+                 color: '#333', border: '1.5px solid rgba(0,0,0,0.15)',
+                 borderRadius: 14, fontSize: 14, fontWeight: 600,
+                 cursor: 'pointer',
+                 backdropFilter: 'blur(10px)' }}>
+        New System
+      </button>
     </div>
   );
 }
