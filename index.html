@@ -7588,12 +7588,7 @@ function TimelineGame({ onBack }) {
             {score} / {total} correct &nbsp;·&nbsp; {pct}%
           </div>
         </div>
-        <button onClick={resetPlay}
-          style={{ border: 'none', background: '#1a1a1a', borderRadius: 8,
-                   cursor: 'pointer', fontSize: 13, color: '#fff',
-                   padding: '6px 14px', flexShrink: 0 }}>
-          Try Again
-        </button>
+        <div style={{ width: 90, flexShrink: 0 }} />
       </div>
 
       {/* ── Frozen timeline (same layout as play phase, non-draggable) ── */}
@@ -7788,6 +7783,18 @@ function TimelineGame({ onBack }) {
                  cursor: 'pointer',
                  backdropFilter: 'blur(10px)' }}>
         New System
+      </button>
+
+      {/* Try Again — fixed bottom-right, clear of search button */}
+      <button onClick={resetPlay}
+        style={{ position: 'fixed', bottom: 28, right: 24,
+                 background: '#1a1a1a', color: '#fff',
+                 border: 'none', borderRadius: 24,
+                 padding: '12px 22px', fontSize: 14, fontWeight: 700,
+                 cursor: 'pointer',
+                 boxShadow: '0 4px 16px rgba(0,0,0,0.22)',
+                 zIndex: 200 }}>
+        Try Again
       </button>
     </div>
   );
