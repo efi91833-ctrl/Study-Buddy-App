@@ -936,6 +936,7 @@
 <script src="artery-game.js"></script>
 <script src="artery-assembly-data.js"></script>
 <script src="timeline-data.js"></script>
+<script src="dissection-questions.js"></script>
 
 <!-- Firebase SDK (compat v9) — required for Google auth + user approval -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -2229,6 +2230,17 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
             Time-Line
             <div style={{ fontSize: 11, fontWeight: 400, color: '#888', marginTop: 4 }}>
               Arrange developmental events in chronological order
+            </div>
+          </button>
+        )}
+        {/* Dissections Question Bank — full width */}
+        {subject === 'Anatomy' && (
+          <button onClick={() => onSelectExam({ type: 'dissection_bank' })}
+            style={{ ...cardStyle, background: 'rgba(230,245,255,0.95)', gridColumn: '1 / -1',
+                     borderLeft: '4px solid #1976d2', fontSize: 15 }}>
+            Dissections Question Bank
+            <div style={{ fontSize: 12, fontWeight: 400, color: '#888', marginTop: 4 }}>
+              121 questions · Summer &amp; Winter · 12 professors · oral exam prep
             </div>
           </button>
         )}
@@ -7700,6 +7712,181 @@ function TimelineGame({ onBack }) {
   );
 }
 
+/* ── Dissection Question Bank ── */
+function DissectionBank({ onBack }) {
+  const data = window.DISSECTION_QUESTIONS || {};
+  const semesters = Object.keys(data); // ['Summer', 'Winter']
+
+  const [semester, setSemester] = useState(null);   // 'Summer' | 'Winter'
+  const [professor, setProfessor] = useState(null); // professor name
+  const [qIdx, setQIdx]         = useState(0);
+  const [marked, setMarked]     = useState({});     // idx → true if flagged
+
+  // Reset question index when prof changes
+  useEffect(() => { setQIdx(0); setMarked({}); }, [professor]);
+
+  const professors  = semester ? Object.keys(data[semester] || {}) : [];
+  const questions   = (semester && professor) ? (data[semester][professor] || []) : [];
+  const total       = questions.length;
+  const q           = questions[qIdx] || null;
+  const flaggedCount = Object.values(marked).filter(Boolean).length;
+
+  /* ── Semester picker ── */
+  if (!semester) return (
+    <div style={{ minHeight: '100vh', background: '#f7f6f3', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '18px 20px 12px', borderBottom: '1px solid #eee', background: '#fff' }}>
+        <button onClick={onBack} style={{ border: 'none', background: 'none', fontSize: 18, cursor: 'pointer', color: '#888' }}>←</button>
+        <div style={{ fontWeight: 700, fontSize: 16, color: '#1a1a1a' }}>Dissections Question Bank</div>
+      </div>
+      <div style={{ padding: '28px 20px' }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: '#aaa', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 14 }}>Select Semester</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {semesters.map(sem => {
+            const total = Object.values(data[sem]).reduce((s, qs) => s + qs.length, 0);
+            const profs = Object.keys(data[sem]).length;
+            return (
+              <div key={sem} onClick={() => setSemester(sem)} style={{
+                background: '#fff', border: '1.5px solid #e0e0e0', borderRadius: 14,
+                padding: '18px 20px', cursor: 'pointer', transition: 'all .12s',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 16, color: '#1a1a1a' }}>{sem} Semester</div>
+                  <div style={{ fontSize: 12, color: '#888', marginTop: 3 }}>{profs} professors · {total} questions</div>
+                </div>
+                <span style={{ fontSize: 20, color: '#ccc' }}>›</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
+  /* ── Professor picker ── */
+  if (!professor) return (
+    <div style={{ minHeight: '100vh', background: '#f7f6f3', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '18px 20px 12px', borderBottom: '1px solid #eee', background: '#fff' }}>
+        <button onClick={() => setSemester(null)} style={{ border: 'none', background: 'none', fontSize: 18, cursor: 'pointer', color: '#888' }}>←</button>
+        <div style={{ fontWeight: 700, fontSize: 16, color: '#1a1a1a' }}>{semester} Semester</div>
+      </div>
+      <div style={{ padding: '28px 20px' }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: '#aaa', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 14 }}>Select Professor</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {professors.map(prof => {
+            const count = data[semester][prof].length;
+            return (
+              <div key={prof} onClick={() => setProfessor(prof)} style={{
+                background: '#fff', border: '1.5px solid #e0e0e0', borderRadius: 12,
+                padding: '15px 18px', cursor: 'pointer', transition: 'all .12s',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              }}>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: 15, color: '#1a1a1a' }}>Prof. {prof}</div>
+                  <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>{count} questions</div>
+                </div>
+                <span style={{ fontSize: 20, color: '#ccc' }}>›</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
+  /* ── Question viewer ── */
+  if (!q) return null;
+  const isFlagged = marked[qIdx] || false;
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#f7f6f3', display: 'flex', flexDirection: 'column' }}>
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', borderBottom: '1px solid #eee', background: '#fff', flexShrink: 0 }}>
+        <button onClick={() => setProfessor(null)} style={{ border: 'none', background: 'none', fontSize: 18, cursor: 'pointer', color: '#888', padding: '0 4px' }}>←</button>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: '#1a1a1a' }}>Prof. {professor}</div>
+          <div style={{ fontSize: 11, color: '#aaa' }}>{semester} Semester</div>
+        </div>
+        <div style={{ fontSize: 12, color: '#888', fontWeight: 600 }}>{qIdx + 1} / {total}</div>
+        {flaggedCount > 0 && (
+          <div style={{ fontSize: 11, color: '#e07b00', fontWeight: 700, background: '#fff3e0', borderRadius: 8, padding: '2px 7px' }}>
+            {flaggedCount} flagged
+          </div>
+        )}
+      </div>
+
+      {/* Progress bar */}
+      <div style={{ height: 3, background: '#eee', flexShrink: 0 }}>
+        <div style={{ height: 3, background: '#1a1a1a', width: `${((qIdx + 1) / total) * 100}%`, transition: 'width .2s' }} />
+      </div>
+
+      {/* Question card */}
+      <div style={{ flex: 1, padding: '24px 20px', overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+        {q.topic && (
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#1976d2', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+            {q.topic}
+          </div>
+        )}
+
+        <div style={{
+          background: '#fff', borderRadius: 16, padding: '24px 22px',
+          fontSize: 16, lineHeight: 1.7, color: '#1a1a1a', fontWeight: 500,
+          boxShadow: '0 2px 12px rgba(0,0,0,0.07)',
+          border: isFlagged ? '2px solid #e07b00' : '1.5px solid #e8e8e8',
+        }}>
+          {q.q}
+        </div>
+
+        {/* Flag / unflag */}
+        <button
+          onClick={() => setMarked(prev => ({ ...prev, [qIdx]: !isFlagged }))}
+          style={{
+            padding: '9px 18px', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 600,
+            border: isFlagged ? '1.5px solid #e07b00' : '1.5px solid #ddd',
+            background: isFlagged ? '#fff3e0' : '#fff',
+            color: isFlagged ? '#e07b00' : '#888',
+            alignSelf: 'flex-start',
+          }}
+        >
+          {isFlagged ? 'Flagged — tap to unflag' : 'Flag for review'}
+        </button>
+      </div>
+
+      {/* Navigation */}
+      <div style={{
+        display: 'flex', gap: 10, padding: '14px 18px',
+        background: '#fff', borderTop: '1px solid #eee', flexShrink: 0,
+      }}>
+        <button
+          onClick={() => setQIdx(i => Math.max(0, i - 1))}
+          disabled={qIdx === 0}
+          style={{
+            flex: 1, padding: '12px 0', borderRadius: 12, border: '1.5px solid #ddd',
+            background: qIdx === 0 ? '#f5f5f5' : '#fff', color: qIdx === 0 ? '#ccc' : '#444',
+            fontWeight: 700, fontSize: 14, cursor: qIdx === 0 ? 'default' : 'pointer',
+          }}
+        >
+          Previous
+        </button>
+        <button
+          onClick={() => setQIdx(i => Math.min(total - 1, i + 1))}
+          disabled={qIdx === total - 1}
+          style={{
+            flex: 1, padding: '12px 0', borderRadius: 12, border: 'none',
+            background: qIdx === total - 1 ? '#ccc' : '#1a1a1a',
+            color: '#fff', fontWeight: 700, fontSize: 14,
+            cursor: qIdx === total - 1 ? 'default' : 'pointer',
+          }}
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ── End TimelineGame ── */
 
 /* ── Page instructions shown before entering each section ── */
@@ -7753,6 +7940,16 @@ const PAGE_INSTRUCTIONS = {
       'Study the vertebral and rib anatomy shown in the images.',
       'Tap the interactive labels to identify each anatomical feature.',
       'Navigate through different vertebral levels using the controls.',
+    ],
+  },
+  dissection_bank: {
+    title: 'Dissections Question Bank',
+    steps: [
+      'Choose a semester — Summer or Winter.',
+      'Then select a professor to see their specific questions.',
+      'Read each question and think through your answer.',
+      'Tap "Flag for review" on any question you want to come back to.',
+      'Use Previous / Next to move through all questions.',
     ],
   },
   czech_credit: {
@@ -7898,6 +8095,8 @@ function App() {
             ? <ArteryErrorBoundary><ArteryAssemblyGame onBack={handleBack} /></ArteryErrorBoundary>
           : specialMode?.type === 'timeline_game'
             ? <TimelineGame onBack={handleBack} />
+          : specialMode?.type === 'dissection_bank'
+            ? <DissectionBank onBack={handleBack} />
           : !subject
             ? <HomeScreen
                 onSelectSubject={handleSelectSubject}

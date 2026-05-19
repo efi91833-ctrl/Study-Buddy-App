@@ -5,7 +5,7 @@
    - Cache-first strategy for all GET requests
    ============================================================ */
 
-const CACHE_NAME = 'study-buddy-v98';
+const CACHE_NAME = 'study-buddy-v99';
 
 /* All local files to pre-cache on install */
 const LOCAL_ASSETS = [
@@ -21,6 +21,7 @@ const LOCAL_ASSETS = [
   '/artery-game.js',
   '/artery-assembly-data.js',
   '/timeline-data.js',
+  '/dissection-questions.js',
   /* Vendored scripts — fully offline, no CDN needed */
   '/vendor/react.min.js',
   '/vendor/react-dom.min.js',
