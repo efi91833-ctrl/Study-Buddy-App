@@ -2620,34 +2620,72 @@ function AnatomyTest({ onBack }) {
     if (pendingBox) setTimeout(() => termRef.current?.focus(), 60);
   }, [pendingBox]);
 
-  // ── Test picker (early return after all hooks) ───────────
+  // ── Topic picker (shown when no topic is selected) ───────────
   if (!selectedTest) {
     return (
       <div style={{maxWidth:860, margin:'0 auto', padding:'24px 20px'}}>
         <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:24}}>
           <button className="topbar-back" onClick={onBack}>← Back</button>
-          <span style={{fontSize:16, fontWeight:700, color:'#222'}}>Anatomy Slide Tests</span>
+          <span style={{fontSize:16, fontWeight:700, color:'#222'}}>Anatomy Slides</span>
         </div>
-        <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(190px, 1fr))', gap:12}}>
-          {ANATOMY_SLIDE_TESTS.map(test => {
-            let labelCount = 0;
-            test.slides.forEach(s => { labelCount += getLabelsForSlide(s.slideId).length; });
-            return (
-              <div key={test.testId}
-                onClick={() => { setSelectedTest(test); setSlideIdx(0); setRevealedIds({}); setEditMode(false); setEditLabels(null); }}
-                style={{
-                  background:'rgba(255,255,255,0.8)', border:'1px solid #ddd',
-                  borderRadius:12, padding:'16px', cursor:'pointer', transition:'all .15s',
-                }}>
-                <div style={{fontSize:15, fontWeight:700, color:'#1a1a1a', marginBottom:4}}>{test.title}</div>
-                <div style={{fontSize:12, color:'#888'}}>{test.slides.length} slide{test.slides.length !== 1 ? 's' : ''}</div>
-                {labelCount > 0 && (
-                  <div style={{fontSize:11, color:'#999', marginTop:3}}>{labelCount} label{labelCount !== 1 ? 's' : ''} drawn</div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+
+        {/* New folder input */}
+        {addingTopic ? (
+          <div style={{display:'flex', gap:8, marginBottom:16, alignItems:'center'}}>
+            <input
+              autoFocus
+              type="text" placeholder="Folder name (e.g. Blood Vessels)…" value={newTopicName}
+              onChange={e => setNewTopicName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleAddTopic(); if (e.key === 'Escape') { setAddingTopic(false); setNewTopicName(''); } }}
+              style={{flex:1, fontSize:14, padding:'9px 12px', borderRadius:10, border:'1.5px solid #ccc', outline:'none', boxSizing:'border-box'}}
+            />
+            <button onClick={handleAddTopic}
+              style={{padding:'9px 18px', borderRadius:10, border:'none', background:'#1a1a1a', color:'#fff', fontWeight:700, fontSize:14, cursor:'pointer'}}>
+              Create
+            </button>
+            <button onClick={() => { setAddingTopic(false); setNewTopicName(''); }}
+              style={{padding:'9px 14px', borderRadius:10, border:'1px solid #ccc', background:'#f5f5f5', color:'#555', fontSize:14, cursor:'pointer'}}>
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button onClick={() => setAddingTopic(true)}
+            style={{
+              display:'flex', alignItems:'center', gap:8,
+              padding:'10px 18px', borderRadius:12, border:'1.5px dashed #ccc',
+              background:'rgba(255,255,255,0.8)', color:'#555', fontSize:14,
+              fontWeight:600, cursor:'pointer', marginBottom:16, transition:'all .15s',
+            }}>
+            + New Folder
+          </button>
+        )}
+
+        {/* Custom topics grid */}
+        {customTopics.length > 0 && (
+          <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(190px, 1fr))', gap:12}}>
+            {customTopics.map(ct => {
+              const slides = customSlides[ct.id] || [];
+              const topic = { testId:'custom-'+ct.id, title:ct.name, isCustom:true, customTopicId:ct.id, slides: slides.map(s => ({slideId:s.id, image:s.url, title:s.title})) };
+              return (
+                <div key={ct.id}
+                  onClick={() => { setSelectedTest(topic); setSlideIdx(0); setRevealedIds({}); setEditMode(false); setEditLabels(null); setPhotoManage(slides.length === 0); }}
+                  style={{
+                    background:'rgba(255,255,255,0.88)', border:'1px solid #ddd',
+                    borderRadius:12, padding:'16px', cursor:'pointer', transition:'all .15s',
+                  }}>
+                  <div style={{fontSize:15, fontWeight:700, color:'#1a1a1a', marginBottom:4}}>{ct.name}</div>
+                  <div style={{fontSize:12, color:'#888'}}>{slides.length} photo{slides.length !== 1 ? 's' : ''}</div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {customTopics.length === 0 && !addingTopic && (
+          <div style={{color:'#bbb', fontSize:13, marginTop:8}}>
+            Create a folder and upload your own photos to start practising.
+          </div>
+        )}
       </div>
     );
   }
