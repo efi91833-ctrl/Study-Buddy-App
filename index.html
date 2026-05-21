@@ -8690,7 +8690,7 @@ function drawQuizMarker(canvas, level, xf, yf, state) {
 function BrainAtlas({ onBack }) {
 
   const [viewMode,   setViewMode]  = useState('photo');
-  const [photoSlice, setPhotoSlice] = useState(20);
+  const [photoSlice, setPhotoSlice] = useState(80);
   const [quizQ,        setQuizQ]        = useState(null);
   const [quizOptions,  setQuizOptions]  = useState([]);
   const [quizAnswered, setQuizAnswered] = useState(null);
@@ -8699,20 +8699,36 @@ function BrainAtlas({ onBack }) {
   const quizRef      = useRef(null);
   const usedQuizKeys = useRef(new Set());
 
-  const PHOTO_LABELS = [
-    'Foramen magnum','Lower brainstem','Cerebellum','Cerebellum','Cerebellum / Brainstem',
-    'Brainstem','Pons','Pons','Pons / Cerebellum','Pons / Cerebellum',
-    'Upper pons','Midbrain','Midbrain','Midbrain','Midbrain / Thalamus',
-    'Thalamus','Thalamus / Basal ganglia','Basal ganglia','Basal ganglia','Basal ganglia',
-    'Basal ganglia / Ventricles','Lateral ventricles','Lateral ventricles','Lateral ventricles','Lateral ventricles',
-    'Corpus callosum','Corpus callosum','Corpus callosum','Corpus callosum','Corona radiata',
-    'Corona radiata','Corona radiata','Corona radiata','Corona radiata','Corona radiata',
-    'Superior cortex','Superior cortex','Superior cortex','Superior cortex','Superior cortex',
-    'Superior cortex','Superior cortex','Superior cortex','Superior cortex','Superior cortex',
-    'Parasagittal cortex','Parasagittal cortex','Parasagittal cortex','Parasagittal cortex','Parasagittal cortex',
-    'High cortex','High cortex','High cortex','High cortex','High cortex',
-    'Vertex','Vertex','Vertex','Vertex','Vertex',
-  ];
+  /* 221 labels — one per slice (axial_000 = inferior, axial_220 = vertex) */
+  const PHOTO_LABELS = (() => {
+    const regions = [
+      [12,  'Foramen magnum'],
+      [22,  'Lower brainstem'],
+      [40,  'Cerebellum / Brainstem'],
+      [55,  'Pons'],
+      [68,  'Pons / Cerebellum'],
+      [80,  'Upper pons'],
+      [92,  'Midbrain'],
+      [105, 'Midbrain / Thalamus'],
+      [118, 'Thalamus'],
+      [130, 'Thalamus / Basal ganglia'],
+      [142, 'Basal ganglia'],
+      [152, 'Basal ganglia / Ventricles'],
+      [162, 'Lateral ventricles'],
+      [172, 'Corpus callosum'],
+      [182, 'Corona radiata'],
+      [194, 'Superior cortex'],
+      [204, 'Parasagittal cortex'],
+      [213, 'High cortex'],
+      [221, 'Vertex'],
+    ];
+    const labels = [];
+    for (let i = 0; i < 221; i++) {
+      const region = regions.find(([end]) => i < end) || regions[regions.length - 1];
+      labels.push(region[1]);
+    }
+    return labels;
+  })();
 
   function pickQuizQuestion() {
     let pool = QUIZ_MARKERS.filter(m => !usedQuizKeys.current.has(m.key));
@@ -8823,10 +8839,10 @@ function BrainAtlas({ onBack }) {
                          cursor:'pointer', fontSize:18, lineHeight:1, flexShrink:0 }}>
                 &#8592;
               </button>
-              <input type="range" min={0} max={59} value={photoSlice}
+              <input type="range" min={0} max={220} value={photoSlice}
                 onChange={e => setPhotoSlice(Number(e.target.value))}
                 style={{ flex:1, accentColor:'#4fc3f7', cursor:'pointer', height:4 }} />
-              <button onClick={() => setPhotoSlice(s => Math.min(59, s + 1))}
+              <button onClick={() => setPhotoSlice(s => Math.min(220, s + 1))}
                 style={{ background:'rgba(255,255,255,0.05)',
                          border:'1px solid rgba(255,255,255,0.10)',
                          borderRadius:6, color:'#888', padding:'5px 16px',
