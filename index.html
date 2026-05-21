@@ -8739,7 +8739,7 @@ function BrainAtlas({ onBack }) {
     fontWeight: active ? 600 : 400, transition: 'all .15s',
   });
 
-  const photoSrc = `/mri-slices/axial_${String(photoSlice).padStart(3,'0')}.jpg`;
+  const photoSrc = `mri-slices/axial_${String(photoSlice).padStart(3,'0')}.jpg`;
 
   return (
     <div style={{ position:'fixed', inset:0, background:'#06060c',
@@ -9086,7 +9086,8 @@ function LoginScreen() {
     setBusy(true); setErr('');
     try {
       const provider = new firebase.auth.GoogleAuthProvider();
-      await fbAuth.signInWithPopup(provider);
+      /* Use redirect (not popup) — works reliably on all browsers & deployed sites */
+      await fbAuth.signInWithRedirect(provider);
     } catch (e) {
       setErr('Sign-in failed. Please try again.');
       setBusy(false);
@@ -9354,6 +9355,9 @@ function Root() {
   useEffect(() => {
     if (!fbAuth) return;
     let firestoreUnsub = null;
+
+    /* Handle the redirect result coming back from Google */
+    fbAuth.getRedirectResult().catch(() => {});
 
     const authUnsub = fbAuth.onAuthStateChanged(async user => {
       /* Clean up any previous Firestore listener */
