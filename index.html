@@ -8687,30 +8687,41 @@ function drawQuizMarker(canvas, level, xf, yf, state) {
 }
 
 /* ── Brain MRI Component — real IXI-T1 axial photos + quiz ── */
-/* Volumes available — add new entries here as more brains are committed */
-const MRI_VOLUMES = [
-  { folder: 'mri-slices',    total: 221, label: 'Brain 1' },
-  { folder: 'mri-slices-02', total: 239, label: 'Brain 2' },
-  { folder: 'mri-slices-03', total: 243, label: 'Brain 3' },
-  { folder: 'mri-slices-04', total: 220, label: 'Brain 4' },
-  { folder: 'mri-slices-05', total: 226, label: 'Brain 5' },
-  { folder: 'mri-slices-06', total: 247, label: 'Brain 6' },
-  { folder: 'mri-slices-07', total: 230, label: 'Brain 7' },
-  { folder: 'mri-slices-08', total: 235, label: 'Brain 8' },
-  { folder: 'mri-slices-09', total: 230, label: 'Brain 9' },
-  { folder: 'mri-slices-10', total: 252, label: 'Brain 10' },
-  { folder: 'mri-slices-11', total: 238, label: 'Brain 11' },
-  { folder: 'mri-slices-12', total: 222, label: 'Brain 12' },
-  { folder: 'mri-slices-13', total: 239, label: 'Brain 13' },
-];
+/* Volumes per view — add new brains to each array as folders are committed */
+const MRI_VIEWS = {
+  axial: [
+    { folder: 'mri-slices',    total: 221 },
+    { folder: 'mri-slices-02', total: 239 },
+    { folder: 'mri-slices-03', total: 243 },
+    { folder: 'mri-slices-04', total: 220 },
+    { folder: 'mri-slices-05', total: 226 },
+    { folder: 'mri-slices-06', total: 247 },
+    { folder: 'mri-slices-07', total: 230 },
+    { folder: 'mri-slices-08', total: 235 },
+    { folder: 'mri-slices-09', total: 230 },
+    { folder: 'mri-slices-10', total: 252 },
+    { folder: 'mri-slices-11', total: 238 },
+    { folder: 'mri-slices-12', total: 222 },
+    { folder: 'mri-slices-13', total: 239 },
+  ],
+  coronal: [
+    { folder: 'mri-coronal', total: 222 },
+  ],
+  sagittal: [
+    { folder: 'mri-sagittal', total: 132 },
+  ],
+};
 
 function BrainAtlas({ onBack }) {
 
+  const [viewType,   setViewType]  = useState('axial');
   const [volIndex,   setVolIndex]  = useState(0);
   const [photoSlice, setPhotoSlice] = useState(80);
 
-  const vol = MRI_VOLUMES[volIndex];
+  const volumes  = MRI_VIEWS[viewType];
+  const vol      = volumes[volIndex] || volumes[0];
   const maxSlice = vol.total - 1;
+  const defaultSlice = viewType === 'axial' ? 80 : Math.floor(vol.total / 2);
 
   const modeBtn = active => ({
     background: active ? 'rgba(255,255,255,0.15)' : 'none',
@@ -8737,25 +8748,37 @@ function BrainAtlas({ onBack }) {
         </button>
         <span style={{ color:'#fff', fontWeight:700, fontSize:17 }}>Brain MRI</span>
 
+        {/* View type tabs */}
+        <div style={{ display:'flex', gap:3, background:'rgba(255,255,255,0.06)', borderRadius:8, padding:3 }}>
+          {['axial','coronal','sagittal'].map(v => (
+            <button key={v} style={modeBtn(viewType===v)} onClick={() => {
+              setViewType(v); setVolIndex(0);
+              setPhotoSlice(v === 'axial' ? 80 : Math.floor(MRI_VIEWS[v][0].total / 2));
+            }}>
+              {v.charAt(0).toUpperCase() + v.slice(1)}
+            </button>
+          ))}
+        </div>
+
         {/* Brain switcher */}
-        <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:6, marginLeft:'auto' }}>
           <button
-            onClick={() => { setVolIndex(i => Math.max(0, i-1)); setPhotoSlice(80); }}
+            onClick={() => { setVolIndex(i => Math.max(0, i-1)); setPhotoSlice(defaultSlice); }}
             disabled={volIndex === 0}
             style={{ background:'none', border:'1px solid rgba(255,255,255,0.15)', borderRadius:6,
                      color: volIndex===0 ? '#333' : '#aaa', padding:'4px 10px',
                      cursor: volIndex===0 ? 'default' : 'pointer', fontSize:14 }}>
             &#8592;
           </button>
-          <span style={{ color:'#4fc3f7', fontSize:12, fontWeight:600, minWidth:48, textAlign:'center' }}>
-            {vol.label}
+          <span style={{ color:'#4fc3f7', fontSize:12, fontWeight:600, minWidth:52, textAlign:'center' }}>
+            Brain {volIndex + 1} / {volumes.length}
           </span>
           <button
-            onClick={() => { setVolIndex(i => Math.min(MRI_VOLUMES.length-1, i+1)); setPhotoSlice(80); }}
-            disabled={volIndex === MRI_VOLUMES.length-1}
+            onClick={() => { setVolIndex(i => Math.min(volumes.length-1, i+1)); setPhotoSlice(defaultSlice); }}
+            disabled={volIndex === volumes.length-1}
             style={{ background:'none', border:'1px solid rgba(255,255,255,0.15)', borderRadius:6,
-                     color: volIndex===MRI_VOLUMES.length-1 ? '#333' : '#aaa', padding:'4px 10px',
-                     cursor: volIndex===MRI_VOLUMES.length-1 ? 'default' : 'pointer', fontSize:14 }}>
+                     color: volIndex===volumes.length-1 ? '#333' : '#aaa', padding:'4px 10px',
+                     cursor: volIndex===volumes.length-1 ? 'default' : 'pointer', fontSize:14 }}>
             &#8594;
           </button>
         </div>
