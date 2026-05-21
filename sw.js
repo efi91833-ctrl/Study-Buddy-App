@@ -5,7 +5,7 @@
    - Cache-first strategy for all GET requests
    ============================================================ */
 
-const CACHE_NAME = 'study-buddy-v104';
+const CACHE_NAME = 'study-buddy-v105';
 
 /* All local files to pre-cache on install */
 const LOCAL_ASSETS = [
@@ -23,8 +23,6 @@ const LOCAL_ASSETS = [
   '/timeline-data.js',
   '/dissection-questions.js',
   '/brain-atlas-data.js',
-  /* Three.js for 3D brain atlas */
-  'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
   /* Vendored scripts — fully offline, no CDN needed */
   '/vendor/react.min.js',
   '/vendor/react-dom.min.js',
@@ -55,6 +53,27 @@ const LOCAL_ASSETS = [
   '/Peritoneum/vertebra-cut.png',
   '/Peritoneum/rib-cropped.png',
   '/Wound-man,_16th_Century_Wellcome_L0010200.webp',
+  /* Real MRI axial slices (IXI-T1) */
+  '/mri-slices/axial_000.jpg','/mri-slices/axial_001.jpg','/mri-slices/axial_002.jpg',
+  '/mri-slices/axial_003.jpg','/mri-slices/axial_004.jpg','/mri-slices/axial_005.jpg',
+  '/mri-slices/axial_006.jpg','/mri-slices/axial_007.jpg','/mri-slices/axial_008.jpg',
+  '/mri-slices/axial_009.jpg','/mri-slices/axial_010.jpg','/mri-slices/axial_011.jpg',
+  '/mri-slices/axial_012.jpg','/mri-slices/axial_013.jpg','/mri-slices/axial_014.jpg',
+  '/mri-slices/axial_015.jpg','/mri-slices/axial_016.jpg','/mri-slices/axial_017.jpg',
+  '/mri-slices/axial_018.jpg','/mri-slices/axial_019.jpg','/mri-slices/axial_020.jpg',
+  '/mri-slices/axial_021.jpg','/mri-slices/axial_022.jpg','/mri-slices/axial_023.jpg',
+  '/mri-slices/axial_024.jpg','/mri-slices/axial_025.jpg','/mri-slices/axial_026.jpg',
+  '/mri-slices/axial_027.jpg','/mri-slices/axial_028.jpg','/mri-slices/axial_029.jpg',
+  '/mri-slices/axial_030.jpg','/mri-slices/axial_031.jpg','/mri-slices/axial_032.jpg',
+  '/mri-slices/axial_033.jpg','/mri-slices/axial_034.jpg','/mri-slices/axial_035.jpg',
+  '/mri-slices/axial_036.jpg','/mri-slices/axial_037.jpg','/mri-slices/axial_038.jpg',
+  '/mri-slices/axial_039.jpg','/mri-slices/axial_040.jpg','/mri-slices/axial_041.jpg',
+  '/mri-slices/axial_042.jpg','/mri-slices/axial_043.jpg','/mri-slices/axial_044.jpg',
+  '/mri-slices/axial_045.jpg','/mri-slices/axial_046.jpg','/mri-slices/axial_047.jpg',
+  '/mri-slices/axial_048.jpg','/mri-slices/axial_049.jpg','/mri-slices/axial_050.jpg',
+  '/mri-slices/axial_051.jpg','/mri-slices/axial_052.jpg','/mri-slices/axial_053.jpg',
+  '/mri-slices/axial_054.jpg','/mri-slices/axial_055.jpg','/mri-slices/axial_056.jpg',
+  '/mri-slices/axial_057.jpg','/mri-slices/axial_058.jpg','/mri-slices/axial_059.jpg',
   /* Blood vessels */
   '/Blood%20vessels/Abdomenal%20Aorta.jpg',
   '/Blood%20vessels/Abdominal%20Aorta.jpg',
