@@ -9322,6 +9322,10 @@ function Root() {
   const [userDoc,    setUserDoc]    = useState(null);
   const [showAdmin,  setShowAdmin]  = useState(false);
 
+  /* Localhost bypass — skip Firebase auth entirely when running locally */
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  if (isLocalhost) return <App />;
+
   /* If Firebase SDK failed to load — show retry screen (hooks already called above) */
   if (!FIREBASE_OK) return (
     <div style={{
