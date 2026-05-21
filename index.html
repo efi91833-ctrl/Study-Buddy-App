@@ -937,6 +937,8 @@
 <script src="artery-assembly-data.js"></script>
 <script src="timeline-data.js"></script>
 <script src="dissection-questions.js"></script>
+<script src="brain-atlas-data.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <!-- Firebase SDK (compat v9) — required for Google auth + user approval -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -3280,7 +3282,7 @@ function AnatomyTest({ onBack }) {
   );
 }
 
-function HomeScreen({ onSelectSubject, onBooksChange, onOpenBook }) {
+function HomeScreen({ onSelectSubject, onBooksChange, onOpenBook, onSpecialMode }) {
   return (
     <div className="home-screen">
       <div className="home-bg" />
@@ -3321,6 +3323,16 @@ function HomeScreen({ onSelectSubject, onBooksChange, onOpenBook }) {
           );
         })}
         <BookShelf onBooksChange={onBooksChange} onOpenBook={onOpenBook} />
+        {onSpecialMode && (
+          <div
+            className="sidebar-subject-card"
+            onClick={() => onSpecialMode('brain_atlas')}
+            style={{ background:'rgba(8,8,20,0.88)', border:'1px solid rgba(79,195,247,0.35)' }}
+          >
+            <div className="sidebar-subject-name" style={{ color:'#4fc3f7' }}>Brain Atlas</div>
+            <div className="sidebar-subject-desc" style={{ color:'#5a7a90' }}>3D brain + MRI cross-sections</div>
+          </div>
+        )}
       </div>
 
       <div className="home-center">
@@ -8080,6 +8092,631 @@ function InstructionOverlay({ title, steps, onContinue }) {
   );
 }
 
+
+/* ═══════════════════════════════════════════════════════════════
+   BRAIN ATLAS — helpers + component
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Create a bumpy brain-shaped outer shell from a deformed sphere */
+function createBrainGeometry() {
+  const geo = new THREE.SphereGeometry(1.1, 52, 40);
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    const len = Math.sqrt(x*x + y*y + z*z) || 1;
+    const nx = x/len, ny = y/len, nz = z/len;
+    const theta = Math.atan2(nz, nx);
+    const phi   = Math.asin(Math.max(-1, Math.min(1, ny)));
+    /* gyral bumps */
+    const bump = 0.042 * (
+      Math.sin(theta*5 + phi*4 + 0.3) + Math.sin(theta*8 - phi*6 + 1.1) +
+      Math.sin(phi*9  + theta*3 + 0.7) + Math.sin(theta*3 + phi*8 - 0.5)
+    );
+    /* flatten inferior surface */
+    const flat = ny < -0.25 ? 1.0 + (ny + 0.25) * 0.45 : 1.0;
+    const r = (1.1 + bump) * flat;
+    pos.setXYZ(i, nx * 0.87 * r, ny * 0.80 * r, nz * 1.02 * r);
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
+
+/* Draw one axial MRI slice on a <canvas> element */
+function drawMRISlice(canvas, level) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height, cx = W/2, cy = H/2;
+  ctx.clearRect(0,0,W,H);
+
+  /* Background */
+  const bg = ctx.createRadialGradient(cx,cy,8,cx,cy,W*0.62);
+  bg.addColorStop(0,'#111118'); bg.addColorStop(1,'#050508');
+  ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+
+  /* Brain cross-section scale per level (0=inferior → 17=superior) */
+  const scales = [0.38,0.52,0.68,0.75,0.80,0.84,0.87,0.91,
+                  0.96,0.98,0.99,0.97,0.95,0.92,0.89,0.85,0.76,0.56];
+  const sc = scales[Math.min(level, scales.length-1)];
+  const bW = W * 0.44 * sc, bH = H * 0.40 * sc;
+
+  /* ── helpers ── */
+  function el(x,y,rx,ry,fill,stroke,lw) {
+    ctx.save(); ctx.beginPath();
+    ctx.ellipse(x,y,Math.max(1,rx),Math.max(1,ry),0,0,Math.PI*2);
+    if(fill){ctx.fillStyle=fill;ctx.fill();}
+    if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw||1.5;ctx.stroke();}
+    ctx.restore();
+  }
+  function txt(t,x,y,col,size) {
+    ctx.save(); ctx.fillStyle=col||'rgba(255,255,255,0.65)';
+    ctx.font=(size||10)+'px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(t,x,y); ctx.restore();
+  }
+  function midline() {
+    ctx.save(); ctx.strokeStyle='rgba(255,255,255,0.10)';
+    ctx.lineWidth=1; ctx.setLineDash([3,4]);
+    ctx.beginPath(); ctx.moveTo(cx,cy-bH-8); ctx.lineTo(cx,cy+bH+8);
+    ctx.stroke(); ctx.restore();
+  }
+
+  /* ── outer brain oval ── */
+  function brain() {
+    const g = ctx.createRadialGradient(cx,cy-bH*0.1,bW*0.1,cx,cy,bW);
+    g.addColorStop(0,'#3a3040'); g.addColorStop(0.65,'#2a2535'); g.addColorStop(1,'#1a1520');
+    el(cx,cy,bW,bH,g,'rgba(180,160,200,0.22)',1.5);
+    /* gray-matter rim */
+    ctx.save(); ctx.beginPath();
+    ctx.ellipse(cx,cy,bW,bH,0,0,Math.PI*2);
+    ctx.strokeStyle='rgba(140,120,170,0.28)'; ctx.lineWidth=7; ctx.stroke();
+    ctx.restore();
+    /* sulcal lines */
+    ctx.save(); ctx.strokeStyle='rgba(0,0,0,0.2)'; ctx.lineWidth=1;
+    for(let i=0;i<10;i++){
+      const a=(i/10)*Math.PI*2;
+      ctx.beginPath();
+      ctx.moveTo(cx+bW*0.87*Math.cos(a),cy+bH*0.87*Math.sin(a));
+      ctx.lineTo(cx+bW*0.97*Math.cos(a),cy+bH*0.97*Math.sin(a));
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  const C = {
+    wm:'#2a2535', gm:'#4a4060', th:'#b44a3a', ca:'#c8770a',
+    pu:'#d4900f', gp:'#a06010', ic:'#1a3060', hi:'#7040a0',
+    am:'#804060', ve:'#0a3058', cb:'#206050', po:'#205540',
+    me:'#1a4535', mb:'#204840', cc:'#303050', sn:'#0a0808',
+    aq:'#0a2040', ci:'#5a507a',
+  };
+
+  brain(); midline();
+
+  if (level <= 1) {
+    /* Medulla / lower brainstem */
+    el(cx,cy+bH*0.05,bW*0.18,bH*0.22,C.me,'#2a7060',1.5);
+    txt('Medulla',cx,cy+bH*0.1,'#30a080',10);
+    el(cx-bW*0.42,cy-bH*0.1,bW*0.28,bH*0.32,C.cb,'#30a080',1.5);
+    el(cx+bW*0.42,cy-bH*0.1,bW*0.28,bH*0.32,C.cb,'#30a080',1.5);
+    txt('Cerebellar hemispheres',cx,cy-bH*0.28,'#40c090',10);
+    el(cx-bW*0.82,cy+bH*0.1,bW*0.18,bH*0.22,C.gm,'#888',1);
+    el(cx+bW*0.82,cy+bH*0.1,bW*0.18,bH*0.22,C.gm,'#888',1);
+
+  } else if (level === 2) {
+    /* Pons */
+    el(cx,cy-bH*0.28,bW*0.68,bH*0.5,C.cb,'#30a080',1.5);
+    el(cx,cy-bH*0.28,bW*0.13,bH*0.14,'#287060','#40a080',1);
+    txt('Vermis',cx,cy-bH*0.25,'#50c090',10);
+    txt('Cerebellum',cx-bW*0.4,cy-bH*0.12,'#40c090',10);
+    /* 4th ventricle */
+    ctx.save(); ctx.beginPath();
+    ctx.moveTo(cx,cy-bH*0.04); ctx.lineTo(cx-bW*0.08,cy+bH*0.09); ctx.lineTo(cx+bW*0.08,cy+bH*0.09);
+    ctx.closePath(); ctx.fillStyle=C.ve; ctx.fill(); ctx.restore();
+    txt('4th Ventricle',cx,cy+bH*0.14,'#4fc3f7',10);
+    el(cx,cy+bH*0.24,bW*0.36,bH*0.24,C.po,'#30a080',1.5);
+    txt('Pons',cx,cy+bH*0.27,'#40c090',11);
+    el(cx-bW*0.82,cy+bH*0.2,bW*0.19,bH*0.22,C.gm,'#888',1);
+    el(cx+bW*0.82,cy+bH*0.2,bW*0.19,bH*0.22,C.gm,'#888',1);
+
+  } else if (level === 3) {
+    /* Pons / Cerebellum */
+    el(cx,cy-bH*0.22,bW*0.62,bH*0.48,C.cb,'#30a080',1.5);
+    el(cx,cy-bH*0.22,bW*0.12,bH*0.13,'#287060','#40a080',1);
+    ctx.save(); ctx.beginPath();
+    ctx.moveTo(cx,cy+bH*0.03); ctx.lineTo(cx-bW*0.07,cy+bH*0.14); ctx.lineTo(cx+bW*0.07,cy+bH*0.14);
+    ctx.closePath(); ctx.fillStyle=C.ve; ctx.fill(); ctx.restore();
+    el(cx,cy+bH*0.27,bW*0.30,bH*0.21,C.po,'#30a080',1.5);
+    txt('Pons',cx,cy+bH*0.30,'#40c090',11);
+    txt('4th Ventricle',cx,cy+bH*0.1,'#4fc3f7',10);
+    el(cx-bW*0.74,cy+bH*0.2,bW*0.2,bH*0.26,C.gm,'#888',1);
+    el(cx+bW*0.74,cy+bH*0.2,bW*0.2,bH*0.26,C.gm,'#888',1);
+
+  } else if (level === 4) {
+    /* Lower midbrain — "Mickey Mouse" */
+    el(cx,cy-bH*0.30,bW*0.52,bH*0.34,C.cb,'#30a080',1.5);
+    el(cx,cy-bH*0.08,bW*0.15,bH*0.11,'#28504a','#40a080',1);
+    txt('Quadrigeminal plate',cx,cy-bH*0.04,'#40c090',9);
+    el(cx,cy+bH*0.05,bW*0.025,bH*0.025,C.aq,'#4fc3f7',1);
+    el(cx,cy+bH*0.16,bW*0.22,bH*0.17,C.mb,'#30a0a0',1.5);
+    el(cx-bW*0.26,cy+bH*0.3,bW*0.15,bH*0.12,'#1a4848','#30a0a0',1.5);
+    el(cx+bW*0.26,cy+bH*0.3,bW*0.15,bH*0.12,'#1a4848','#30a0a0',1.5);
+    txt('Cerebral peduncles',cx,cy+bH*0.38,'#4fc3f7',10);
+    txt('Midbrain',cx,cy+bH*0.18,'#40c0c0',11);
+    el(cx-bW*0.74,cy+bH*0.1,bW*0.19,bH*0.26,C.gm,'#888',1);
+    el(cx+bW*0.74,cy+bH*0.1,bW*0.19,bH*0.26,C.gm,'#888',1);
+
+  } else if (level === 5 || level === 6) {
+    /* Midbrain proper */
+    el(cx,cy-bH*0.04,bW*0.025,bH*0.03,C.aq,'#4fc3f7',1.5);
+    txt('Aqueduct',cx,cy+bH*0.0,'#4fc3f7',9);
+    el(cx,cy+bH*0.06,bW*0.27,bH*0.27,C.mb,'#30a0a0',1.5);
+    el(cx-bW*0.12,cy+bH*0.13,bW*0.09,bH*0.05,C.sn,'#555',1);
+    el(cx+bW*0.12,cy+bH*0.13,bW*0.09,bH*0.05,C.sn,'#555',1);
+    txt('Substantia nigra',cx,cy+bH*0.18,'#888',9);
+    el(cx-bW*0.07,cy+bH*0.03,bW*0.05,bH*0.05,'#903020','#c04030',1.5);
+    el(cx+bW*0.07,cy+bH*0.03,bW*0.05,bH*0.05,'#903020','#c04030',1.5);
+    txt('Red nuclei',cx,cy+bH*0.03,'#c04030',9);
+    el(cx-bW*0.23,cy+bH*0.23,bW*0.14,bH*0.11,'#1a4848','#30a0a0',1.5);
+    el(cx+bW*0.23,cy+bH*0.23,bW*0.14,bH*0.11,'#1a4848','#30a0a0',1.5);
+    txt('Midbrain',cx,cy+bH*0.08,'#40c0c0',11);
+    el(cx-bW*0.74,cy+bH*0.05,bW*0.21,bH*0.28,C.gm,'#888',1);
+    el(cx+bW*0.74,cy+bH*0.05,bW*0.21,bH*0.28,C.gm,'#888',1);
+
+  } else if (level === 7) {
+    /* Amygdala / Hippocampus level */
+    el(cx-bW*0.14,cy,bW*0.14,bH*0.18,C.th,'#d05040',1.5);
+    el(cx+bW*0.14,cy,bW*0.14,bH*0.18,C.th,'#d05040',1.5);
+    txt('Thalamus',cx,cy+4,'#d05040',11);
+    ctx.save(); ctx.beginPath(); ctx.moveTo(cx,cy-bH*0.18); ctx.lineTo(cx,cy+bH*0.18);
+    ctx.strokeStyle=C.ve; ctx.lineWidth=3; ctx.stroke(); ctx.restore();
+    el(cx-bW*0.42,cy+bH*0.18,bW*0.10,bH*0.10,C.am,'#b05080',1.5);
+    el(cx+bW*0.42,cy+bH*0.18,bW*0.10,bH*0.10,C.am,'#b05080',1.5);
+    txt('Amygdala',cx-bW*0.42,cy+bH*0.26,'#b05080',10);
+    ctx.save(); ctx.beginPath(); ctx.ellipse(cx-bW*0.38,cy,bW*0.13,bH*0.10,-0.4,0,Math.PI*2);
+    ctx.fillStyle=C.hi; ctx.fill(); ctx.strokeStyle='#9060c0'; ctx.lineWidth=1.5; ctx.stroke(); ctx.restore();
+    ctx.save(); ctx.beginPath(); ctx.ellipse(cx+bW*0.38,cy,bW*0.13,bH*0.10,0.4,0,Math.PI*2);
+    ctx.fillStyle=C.hi; ctx.fill(); ctx.strokeStyle='#9060c0'; ctx.lineWidth=1.5; ctx.stroke(); ctx.restore();
+    txt('Hippocampus',cx-bW*0.38,cy+bH*0.1,'#9060c0',10);
+    el(cx,cy+bH*0.23,bW*0.12,bH*0.09,'#903030','#c04040',1.5);
+    txt('Hypothalamus',cx,cy+bH*0.30,'#c04040',10);
+    el(cx-bW*0.74,cy,bW*0.21,bH*0.34,C.gm,'#888',1);
+    el(cx+bW*0.74,cy,bW*0.21,bH*0.34,C.gm,'#888',1);
+
+  } else if (level === 8) {
+    /* Full thalamus + early basal ganglia */
+    el(cx,cy,bW*0.85,bH*0.85,C.wm,null);
+    el(cx-bW*0.17,cy+bH*0.05,bW*0.17,bH*0.22,C.th,'#d05040',1.5);
+    el(cx+bW*0.17,cy+bH*0.05,bW*0.17,bH*0.22,C.th,'#d05040',1.5);
+    txt('Thalamus',cx-bW*0.30,cy+bH*0.06,'#d05040',11);
+    ctx.save(); ctx.beginPath(); ctx.moveTo(cx,cy-bH*0.22); ctx.lineTo(cx,cy+bH*0.22);
+    ctx.strokeStyle=C.ve; ctx.lineWidth=4; ctx.stroke(); ctx.restore();
+    txt('3rd Ventricle',cx+7,cy-bH*0.12,'#4fc3f7',9);
+    el(cx-bW*0.28,cy,bW*0.05,bH*0.22,C.ic,'#4060a0',1);
+    el(cx+bW*0.28,cy,bW*0.05,bH*0.22,C.ic,'#4060a0',1);
+    el(cx-bW*0.38,cy-bH*0.06,bW*0.09,bH*0.14,C.gp,'#c08020',1.5);
+    el(cx+bW*0.38,cy-bH*0.06,bW*0.09,bH*0.14,C.gp,'#c08020',1.5);
+    el(cx-bW*0.52,cy-bH*0.04,bW*0.10,bH*0.18,C.pu,'#d4900f',1.5);
+    el(cx+bW*0.52,cy-bH*0.04,bW*0.10,bH*0.18,C.pu,'#d4900f',1.5);
+    txt('Putamen',cx-bW*0.62,cy-bH*0.04,'#d4900f',10);
+    txt('GP',cx-bW*0.38,cy-bH*0.06,'#c08020',9);
+    el(cx-bW*0.42,cy+bH*0.20,bW*0.12,bH*0.09,C.hi,'#9060c0',1.5);
+    el(cx+bW*0.42,cy+bH*0.20,bW*0.12,bH*0.09,C.hi,'#9060c0',1.5);
+    txt('Hippocampus',cx+bW*0.52,cy+bH*0.27,'#9060c0',10);
+    el(cx-bW*0.84,cy+bH*0.05,bW*0.20,bH*0.33,C.gm,'#888',1);
+    el(cx+bW*0.84,cy+bH*0.05,bW*0.20,bH*0.33,C.gm,'#888',1);
+
+  } else if (level === 9 || level === 10) {
+    /* Basal ganglia — main level */
+    el(cx,cy,bW*0.86,bH*0.86,'#303048',null);
+    /* lateral ventricles frontal horns */
+    el(cx-bW*0.10,cy-bH*0.05,bW*0.07,bH*0.13,C.ve,'#4fc3f7',1.5);
+    el(cx+bW*0.10,cy-bH*0.05,bW*0.07,bH*0.13,C.ve,'#4fc3f7',1.5);
+    txt('Lat. Ventricles',cx,cy-bH*0.18,'#4fc3f7',10);
+    /* caudate head */
+    el(cx-bW*0.19,cy-bH*0.07,bW*0.07,bH*0.13,C.ca,'#d4900f',1.5);
+    el(cx+bW*0.19,cy-bH*0.07,bW*0.07,bH*0.13,C.ca,'#d4900f',1.5);
+    txt('Caudate',cx-bW*0.34,cy-bH*0.07,'#d4900f',10);
+    /* internal capsule */
+    el(cx-bW*0.29,cy-bH*0.10,bW*0.055,bH*0.18,C.ic,'#4060c0',1);
+    el(cx+bW*0.29,cy-bH*0.10,bW*0.055,bH*0.18,C.ic,'#4060c0',1);
+    el(cx-bW*0.29,cy+bH*0.12,bW*0.055,bH*0.16,C.ic,'#4060c0',1);
+    el(cx+bW*0.29,cy+bH*0.12,bW*0.055,bH*0.16,C.ic,'#4060c0',1);
+    txt('Int. Capsule',cx-bW*0.44,cy-bH*0.10,'#4060c0',10);
+    /* globus pallidus */
+    el(cx-bW*0.40,cy,bW*0.08,bH*0.16,C.gp,'#c08020',1.5);
+    el(cx+bW*0.40,cy,bW*0.08,bH*0.16,C.gp,'#c08020',1.5);
+    txt('GP',cx-bW*0.40,cy+4,'#c08020',9);
+    /* putamen */
+    el(cx-bW*0.55,cy-bH*0.04,bW*0.09,bH*0.22,C.pu,'#d4900f',1.5);
+    el(cx+bW*0.55,cy-bH*0.04,bW*0.09,bH*0.22,C.pu,'#d4900f',1.5);
+    txt('Putamen',cx+bW*0.65,cy-bH*0.04,'#d4900f',10);
+    /* thalamus */
+    el(cx-bW*0.18,cy+bH*0.12,bW*0.14,bH*0.20,C.th,'#d05040',1.5);
+    el(cx+bW*0.18,cy+bH*0.12,bW*0.14,bH*0.20,C.th,'#d05040',1.5);
+    txt('Thalamus',cx+bW*0.36,cy+bH*0.12,'#d05040',11);
+    /* 3rd ventricle */
+    ctx.save(); ctx.beginPath(); ctx.moveTo(cx,cy-bH*0.05); ctx.lineTo(cx,cy+bH*0.28);
+    ctx.strokeStyle=C.ve; ctx.lineWidth=3; ctx.stroke(); ctx.restore();
+    /* insula */
+    el(cx-bW*0.70,cy-bH*0.04,bW*0.07,bH*0.16,'#50305a','#8040a0',1.5);
+    el(cx+bW*0.70,cy-bH*0.04,bW*0.07,bH*0.16,'#50305a','#8040a0',1.5);
+    txt('Insula',cx+bW*0.80,cy-bH*0.04,'#8040a0',10);
+    el(cx-bW*0.86,cy+bH*0.04,bW*0.17,bH*0.30,C.gm,'#888',1);
+    el(cx+bW*0.86,cy+bH*0.04,bW*0.17,bH*0.30,C.gm,'#888',1);
+
+  } else if (level === 11 || level === 12) {
+    /* Lateral ventricles body + corpus callosum */
+    el(cx,cy,bW*0.86,bH*0.86,C.wm,null);
+    /* corpus callosum */
+    if (level === 11) {
+      el(cx-bW*0.08,cy-bH*0.08,bW*0.09,bH*0.10,C.cc,'#6070b0',2);
+      el(cx+bW*0.08,cy-bH*0.08,bW*0.09,bH*0.10,C.cc,'#6070b0',2);
+      el(cx,cy+bH*0.30,bW*0.14,bH*0.10,C.cc,'#6070b0',2);
+      txt('Genu (CC)',cx,cy-bH*0.08,'#6070b0',10);
+      txt('Splenium (CC)',cx,cy+bH*0.38,'#6070b0',10);
+    } else {
+      ctx.save(); ctx.beginPath();
+      ctx.moveTo(cx-bW*0.22,cy); ctx.lineTo(cx+bW*0.22,cy);
+      ctx.strokeStyle='#6070b0'; ctx.lineWidth=8; ctx.stroke(); ctx.restore();
+      txt('Corpus Callosum',cx,cy-8,'#8090c0',10);
+    }
+    el(cx-bW*0.15,cy-bH*0.05,bW*0.12,bH*0.20,C.ve,'#4fc3f7',1.5);
+    el(cx+bW*0.15,cy-bH*0.05,bW*0.12,bH*0.20,C.ve,'#4fc3f7',1.5);
+    txt('Lateral Ventricles',cx,cy-bH*0.27,'#4fc3f7',10);
+    el(cx-bW*0.25,cy-bH*0.10,bW*0.07,bH*0.10,C.ca,'#d4900f',1.5);
+    el(cx+bW*0.25,cy-bH*0.10,bW*0.07,bH*0.10,C.ca,'#d4900f',1.5);
+    txt('Caudate head',cx+bW*0.40,cy-bH*0.10,'#d4900f',10);
+    el(cx,cy-bH*0.46,bW*0.09,bH*0.09,C.ci,'#9080c0',1.5);
+    txt('Cingulate',cx,cy-bH*0.52,'#9080c0',10);
+    el(cx-bW*0.83,cy,bW*0.16,bH*0.28,C.gm,'#888',1);
+    el(cx+bW*0.83,cy,bW*0.16,bH*0.28,C.gm,'#888',1);
+
+  } else if (level === 13 || level === 14) {
+    /* Corona radiata */
+    el(cx,cy,bW*0.83,bH*0.83,C.wm,null);
+    ctx.save(); ctx.beginPath();
+    ctx.moveTo(cx-bW*0.22,cy+bH*0.12); ctx.lineTo(cx+bW*0.22,cy+bH*0.12);
+    ctx.strokeStyle='#6070b0'; ctx.lineWidth=8; ctx.stroke(); ctx.restore();
+    txt('Corpus Callosum',cx,cy+bH*0.10,'#8090c0',10);
+    el(cx-bW*0.14,cy+bH*0.10,bW*0.10,bH*0.13,C.ve,'#4fc3f7',1.5);
+    el(cx+bW*0.14,cy+bH*0.10,bW*0.10,bH*0.13,C.ve,'#4fc3f7',1.5);
+    txt('Lat. Ventricles',cx,cy+bH*0.25,'#4fc3f7',10);
+    el(cx,cy-bH*0.28,bW*0.12,bH*0.12,C.ci,'#9080c0',1.5);
+    txt('Cingulate',cx,cy-bH*0.34,'#9080c0',10);
+    if (level === 14) {
+      el(cx,cy-bH*0.60,bW*0.62,bH*0.10,C.gm,'#4A90D9',1.5);
+      txt('Prefrontal Cortex',cx,cy-bH*0.68,'#4A90D9',10);
+    }
+
+  } else if (level === 15 || level === 16) {
+    /* Semi-oval centre / Superior cortex */
+    el(cx,cy,bW*0.79,bH*0.79,C.wm,null);
+    el(cx,cy-bH*0.55,bW*0.66,bH*0.13,'#2E86DE','#5090e0',2);
+    txt('Primary Motor Cortex',cx-bW*0.38,cy-bH*0.62,'#5090e0',10);
+    el(cx,cy-bH*0.38,bW*0.66,bH*0.13,'#27AE60','#40c070',2);
+    txt('Somatosensory Cortex',cx+bW*0.40,cy-bH*0.45,'#40c070',10);
+    el(cx,cy+bH*0.10,bW*0.60,bH*0.18,'#219A52','#30a050',2);
+    txt('Superior Parietal',cx,cy+bH*0.10,'#30a050',10);
+    el(cx,cy-bH*0.15,bW*0.12,bH*0.18,C.ci,'#9080c0',1.5);
+    txt('Cingulate',cx,cy-bH*0.22,'#9080c0',10);
+    if (level === 15) {
+      el(cx,cy-bH*0.52,bW*0.15,bH*0.09,'#1558A8','#3068c0',2);
+      txt('SMA',cx,cy-bH*0.56,'#3068c0',10);
+    }
+
+  } else {
+    /* Level 17 — Vertex */
+    el(cx,cy,bW*0.73,bH*0.73,C.wm,null);
+    el(cx-bW*0.12,cy-bH*0.14,bW*0.12,bH*0.24,'#2E86DE','#5090e0',2);
+    el(cx+bW*0.12,cy-bH*0.14,bW*0.12,bH*0.24,'#2E86DE','#5090e0',2);
+    txt('Motor cortex',cx-bW*0.26,cy-bH*0.2,'#5090e0',10);
+    el(cx,cy+bH*0.10,bW*0.55,bH*0.18,'#27AE60','#40c070',2);
+    txt('Somatosensory',cx,cy+bH*0.10,'#40c070',10);
+    ctx.save(); ctx.beginPath(); ctx.moveTo(cx,cy-bH*0.72); ctx.lineTo(cx,cy+bH*0.72);
+    ctx.strokeStyle='rgba(0,0,0,0.45)'; ctx.lineWidth=4; ctx.stroke(); ctx.restore();
+    txt('Interhemispheric fissure',cx+8,cy-bH*0.62,'#555',9);
+  }
+}
+
+/* ── Brain Atlas React Component ── */
+function BrainAtlas({ onBack }) {
+  const mountRef    = useRef(null);
+  const rendererRef = useRef(null);
+  const meshesRef   = useRef({});
+  const mriRef      = useRef(null);
+
+  const [viewMode,    setViewMode]    = useState('3d');
+  const [sliceLevel,  setSliceLevel]  = useState(9);
+  const [selectedId,  setSelectedId]  = useState(null);
+  const [showFull,    setShowFull]    = useState(false);
+
+  const region = selectedId ? (window.BRAIN_ATLAS_DATA || {})[selectedId] : null;
+
+  /* ── Three.js setup ── */
+  useEffect(() => {
+    if (viewMode !== '3d' || !mountRef.current || typeof THREE === 'undefined') return;
+    const el = mountRef.current;
+    const W = el.clientWidth || 600, H = el.clientHeight || 500;
+
+    const scene    = new THREE.Scene();
+    scene.background = new THREE.Color(0x080810);
+    const camera   = new THREE.PerspectiveCamera(42, W/H, 0.1, 100);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(W, H);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    el.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
+
+    /* Lights */
+    scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+    const d1 = new THREE.DirectionalLight(0xffeedd, 0.9); d1.position.set(3,4,5); scene.add(d1);
+    const d2 = new THREE.DirectionalLight(0x8888ff, 0.35); d2.position.set(-3,-2,-4); scene.add(d2);
+
+    /* Outer brain shell */
+    const shellMat = new THREE.MeshPhongMaterial({
+      color: 0xc8a8b8, transparent: true, opacity: 0.14,
+      side: THREE.DoubleSide, depthWrite: false, shininess: 15
+    });
+    scene.add(new THREE.Mesh(createBrainGeometry(), shellMat));
+
+    /* Region meshes */
+    const map = {};
+    Object.entries(window.BRAIN_ATLAS_DATA || {}).forEach(([id, r]) => {
+      const mat = new THREE.MeshPhongMaterial({
+        color: new THREE.Color(r.color), transparent: true,
+        opacity: 0.82, shininess: 55, emissive: new THREE.Color(0x000000)
+      });
+      const mesh = new THREE.Mesh(new THREE.SphereGeometry(1,18,14), mat);
+      mesh.position.set(r.pos3d.x*0.88, r.pos3d.y*0.82, r.pos3d.z*0.88);
+      mesh.scale.set(r.scale3d.x*0.30, r.scale3d.y*0.30, r.scale3d.z*0.30);
+      mesh.userData.id = id;
+      scene.add(mesh); map[id] = mesh;
+    });
+    meshesRef.current = map;
+
+    /* Orbit controls */
+    let drag = false, autoSpin = true;
+    let prev = {x:0,y:0}, sph = {theta:0.4, phi:1.25, r:4.8};
+    function applyCamera() {
+      camera.position.set(
+        sph.r*Math.sin(sph.phi)*Math.sin(sph.theta),
+        sph.r*Math.cos(sph.phi),
+        sph.r*Math.sin(sph.phi)*Math.cos(sph.theta)
+      );
+      camera.lookAt(0,0,0);
+    }
+    applyCamera();
+
+    const cvs = renderer.domElement;
+    const onMD = e => { drag=true; autoSpin=false; prev={x:e.clientX,y:e.clientY}; };
+    const onMM = e => { if(!drag)return; sph.theta-=(e.clientX-prev.x)*0.007; sph.phi=Math.max(0.25,Math.min(Math.PI-0.25,sph.phi+(e.clientY-prev.y)*0.007)); prev={x:e.clientX,y:e.clientY}; applyCamera(); };
+    const onMU = () => { drag=false; };
+    const onWh = e => { sph.r=Math.max(2.5,Math.min(9,sph.r+e.deltaY*0.006)); applyCamera(); };
+    const onTS = e => { if(e.touches.length===1){drag=true;autoSpin=false;prev={x:e.touches[0].clientX,y:e.touches[0].clientY};} };
+    const onTM = e => { if(!drag||e.touches.length!==1)return; sph.theta-=(e.touches[0].clientX-prev.x)*0.007; sph.phi=Math.max(0.25,Math.min(Math.PI-0.25,sph.phi+(e.touches[0].clientY-prev.y)*0.007)); prev={x:e.touches[0].clientX,y:e.touches[0].clientY}; applyCamera(); };
+    const onTE = () => { drag=false; };
+
+    /* Click to select region */
+    const ray = new THREE.Raycaster(), m2 = new THREE.Vector2();
+    let downXY = {x:0,y:0};
+    const onMD2 = e => { downXY={x:e.clientX,y:e.clientY}; };
+    const onCk  = e => {
+      if(Math.hypot(e.clientX-downXY.x,e.clientY-downXY.y)>6)return;
+      const rc=cvs.getBoundingClientRect();
+      m2.x=((e.clientX-rc.left)/rc.width)*2-1;
+      m2.y=-((e.clientY-rc.top)/rc.height)*2+1;
+      ray.setFromCamera(m2,camera);
+      const hits=ray.intersectObjects(Object.values(map));
+      if(hits.length>0){setSelectedId(hits[0].object.userData.id);setShowFull(false);}
+    };
+    const onTap = e => {
+      if(e.changedTouches.length!==1)return;
+      const t=e.changedTouches[0],rc=cvs.getBoundingClientRect();
+      m2.x=((t.clientX-rc.left)/rc.width)*2-1;
+      m2.y=-((t.clientY-rc.top)/rc.height)*2+1;
+      ray.setFromCamera(m2,camera);
+      const hits=ray.intersectObjects(Object.values(map));
+      if(hits.length>0){setSelectedId(hits[0].object.userData.id);setShowFull(false);}
+    };
+
+    cvs.addEventListener('mousedown',onMD); cvs.addEventListener('mousedown',onMD2);
+    window.addEventListener('mousemove',onMM); window.addEventListener('mouseup',onMU);
+    cvs.addEventListener('click',onCk); cvs.addEventListener('wheel',onWh,{passive:true});
+    cvs.addEventListener('touchstart',onTS,{passive:true}); cvs.addEventListener('touchmove',onTM,{passive:true});
+    cvs.addEventListener('touchend',onTE); cvs.addEventListener('touchend',onTap);
+
+    let raf;
+    const animate = () => {
+      raf=requestAnimationFrame(animate);
+      if(autoSpin){sph.theta+=0.004;applyCamera();}
+      renderer.render(scene,camera);
+    };
+    animate();
+
+    return () => {
+      cancelAnimationFrame(raf);
+      cvs.removeEventListener('mousedown',onMD); cvs.removeEventListener('mousedown',onMD2);
+      window.removeEventListener('mousemove',onMM); window.removeEventListener('mouseup',onMU);
+      cvs.removeEventListener('click',onCk); cvs.removeEventListener('wheel',onWh);
+      cvs.removeEventListener('touchstart',onTS); cvs.removeEventListener('touchmove',onTM);
+      cvs.removeEventListener('touchend',onTE); cvs.removeEventListener('touchend',onTap);
+      renderer.dispose();
+      if(cvs.parentNode===el) el.removeChild(cvs);
+    };
+  }, [viewMode]);
+
+  /* Highlight selected mesh */
+  useEffect(() => {
+    const data = window.BRAIN_ATLAS_DATA || {};
+    Object.entries(meshesRef.current).forEach(([id, mesh]) => {
+      const r = data[id]; if(!r) return;
+      if(id === selectedId) {
+        mesh.material.emissive = new THREE.Color(0x404040);
+        mesh.material.opacity  = 1.0;
+        mesh.scale.set(r.scale3d.x*0.38, r.scale3d.y*0.38, r.scale3d.z*0.38);
+      } else {
+        mesh.material.emissive = new THREE.Color(0x000000);
+        mesh.material.opacity  = 0.82;
+        mesh.scale.set(r.scale3d.x*0.30, r.scale3d.y*0.30, r.scale3d.z*0.30);
+      }
+    });
+  }, [selectedId]);
+
+  /* MRI canvas redraw */
+  useEffect(() => {
+    if(viewMode !== 'mri' || !mriRef.current) return;
+    drawMRISlice(mriRef.current, sliceLevel);
+  }, [viewMode, sliceLevel]);
+
+  const levelInfo = (window.MRI_LEVELS || [])[sliceLevel] || {};
+  const allRegions = Object.entries(window.BRAIN_ATLAS_DATA || {});
+
+  /* Shared button style */
+  const modeBtn = active => ({
+    background: active ? 'rgba(255,255,255,0.15)' : 'none',
+    border: 'none', borderRadius: 6,
+    color: active ? '#fff' : '#666',
+    padding: '5px 13px', cursor: 'pointer', fontSize: 13,
+    fontWeight: active ? 600 : 400, transition: 'all .15s'
+  });
+
+  return (
+    <div style={{ position:'fixed', inset:0, background:'#080810', display:'flex', flexDirection:'column', zIndex:100 }}>
+
+      {/* Header */}
+      <div style={{ display:'flex', alignItems:'center', gap:14, padding:'10px 18px',
+                    background:'rgba(255,255,255,0.05)', borderBottom:'1px solid rgba(255,255,255,0.08)', flexShrink:0 }}>
+        <button onClick={onBack}
+          style={{ background:'none', border:'1px solid rgba(255,255,255,0.22)', borderRadius:8,
+                   color:'#aaa', padding:'6px 14px', cursor:'pointer', fontSize:14 }}>
+          Back
+        </button>
+        <span style={{ color:'#fff', fontWeight:700, fontSize:17 }}>Brain Atlas</span>
+        <span style={{ color:'#444', fontSize:12 }}>{allRegions.length} structures</span>
+
+        <div style={{ display:'flex', gap:3, marginLeft:'auto',
+                      background:'rgba(255,255,255,0.06)', borderRadius:8, padding:3 }}>
+          <button style={modeBtn(viewMode==='3d')}  onClick={() => {setViewMode('3d');  setSelectedId(null); setShowFull(false);}}>3D View</button>
+          <button style={modeBtn(viewMode==='mri')} onClick={() => {setViewMode('mri'); setSelectedId(null); setShowFull(false);}}>MRI Scroll</button>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div style={{ flex:1, display:'flex', overflow:'hidden' }}>
+
+        {/* 3D canvas */}
+        {viewMode === '3d' && (
+          <div ref={mountRef} style={{ flex:1, position:'relative', overflow:'hidden' }}>
+            <div style={{ position:'absolute', top:10, left:12, color:'rgba(255,255,255,0.28)',
+                          fontSize:11, pointerEvents:'none', lineHeight:1.9 }}>
+              Drag to rotate  |  Scroll to zoom  |  Tap a region to learn
+            </div>
+          </div>
+        )}
+
+        {/* MRI scroll */}
+        {viewMode === 'mri' && (
+          <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center',
+                        justifyContent:'center', padding:'12px 16px', overflow:'auto' }}>
+            <div style={{ color:'#7ac', fontSize:13, fontWeight:600, marginBottom:8 }}>
+              {levelInfo.label || ''}
+            </div>
+            <canvas ref={mriRef} width={420} height={420}
+              style={{ borderRadius:210, border:'2px solid rgba(100,120,180,0.18)',
+                       maxWidth:'min(420px, 88vw)', maxHeight:'min(420px, 44vh)' }} />
+            <div style={{ marginTop:14, display:'flex', alignItems:'center', gap:10,
+                          width:'100%', maxWidth:420 }}>
+              <span style={{ color:'#333', fontSize:10 }}>Inferior</span>
+              <input type="range" min={0} max={17} value={sliceLevel}
+                onChange={e => {setSliceLevel(Number(e.target.value)); setSelectedId(null); setShowFull(false);}}
+                style={{ flex:1, accentColor:'#4fc3f7', cursor:'pointer' }} />
+              <span style={{ color:'#333', fontSize:10 }}>Superior</span>
+            </div>
+            <div style={{ marginTop:5, color:'#444', fontSize:11 }}>
+              Slice {sliceLevel + 1} of 18
+            </div>
+            <div style={{ marginTop:12, display:'flex', flexWrap:'wrap', gap:6, justifyContent:'center', maxWidth:480 }}>
+              {(levelInfo.structures || []).map(id => {
+                const r = (window.BRAIN_ATLAS_DATA || {})[id]; if(!r) return null;
+                return (
+                  <button key={id} onClick={() => {setSelectedId(id); setShowFull(false);}}
+                    style={{ background: r.color+'22', border:`1px solid ${r.color}88`,
+                             borderRadius:14, padding:'3px 10px', color: r.color,
+                             fontSize:11, cursor:'pointer',
+                             fontWeight: selectedId===id ? 700 : 400,
+                             outline: selectedId===id ? `2px solid ${r.color}` : 'none' }}>
+                    {r.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Info panel */}
+        {region && (
+          <div style={{ width:292, borderLeft:'1px solid rgba(255,255,255,0.08)',
+                        background:'rgba(255,255,255,0.03)', display:'flex', flexDirection:'column', overflow:'hidden' }}>
+            <div style={{ padding:'16px 18px', overflowY:'auto', flex:1 }}>
+              <button onClick={() => setSelectedId(null)}
+                style={{ float:'right', background:'none', border:'none', color:'#555', cursor:'pointer', fontSize:20, lineHeight:1 }}>
+                x
+              </button>
+              <div style={{ background: region.color+'28', border:`1.5px solid ${region.color}66`,
+                            borderRadius:6, padding:'4px 10px', display:'inline-block', marginBottom:10 }}>
+                <span style={{ color: region.color, fontSize:11, fontWeight:600 }}>{region.lobe}</span>
+              </div>
+              <h3 style={{ color:'#fff', fontSize:16, fontWeight:700, marginBottom:10, lineHeight:1.3 }}>
+                {region.name}
+              </h3>
+              <p style={{ color:'#bbb', fontSize:13.5, lineHeight:1.6 }}>{region.brief}</p>
+
+              {!showFull ? (
+                <button onClick={() => setShowFull(true)}
+                  style={{ marginTop:16, background:'rgba(79,195,247,0.12)',
+                           border:'1px solid #4fc3f7', borderRadius:8,
+                           color:'#4fc3f7', padding:'9px 0', cursor:'pointer',
+                           fontSize:14, width:'100%', fontWeight:600 }}>
+                  Learn More
+                </button>
+              ) : (
+                <div style={{ marginTop:16 }}>
+                  <div style={{ height:1, background:'rgba(255,255,255,0.07)', marginBottom:14 }} />
+                  {region.full.split('\n\n').map((para, i) => (
+                    <p key={i} style={{ color:'#aaa', fontSize:12.5, lineHeight:1.65, marginBottom:11 }}>
+                      {para.trim()}
+                    </p>
+                  ))}
+                  <button onClick={() => setShowFull(false)}
+                    style={{ marginTop:4, background:'none', border:'1px solid #333',
+                             borderRadius:8, color:'#666', padding:'6px 14px',
+                             cursor:'pointer', fontSize:12, width:'100%' }}>
+                    Collapse
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Region tag strip (3D, no selection) */}
+      {viewMode === '3d' && !selectedId && (
+        <div style={{ padding:'7px 14px', background:'rgba(0,0,0,0.28)',
+                      borderTop:'1px solid rgba(255,255,255,0.05)',
+                      display:'flex', gap:5, flexWrap:'wrap', maxHeight:70, overflowY:'auto' }}>
+          {allRegions.map(([id, r]) => (
+            <button key={id} onClick={() => {setSelectedId(id); setShowFull(false);}}
+              style={{ background: r.color+'18', border:`1px solid ${r.color}55`,
+                       borderRadius:11, padding:'2px 8px', color: r.color,
+                       fontSize:10, cursor:'pointer', flexShrink:0 }}>
+              {r.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function App() {
   const [subject, setSubject]       = useState(null);
   const [examIndex, setExamIndex]   = useState(null);
@@ -8150,11 +8787,14 @@ function App() {
             ? <TimelineGame onBack={handleBack} />
           : specialMode?.type === 'dissection_bank'
             ? <DissectionBank onBack={handleBack} />
+          : specialMode?.type === 'brain_atlas'
+            ? <BrainAtlas onBack={handleBack} />
           : !subject
             ? <HomeScreen
                 onSelectSubject={handleSelectSubject}
                 onBooksChange={setBooks}
                 onOpenBook={setOpenBook}
+                onSpecialMode={type => showInstructionsThen(type, () => setSpecialMode({ type }))}
               />
             : hasExams && examIndex === null
               ? <ExamPicker subject={subject} onSelectExam={handleExamSelect} onBack={() => { setSubject(null); setExamIndex(null); setSpecialMode(null); }} />

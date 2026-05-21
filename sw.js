@@ -5,7 +5,7 @@
    - Cache-first strategy for all GET requests
    ============================================================ */
 
-const CACHE_NAME = 'study-buddy-v100';
+const CACHE_NAME = 'study-buddy-v101';
 
 /* All local files to pre-cache on install */
 const LOCAL_ASSETS = [
@@ -22,6 +22,9 @@ const LOCAL_ASSETS = [
   '/artery-assembly-data.js',
   '/timeline-data.js',
   '/dissection-questions.js',
+  '/brain-atlas-data.js',
+  /* Three.js for 3D brain atlas */
+  'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
   /* Vendored scripts — fully offline, no CDN needed */
   '/vendor/react.min.js',
   '/vendor/react-dom.min.js',
