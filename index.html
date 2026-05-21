@@ -8793,9 +8793,9 @@ function BrainAtlas({ onBack }) {
                 src={photoSrc}
                 alt={`Axial MRI slice ${photoSlice + 1}`}
                 style={{
-                  width:  'min(480px, 88vw)',
-                  height: 'min(480px, 88vw)',
-                  objectFit: 'contain',
+                  width:  'min(360px, 80vw)',
+                  height: 'min(480px, calc(80vw * 4 / 3))',
+                  objectFit: 'fill',
                   display: 'block',
                   filter: 'brightness(1.08) contrast(1.08)',
                   borderRadius: 4,
