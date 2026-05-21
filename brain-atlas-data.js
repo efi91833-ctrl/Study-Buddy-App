@@ -1,653 +1,759 @@
 /* ============================================================
-   Study Buddy — Brain Atlas Data
-   36 structures with 3D positions, MRI levels, and descriptions
-   Coordinate system: x left(-)/right(+), y inferior(-)/superior(+), z posterior(-)/anterior(+)
+   Study Buddy — Brain Atlas Data  v2
+   Sources: Gilroy Atlas of Anatomy 4th ed, imaios.com MRI atlas,
+            MNI152 standard space coordinates
+   3D coordinate system:
+     x: left(-) / right(+)
+     y: inferior(-) / superior(+)   [MNI z / 80]
+     z: posterior(-) / anterior(+)  [MNI y / 80]
    ============================================================ */
 
 window.BRAIN_ATLAS_DATA = {
 
-  // ── FRONTAL LOBE ──────────────────────────────────────────
+  /* ═══════ FRONTAL LOBE ══════════════════════════════════════ */
+
   prefrontal_cortex: {
     name: 'Prefrontal Cortex',
     lobe: 'Frontal Lobe',
-    color: '#3A7BD5',
-    pos3d: { x: 0, y: 0.15, z: 1.15 },
-    scale3d: { x: 0.75, y: 0.6, z: 0.5 },
-    mriLevels: [10, 11, 12, 13, 14, 15, 16],
-    brief: 'Executive center of the brain — handles planning, decision-making, working memory, and impulse control.',
-    full: `The prefrontal cortex (PFC) occupies the anterior third of the frontal lobe and is the most recently evolved part of the human brain. It is the seat of executive function — the cognitive processes that allow us to plan, reason, maintain working memory, and control impulses.
+    color: '#4A90D9',
+    pos3d:   { x: 0,     y:  0.31, z:  0.63 },
+    scale3d: { x: 0.80,  y:  0.60, z:  0.50 },
+    mriLevels: [10,11,12,13,14,15],
+    brief: 'Executive center — planning, decision-making, working memory, and personality expression.',
+    full: `The prefrontal cortex (PFC, BA 9/10/11/12/46/47) occupies the anterior third of the frontal lobe. In Gilroy's Atlas it is described as the highest-order association cortex — the region that integrates sensory, motor, and limbic information to guide goal-directed behaviour.
 
-Key functions: working memory (holding information temporarily in mind), cognitive flexibility (switching between tasks), inhibitory control (suppressing inappropriate responses), and value-based decision-making.
+Cytoarchitecturally it is granular (six-layered isocortex) in the dorsolateral portion and agranular in the orbital and medial sectors. The dorsolateral PFC (dlPFC, BA 9/46) is the core of working memory, connected to parietal areas via the superior longitudinal fasciculus. The orbitofrontal cortex (OFC) encodes reward value and is densely connected to the amygdala. The ventromedial PFC (vmPFC) integrates emotion and decision-making.
 
-The PFC has dense reciprocal connections with virtually all cortical and subcortical regions, acting as the brain's coordinator. It is especially connected to the amygdala (emotion regulation), basal ganglia (reward and motivation), and parietal/temporal association areas (sensory integration).
+Lesions cause the dysexecutive syndrome: perseveration (inability to switch tasks), impaired planning (poor Tower-of-London test), disinhibition or apathy, and defective utilisation behaviour (reflexive use of objects without intent). The OFC lesion specifically impairs reversal learning — patients continue responding to a previously rewarded stimulus after the contingency has reversed (Iowa Gambling Task).
 
-Lesions produce the dysexecutive syndrome: impaired planning, perseveration (getting stuck on one behavior), personality change (disinhibition or apathy), and poor social judgment. The classic case is Phineas Gage (1848), whose left frontal lobe was destroyed by an iron rod — transforming a responsible foreman into someone impulsive and socially inappropriate, providing the first evidence of the PFC's role in personality.`
+Classic case: Phineas Gage (1848) — a tamping iron through his left frontal lobe transformed him from a responsible foreman into an impulsive, unreliable individual, providing the first evidence that personality resides in the frontal lobes.`
   },
 
   motor_cortex: {
-    name: 'Primary Motor Cortex',
+    name: 'Primary Motor Cortex (M1)',
     lobe: 'Frontal Lobe',
     color: '#2E86DE',
-    pos3d: { x: 0, y: 0.95, z: 0.3 },
-    scale3d: { x: 0.9, y: 0.3, z: 0.25 },
-    mriLevels: [13, 14, 15, 16, 17],
-    brief: 'Controls voluntary movement. Body parts are mapped along a strip (motor homunculus) — hands and face get the most space.',
-    full: `The primary motor cortex (M1) occupies the precentral gyrus, the gyrus immediately anterior to the central sulcus. It is the primary origin of the corticospinal tract, which descends to motor neurons in the spinal cord to control skeletal muscle.
+    pos3d:   { x: 0,     y:  0.81, z: -0.19 },
+    scale3d: { x: 0.90,  y:  0.28, z:  0.22 },
+    mriLevels: [13,14,15,16,17],
+    brief: 'Precentral gyrus — origin of the corticospinal tract. Body mapped as motor homunculus: hands and face disproportionately large.',
+    full: `The primary motor cortex (M1, BA 4) occupies the precentral gyrus, bounded anteriorly by the precentral sulcus and posteriorly by the central sulcus. It contains the largest pyramidal (Betz) cells in the cortex — fast-conducting upper motor neurons (UMN) that project via the corticospinal and corticobulbar tracts.
 
-The body is represented in a precise somatotopic map called the motor homunculus. The most lateral portion controls facial muscles, progressing medially through the hand, arm, trunk, and leg, to the medial surface controlling the foot and perineum. The face and hand have disproportionately large representations because fine motor control requires more neurons.
+Gilroy emphasises the motor homunculus (Penfield, 1950): the medial wall controls the foot/perineum; the dorsal convexity controls leg, trunk, and arm; the lateral convexity controls hand, face, and tongue. The hand representation is enormous (~40% of M1), reflecting the fine motor control required for manipulation.
 
-Upper motor neurons (UMN) in M1 synapse on lower motor neurons in the anterior horn of the spinal cord. UMN lesions (stroke, tumor) cause spastic paralysis — increased tone, hyperreflexia, and a positive Babinski sign — while LMN lesions cause flaccid paralysis with muscle wasting and fasciculations.
+Fibres descend through the corona radiata → posterior limb of internal capsule → cerebral peduncle → pyramid → pyramidal decussation (85% cross). A lateral corticospinal tract then synapses on spinal ventral horn cells.
 
-M1 does not act alone: it receives preparatory signals from the premotor and supplementary motor areas and refined timing from the cerebellum via the thalamus.`
+Upper motor neuron signs after M1 or internal capsule lesion: contralateral spastic hemiplegia, hyperreflexia, increased tone (clasp-knife), Babinski sign (extensor plantar response), and clonus. The face and hand usually recover less well than the leg (because the leg has a larger ipsilateral component via the anterior corticospinal tract).`
   },
 
   premotor_cortex: {
     name: 'Premotor Cortex',
     lobe: 'Frontal Lobe',
     color: '#1E6EC8',
-    pos3d: { x: 0, y: 0.75, z: 0.55 },
-    scale3d: { x: 0.85, y: 0.35, z: 0.25 },
-    mriLevels: [13, 14, 15, 16],
-    brief: 'Prepares and coordinates complex movements, especially those guided by external cues.',
-    full: `The premotor cortex (PMC) lies anterior to the primary motor cortex and is involved in the planning and coordination of movement, particularly movements guided by sensory cues from the environment.
+    pos3d:   { x: 0,     y:  0.75, z:  0.00 },
+    scale3d: { x: 0.85,  y:  0.30, z:  0.22 },
+    mriLevels: [13,14,15,16],
+    brief: 'Lateral premotor area — programs movements guided by external sensory cues; contains mirror neurons.',
+    full: `The premotor cortex (PMC, BA 6 lateral) lies anterior to M1 on the lateral surface of the frontal lobe. It is part of the lateral premotor circuit, which selects and programs movements in response to external triggers (visual or auditory cues).
 
-It contains a large number of "mirror neurons" — cells that fire both when an animal performs an action and when it observes the same action performed by another. Mirror neurons are thought to underlie action understanding, imitation learning, and possibly empathy.
+It contains mirror neurons — cells that fire both during action execution and during observation of the same action in another individual. First described in macaques by Rizzolatti (1992), human mirror neuron analogues in BA 6 and BA 44 are thought to underlie action understanding, imitation, and social cognition.
 
-The PMC projects directly to M1 and also sends corticospinal fibers of its own. It is especially active during tasks that require selecting a movement based on an external stimulus (e.g., reaching for a specific object in response to a visual cue).
+The PMC projects to M1, contributing approximately 30% of corticospinal fibres. It is connected to posterior parietal cortex (area 7) via the superior longitudinal fasciculus, forming the dorsal visuomotor stream for visually guided reaching.
 
-Damage to the lateral PMC impairs the ability to use external cues to guide movement. Patients may struggle with learned, tool-use movements despite intact basic motor function — a condition known as apraxia.`
+Damage causes limb-kinetic apraxia: the patient can understand and plan an action but performs it clumsily, losing the fine automaticity of learned movements. This is distinct from ideomotor apraxia (parietal) and ideational apraxia (frontal-parietal).`
   },
 
   sma: {
-    name: 'Supplementary Motor Area',
+    name: 'Supplementary Motor Area (SMA)',
     lobe: 'Frontal Lobe',
     color: '#1558A8',
-    pos3d: { x: 0, y: 0.85, z: 0.45 },
-    scale3d: { x: 0.5, y: 0.3, z: 0.2 },
-    mriLevels: [14, 15, 16],
-    brief: 'Plans self-initiated movements and coordinates bilateral movements — especially active just before you decide to move.',
-    full: `The supplementary motor area (SMA) is located on the medial surface of the hemisphere, anterior to the leg representation of M1. It is critical for internally generated (self-initiated) movements — the kind where you decide to act without an external prompt.
+    pos3d:   { x: 0,     y:  0.75, z: -0.06 },
+    scale3d: { x: 0.45,  y:  0.26, z:  0.18 },
+    mriLevels: [14,15,16],
+    brief: 'Medial premotor — internally generated movements, bimanual coordination; active before you decide to move.',
+    full: `The supplementary motor area (SMA, BA 6 medial) lies on the medial surface of the hemisphere, anterior to the paracentral lobule's motor representation. It is the core of the medial premotor circuit — activated for self-initiated, internally generated movements rather than externally cued ones.
 
-Neuroimaging shows the SMA becomes active 1-2 seconds before a voluntary movement begins, even before M1 shows activity. This corresponds to the "readiness potential" observed in EEG. The SMA plays a key role in the famous Libet experiments on the neuroscience of free will.
+The Bereitschaftspotential (readiness potential) recorded by EEG begins ~500 ms before a voluntary movement, originating in SMA, providing physiological evidence that motor preparation precedes conscious intention. This was central to Libet's neuroscience-of-free-will experiments.
 
-The SMA is essential for bimanual coordination (using both hands together), complex sequential movements, and the initiation of speech. Stimulation of the SMA can produce the subjective urge to move without actual movement.
+The SMA has dense connections with the basal ganglia (via thalamus) and is critical for the initiation and sequencing of complex motor programmes. It sends fibres to M1 and to the spinal cord.
 
-Lesions of the SMA cause the "SMA syndrome": initial akinesia (inability to initiate movement) and mutism (inability to speak), which typically recover over weeks as premotor areas compensate.`
+Unilateral SMA lesions cause the alien hand syndrome (medial type): the contralateral hand performs complex purposeful movements that the patient does not feel are under their control. Bilateral lesions initially cause akinetic mutism: the patient lies awake with eyes open but neither moves nor speaks, recovering over weeks.`
   },
 
   brocas_area: {
     name: "Broca's Area",
     lobe: 'Frontal Lobe',
     color: '#0D48A0',
-    pos3d: { x: -0.75, y: 0.25, z: 0.75 },
-    scale3d: { x: 0.25, y: 0.25, z: 0.25 },
-    mriLevels: [11, 12, 13, 14],
-    brief: "Located in the left frontal lobe — controls speech production. Damage causes Broca's aphasia: halting, effortful speech but intact comprehension.",
-    full: `Broca's area (BA44 and BA45) is located in the posterior part of the inferior frontal gyrus of the left hemisphere in ~95% of right-handed people. It was identified by Paul Broca in 1861 through his patient "Tan" (Louis Leborgne), who could only say the syllable "tan" despite understanding speech perfectly.
+    pos3d:   { x: -0.63, y:  0.13, z:  0.19 },
+    scale3d: { x: 0.22,  y:  0.22, z:  0.22 },
+    mriLevels: [11,12,13,14],
+    brief: "Left inferior frontal gyrus (BA 44/45) — speech production and syntactic processing. Damage: non-fluent Broca's aphasia.",
+    full: `Broca's area (pars opercularis BA 44 + pars triangularis BA 45) occupies the posterior inferior frontal gyrus of the left hemisphere in ~97% of right-handers. It was identified by Paul Broca in 1861 through two patients — Leborgne ("Tan") and Lelong — whose only verbal output was a single syllable, yet who understood speech normally.
 
-It is essential for speech production, grammatical processing, and the motor programming of articulation. It sends signals to the primary motor cortex face area to coordinate the muscles of speech.
+It encodes the phonological and syntactic structure of spoken output, programmes the articulatory motor sequences, and sends commands to the face/larynx representation in M1 via the corticobulbar tract. Broca's area is connected to Wernicke's area by two white matter pathways: the arcuate fasciculus (long segment, for phonological repetition) and the extreme capsule/uncinate fasciculus (for semantic processing).
 
-Broca's aphasia (expressive aphasia): non-fluent, effortful, telegraphic speech with preserved comprehension. Patients may say "walk... dog... park" instead of "I walked the dog to the park." They are often frustrated because they know what they want to say.
+Broca's aphasia: non-fluent, effortful, telegraphic speech ("walk… dog… park") with relatively preserved comprehension. Patients are aware of their deficit and often frustrated. Reading and writing are also impaired for function words and grammatical morphemes.
 
-Broca's area is also involved in understanding the syntactic structure of sentences (not just producing it), processing music, and hand gestures — suggesting its role extends beyond speech to general sequencing of complex actions. It is connected to Wernicke's area via the arcuate fasciculus.`
+Broca's area is also active during action observation and sentence comprehension — its role in language may reflect a broader capacity for hierarchical sequential processing, shared with music and tool use.`
   },
 
   frontal_eye_fields: {
-    name: 'Frontal Eye Fields',
+    name: 'Frontal Eye Fields (FEF)',
     lobe: 'Frontal Lobe',
     color: '#0A3D8F',
-    pos3d: { x: 0, y: 0.55, z: 0.75 },
-    scale3d: { x: 0.6, y: 0.25, z: 0.2 },
-    mriLevels: [13, 14, 15],
-    brief: 'Controls voluntary eye movements. Allows you to intentionally direct your gaze regardless of where a stimulus appears.',
-    full: `The frontal eye fields (FEF) are located in the posterior part of the middle frontal gyrus (BA8). They are a key cortical area for controlling voluntary (saccadic) eye movements — rapid, ballistic movements that shift the fovea from one point to another.
+    pos3d:   { x: 0,     y:  0.63, z:  0.31 },
+    scale3d: { x: 0.60,  y:  0.22, z:  0.18 },
+    mriLevels: [13,14,15],
+    brief: 'Controls voluntary saccades — rapid eye movements toward locations of interest regardless of where stimuli appear.',
+    full: `The frontal eye fields (FEF, BA 8, posterior middle frontal gyrus) are the cortical command centre for voluntary saccadic eye movements. Unlike the superior colliculus (reflexive orienting), the FEF mediates top-down, goal-directed gaze control: looking where you intend rather than where a stimulus suddenly appeared.
 
-Unlike the superior colliculus (which mediates reflexive eye movements toward a new stimulus), the FEF mediates top-down, intentional gaze control. When you read a page or search for a face in a crowd, the FEF is directing your eyes according to your goals.
+FEF neurons code target location in oculomotor coordinates (eye-centred). They project to the superior colliculus (for saccade generation), caudate nucleus (via corticostriatal fibres), and directly to brainstem saccade premotor areas (PPRF/riMLF). Sub-threshold FEF stimulation shifts spatial attention without moving the eyes, demonstrating that attention and gaze control are tightly linked.
 
-The FEF has direct projections to the superior colliculus and brainstem gaze centers. Stimulation of the FEF produces contralateral eye deviation. Lesions cause ipsilateral gaze deviation ("the patient looks toward the lesion") because the damaged FEF no longer inhibits the ipsilateral gaze center.
+An acute FEF lesion causes ipsilateral conjugate gaze deviation ("the patient looks toward the lesion") because the contralateral FEF is no longer balanced by the ipsilateral one. This is transient (unlike a pontine gaze centre lesion which is persistent and opposite in direction).
 
-The FEF is also involved in spatial attention — directing not just the eyes but the "spotlight" of attention in visual space.`
+FEF is also involved in covert spatial attention, visual search, and working memory for spatial locations. It forms the core of the frontoparietal attention network, disrupted in hemispatial neglect.`
   },
 
-  // ── PARIETAL LOBE ─────────────────────────────────────────
+  /* ═══════ PARIETAL LOBE ════════════════════════════════════ */
+
   somatosensory_cortex: {
-    name: 'Primary Somatosensory Cortex',
+    name: 'Primary Somatosensory Cortex (S1)',
     lobe: 'Parietal Lobe',
     color: '#27AE60',
-    pos3d: { x: 0, y: 0.95, z: 0.05 },
-    scale3d: { x: 0.9, y: 0.3, z: 0.25 },
-    mriLevels: [13, 14, 15, 16, 17],
-    brief: 'Processes touch, pain, temperature, and proprioception. Body parts are mapped as the sensory homunculus.',
-    full: `The primary somatosensory cortex (S1) occupies the postcentral gyrus, immediately posterior to the central sulcus. It receives sensory information (touch, pressure, vibration, pain, temperature, proprioception) from the contralateral side of the body via the thalamus (VPL nucleus).
+    pos3d:   { x: 0,     y:  0.81, z: -0.31 },
+    scale3d: { x: 0.90,  y:  0.28, z:  0.22 },
+    mriLevels: [13,14,15,16,17],
+    brief: 'Postcentral gyrus (BA 3a/3b/1/2) — processes touch, pressure, vibration, proprioception; mapped as sensory homunculus.',
+    full: `The primary somatosensory cortex (S1, BA 3a/3b/1/2) occupies the postcentral gyrus, immediately posterior to the central sulcus. It receives thalamic input from the ventral posterior lateral nucleus (VPL, for body) and ventral posterior medial nucleus (VPM, for face), which relay from the medial lemniscus and trigeminothalamic tract.
 
-Like M1, it contains a somatotopic map — the sensory homunculus — with the face and hands represented by disproportionately large areas reflecting their high density of sensory receptors (especially Meissner's corpuscles and Pacinian corpuscles for fine touch).
+Gilroy distinguishes four parallel maps within S1: BA 3a (proprioception from muscle spindles), BA 3b (texture/form via Merkel cells and Ruffini endings), BA 1 (texture via Meissner corpuscles), BA 2 (size/shape). Each contains a complete sensory homunculus; the finger/lip/tongue representations are enormously expanded relative to body surface area because of their high receptor density.
 
-S1 contains four distinct areas (3a, 3b, 1, 2) each with their own complete body map, processing different modalities. Area 3a receives proprioceptive input; 3b and 1 process tactile information; area 2 integrates size and shape perception.
+S1 does not work alone: it receives efference copies of motor commands from M1, allowing it to distinguish self-generated touch from external stimuli (explaining why you can't tickle yourself).
 
-Damage causes contralateral hemisensory loss — the patient may have normal strength but cannot feel touch or localize stimuli on the opposite side. Complex tasks like recognizing objects by touch alone (stereognosis) are particularly impaired.`
+Damage causes contralateral hemisensory loss — impaired two-point discrimination, graphesthesia (recognising numbers written on skin), and stereognosis (recognising objects by touch alone). Pain and temperature may be relatively preserved because they are also processed in the insula and anterior cingulate.`
   },
 
   superior_parietal: {
-    name: 'Superior Parietal Lobule',
+    name: 'Superior Parietal Lobule (SPL)',
     lobe: 'Parietal Lobe',
     color: '#219A52',
-    pos3d: { x: 0, y: 0.75, z: -0.25 },
-    scale3d: { x: 0.7, y: 0.35, z: 0.35 },
-    mriLevels: [14, 15, 16, 17],
-    brief: 'Integrates sensory information to create spatial awareness and guide goal-directed movements.',
-    full: `The superior parietal lobule (SPL) is a key node in the dorsal visual stream ("where/how" pathway) that processes spatial information and guides action. It integrates input from S1, visual cortex, and proprioceptive systems to construct a real-time model of the body in space.
+    pos3d:   { x: 0,     y:  0.69, z: -0.69 },
+    scale3d: { x: 0.70,  y:  0.32, z:  0.32 },
+    mriLevels: [14,15,16,17],
+    brief: 'Encodes body-in-space; integrates vision and proprioception for visually guided reaching (dorsal stream).',
+    full: `The superior parietal lobule (SPL, BA 5/7) lies posterior to S1, above the intraparietal sulcus. BA 5 (somatosensory association area) integrates information across S1 subregions to build a representation of body configuration (body schema). BA 7 (visuo-spatial) integrates this with visual input from V5/MT and V3a to code the spatial position of limbs and targets for reaching.
 
-The SPL is critical for visuomotor transformation — converting visual information about object location into motor commands for reaching and grasping. It contains neurons that code target positions in eye-centered, head-centered, and body-centered coordinates.
+The SPL is the key node of the dorsal visual stream ("where/how"), projecting forward to premotor areas to guide hand actions. Neurons here code target location in multiple reference frames (gaze-centred, body-centred, arm-centred) — a transformation essential for visually guided reaching.
 
-It also plays a role in spatial attention and is part of the network that maintains the ability to orient to stimuli in the environment. The right SPL is particularly important for global spatial processing.
+Damage causes optic ataxia (Bálint's syndrome when bilateral): the patient reaches incorrectly for a visually presented object despite normal visual acuity and normal strength — a selective deficit in visually guided action. Associated with posterior cortical atrophy (variant Alzheimer's disease).
 
-Damage to the SPL can cause optic ataxia (difficulty reaching for objects under visual guidance despite intact vision), ideomotor apraxia (difficulty performing learned gestures on command), and spatial disorientation.`
+The right SPL is particularly involved in global spatial processing and is implicated in hemispatial neglect when damaged. The left SPL contributes to praxis (skilled tool use) and body representation.`
   },
 
   inferior_parietal: {
-    name: 'Inferior Parietal Lobule',
+    name: 'Inferior Parietal Lobule (IPL)',
     lobe: 'Parietal Lobe',
     color: '#1D8045',
-    pos3d: { x: 0, y: 0.5, z: -0.1 },
-    scale3d: { x: 0.8, y: 0.35, z: 0.35 },
-    mriLevels: [12, 13, 14, 15],
-    brief: 'A multimodal hub for language, attention, and body representation. Damage on the right causes neglect of the left side of space.',
-    full: `The inferior parietal lobule (IPL) consists of the supramarginal gyrus (BA40) and the angular gyrus (BA39). It is a late-developing, multimodal association area that integrates auditory, visual, and somatosensory information.
+    pos3d:   { x: 0,     y:  0.44, z: -0.56 },
+    scale3d: { x: 0.80,  y:  0.33, z:  0.33 },
+    mriLevels: [12,13,14,15],
+    brief: 'Multimodal hub: language (angular/supramarginal gyri), spatial attention, body schema, number processing.',
+    full: `The inferior parietal lobule (IPL) consists of the supramarginal gyrus (SMG, BA 40) and the angular gyrus (AG, BA 39), located below the intraparietal sulcus. It is one of the most recently evolved and heavily connected regions of the human brain — a convergence zone for auditory, visual, somatosensory, and limbic inputs.
 
-The left IPL is critical for language: the angular gyrus is involved in reading (grapheme-phoneme conversion) and semantic processing, while the supramarginal gyrus is involved in phonological processing. The left angular gyrus is part of Wernicke's area in the broad sense.
+The left AG is critical for reading (grapheme-phoneme conversion), semantic processing, and arithmetic. Gerstmann syndrome from left AG/posterior parietal damage: finger agnosia (inability to identify own fingers), agraphia, acalculia, and left-right confusion — the four A's. The left SMG is involved in phonological processing and forms part of the phonological loop.
 
-The right IPL is critical for spatial attention and body schema. Lesions of the right IPL cause hemispatial neglect — the patient ignores everything on the left side of space (visual, auditory, tactile) even without sensory or motor deficits. They may eat from only the right side of the plate, shave only the right side of the face, or fail to draw the left half of objects.
+The right IPL is the heart of the spatial attention system. Damage causes hemispatial neglect — the most dramatic neurological phenomenon of inattention. Patients eat from only the right side of the plate, shave only the right side of the face, and may deny their left-sided paralysis (anosognosia). The right hemisphere is dominant for spatial attention because it attends to both hemifields, while the left only attends to the right hemifield.
 
-The IPL also contains mirror neuron systems and is involved in theory of mind (understanding others' mental states) and numerical cognition.`
+The IPL contains human mirror neuron systems (action understanding, empathy), is a key default-mode network node (mentalising, theory of mind), and contributes to number representation.`
   },
 
   wernickes_area: {
     name: "Wernicke's Area",
-    lobe: 'Parietal/Temporal Junction',
+    lobe: 'Temporal-Parietal Junction',
     color: '#16A085',
-    pos3d: { x: -0.8, y: 0.3, z: -0.1 },
-    scale3d: { x: 0.25, y: 0.25, z: 0.25 },
-    mriLevels: [10, 11, 12, 13],
-    brief: "Left hemisphere area for language comprehension. Damage causes fluent but meaningless speech ('word salad') with poor comprehension.",
-    full: `Wernicke's area is located in the posterior part of the superior temporal gyrus (BA22), at the temporoparietal junction of the left hemisphere. It was identified by Carl Wernicke in 1874 through patients who spoke fluently but incomprehensibly.
+    pos3d:   { x: -0.69, y:  0.13, z: -0.56 },
+    scale3d: { x: 0.22,  y:  0.22, z:  0.22 },
+    mriLevels: [10,11,12,13],
+    brief: "Left posterior STG (BA 22) — language comprehension. Damage: fluent but meaningless 'word salad' with poor comprehension.",
+    full: `Wernicke's area (posterior BA 22, left hemisphere) lies in the posterior third of the superior temporal gyrus (STG), at the temporoparietal junction. Named after Carl Wernicke who in 1874 described patients who spoke fluently but incomprehensibly, with impaired comprehension.
 
-It is essential for language comprehension — understanding both heard and read speech. It stores the "sound forms" of words and links them to meaning. Incoming auditory language from the primary auditory cortex is processed here for semantic content.
+It receives processed auditory input from the primary auditory cortex (Heschl's gyri) and matches incoming sound patterns to stored phonological representations, extracting word identity. It is connected to Broca's area by the arcuate fasciculus, and to the anterior temporal lobe (semantic hub) via the extreme capsule and uncinate fasciculus.
 
-Wernicke's aphasia (receptive aphasia): fluent, effortless speech with normal rhythm, but the content is filled with semantic paraphasias (wrong words: "the spoon is on the table" becomes "the clock is on the window"), neologisms (invented words), and jargon. Crucially, comprehension is severely impaired — patients cannot reliably follow commands.
+Wernicke's aphasia: fluent, effortless speech with normal rhythm and prosody, but the content is meaningless — paraphasias (substituting words: "the spoon is on the table" → "the clock is on the window"), neologisms (invented words), and jargon. Comprehension is severely impaired and the patient typically has no insight into their deficit (unlike Broca's aphasia). Repetition is also impaired.
 
-Wernicke's area is connected to Broca's area via the arcuate fasciculus (a white matter tract running through the superior longitudinal fasciculus). Damage to this connection causes conduction aphasia: intact comprehension and fluent speech, but inability to repeat sentences exactly.`
+Conduction aphasia from arcuate fasciculus damage: intact comprehension, fluent speech, but impaired repetition — the patient hears and understands normally but cannot copy what they hear exactly. This is the predicted "disconnection" syndrome.`
   },
 
-  // ── TEMPORAL LOBE ─────────────────────────────────────────
+  /* ═══════ TEMPORAL LOBE ════════════════════════════════════ */
+
   auditory_cortex: {
-    name: 'Primary Auditory Cortex',
+    name: 'Primary Auditory Cortex (A1)',
     lobe: 'Temporal Lobe',
     color: '#F39C12',
-    pos3d: { x: 0, y: 0.2, z: 0.05 },
-    scale3d: { x: 0.85, y: 0.2, z: 0.2 },
-    mriLevels: [11, 12, 13],
-    brief: 'First cortical area to process sound. Organized tonotopically — different neurons respond to different frequencies.',
-    full: `The primary auditory cortex (A1) is located in the Heschl's gyri on the superior temporal plane, buried within the lateral sulcus. It receives input from the medial geniculate nucleus (MGN) of the thalamus, which relays signals from the cochlear nuclei and inferior colliculus.
+    pos3d:   { x: 0,     y:  0.13, z: -0.19 },
+    scale3d: { x: 0.85,  y:  0.18, z:  0.18 },
+    mriLevels: [11,12,13],
+    brief: "Heschl's gyri on the superior temporal plane (BA 41/42) — tonotopically organised first cortical stage of hearing.",
+    full: `The primary auditory cortex (A1, BA 41, Heschl's gyri) lies on the superior temporal plane within the lateral sulcus, buried from lateral view. It receives input from the medial geniculate nucleus (MGN) of the thalamus, which relays from the inferior colliculus via the lateral lemniscus.
 
-A1 is organized tonotopically: high-frequency sounds activate posterior regions, low-frequency sounds activate anterior regions. This map preserves the tonotopic organization of the cochlea across multiple relay stations.
+A1 is tonotopically organised (high frequencies posterolaterally, low frequencies anteromedially), preserving the cochlear frequency map. Neurons respond to onset, duration, intensity, and binaural disparity (interaural time and level differences for sound localisation).
 
-It performs basic sound analysis: frequency, intensity, and duration. It does not perform complex sound recognition — that requires the surrounding auditory association cortex (belt and parabelt regions). Bilateral destruction of A1 causes cortical deafness: pure tones can still activate subcortical pathways, but the patient cannot recognize environmental sounds or speech.
+Two parallel auditory processing streams project from A1: an anterior (ventral) stream to the temporal pole for "what" processing (sound identity, speech perception), and a posterior (dorsal) stream to the parietal cortex for "where" processing (sound localisation, auditory-motor integration).
 
-The right auditory cortex is dominant for music and prosody (the emotional tone of speech), while the left is dominant for speech phoneme processing. Together, they extract complementary features: the right extracts coarse spectral patterns (melody), the left extracts rapid temporal patterns (phonemes).`
+Bilateral A1 destruction causes cortical deafness: pure tones can still activate subcortical reflexes (startle, orienting), but the patient cannot consciously perceive or identify sounds. Unilateral A1 damage causes subtle deficits in sound discrimination and localisation in the contralateral ear but not true deafness, because each ear projects bilaterally.`
   },
 
   superior_temporal: {
-    name: 'Superior Temporal Gyrus',
+    name: 'Superior Temporal Gyrus (STG)',
     lobe: 'Temporal Lobe',
     color: '#E67E22',
-    pos3d: { x: 0, y: 0.1, z: -0.1 },
-    scale3d: { x: 0.85, y: 0.2, z: 0.35 },
-    mriLevels: [10, 11, 12, 13],
-    brief: 'Auditory association area — recognizes voices, processes speech sounds, and integrates multisensory social information.',
-    full: `The superior temporal gyrus (STG) surrounds the primary auditory cortex and forms the core auditory association area. Its posterior portion on the left forms most of Wernicke's area. The STG is crucial for processing complex sounds including speech, music, and environmental sounds.
+    pos3d:   { x: 0,     y:  0.06, z: -0.19 },
+    scale3d: { x: 0.85,  y:  0.18, z:  0.35 },
+    mriLevels: [10,11,12,13],
+    brief: 'Auditory association cortex — voice recognition, speech prosody, and multisensory social integration.',
+    full: `The superior temporal gyrus (STG, BA 22/42) surrounds the primary auditory cortex and extends onto the lateral surface of the temporal lobe. It is the core auditory association cortex and a crucial component of the social brain.
 
-The STG is part of the "social brain" — it responds strongly to human voices, faces, and biological motion, and it is consistently activated during social cognition tasks. The temporal-parietal junction (where STG meets parietal cortex) is critical for mentalizing (theory of mind).
+The posterior STG/left hemisphere is Wernicke's area proper. The anterior STG is a multimodal area that responds strongly to human voices (superior to other sounds), faces, biological motion, and emotional prosody. The right STG is dominant for prosody — the melodic, rhythmic, and emotional components of speech; right STG damage impairs recognition of emotional tone in voices (receptive aprosody).
 
-The right STG processes prosody — the emotional and intentional cues carried by the rhythm and melody of speech. Damage to the right STG causes the patient to sound monotone and to misinterpret the emotional tone in others' speech.
+The STG also performs audio-visual integration: it receives visual lip-movement signals and combines them with auditory signals for speech perception. This is the neural substrate of the McGurk effect — an auditory illusion in which visual mouth movements alter perceived speech sounds.
 
-The STG also receives visual input (lip movements during speech) and integrates it with auditory signals — the basis of the McGurk effect, where visual lip movements alter the perceived sound.`
+In schizophrenia, reduced grey matter volume and abnormal activation in the left STG correlates with auditory verbal hallucinations ("hearing voices"). The STG is also involved in theory of mind (particularly the temporoparietal junction) and is a key node for processing socially meaningful stimuli.`
   },
 
-  temporal_gyri: {
+  middle_temporal: {
     name: 'Middle & Inferior Temporal Gyri',
     lobe: 'Temporal Lobe',
     color: '#D35400',
-    pos3d: { x: 0, y: -0.1, z: -0.15 },
-    scale3d: { x: 0.85, y: 0.25, z: 0.5 },
-    mriLevels: [9, 10, 11, 12],
-    brief: 'Object recognition, semantic memory (word meaning), and visual categorization — the brain\'s "what" pathway.',
-    full: `The middle temporal gyrus (MTG) and inferior temporal gyrus (ITG) form the lateral temporal cortex. They are the endpoint of the ventral visual stream ("what" pathway), which processes object identity regardless of size, position, or illumination (object constancy).
+    pos3d:   { x: 0,     y: -0.13, z: -0.25 },
+    scale3d: { x: 0.85,  y:  0.25, z:  0.50 },
+    mriLevels: [9,10,11,12],
+    brief: 'Object recognition and semantic memory — the ventral visual stream ("what pathway") endpoint.',
+    full: `The middle temporal gyrus (MTG, BA 21) and inferior temporal gyrus (ITG, BA 20) form the lateral and inferior temporal cortex. They are the endpoint of the ventral visual stream from V1 → V2 → V4 → TEO → TE (the "what pathway"), which processes object identity independent of size, viewpoint, and illumination.
 
-The ITG contains "grandmother cells" — neurons that respond to specific complex visual categories such as faces, bodies, and objects. The face-selective regions (including the fusiform face area) are crucial for facial recognition; their damage causes prosopagnosia (inability to recognize familiar faces).
+MTG contains abstract semantic representations of objects, animals, and tools — conceptual knowledge about what things are, including motor knowledge (how to use them). Left MTG lesions cause anomic aphasia: profound difficulty finding words (tip-of-the-tongue state) for nouns and verbs. The patient understands the word when told it but cannot produce it voluntarily.
 
-The left MTG/ITG stores lexical-semantic knowledge — the meaning of words and concepts. Lesions in this region cause anomic aphasia: word-finding difficulty (tip-of-the-tongue state) and semantic paraphasias.
+ITG contains high-level visual representations with invariant object recognition. It includes category-selective areas: the fusiform face area (FFA in fusiform gyrus) for faces, the parahippocampal place area (PPA) for scenes, and object-selective lateral occipital complex.
 
-The temporal cortex as a whole is sometimes called the "semantic hub" of the brain — damage here can impair knowledge about objects, animals, and concepts across multiple sensory modalities (semantic dementia).`
+In semantic dementia (a frontotemporal dementia variant), anterior temporal cortex atrophies bilaterally, causing progressive loss of semantic knowledge — the patient gradually loses the meaning of words and concepts across all modalities, while episodic memory (what they did yesterday) is initially spared.`
   },
 
   fusiform_gyrus: {
-    name: 'Fusiform Gyrus',
+    name: 'Fusiform Gyrus (BA 37)',
     lobe: 'Temporal Lobe',
     color: '#BA4A00',
-    pos3d: { x: 0, y: -0.3, z: -0.2 },
-    scale3d: { x: 0.7, y: 0.2, z: 0.45 },
-    mriLevels: [8, 9, 10, 11],
-    brief: 'Expert object recognition — contains the fusiform face area (FFA) for face recognition and similar regions for reading words.',
-    full: `The fusiform gyrus runs along the inferior temporal lobe and contains several specialized regions for expert visual recognition. Most famous is the fusiform face area (FFA), consistently activated by faces more than any other category.
+    pos3d:   { x: 0,     y: -0.25, z: -0.38 },
+    scale3d: { x: 0.70,  y:  0.18, z:  0.42 },
+    mriLevels: [8,9,10,11],
+    brief: 'Expert visual recognition — fusiform face area (FFA) for faces; visual word form area (VWFA) on left for reading.',
+    full: `The fusiform gyrus (BA 37) runs along the ventral temporal lobe between the parahippocampal and inferior temporal sulci. It contains functionally specialised sub-regions identified by fMRI.
 
-The FFA is not exclusively for faces — it activates for any category of objects the person has developed perceptual expertise with (car experts, bird experts). This suggests it is a general expert object recognition region that is "captured" by faces due to their evolutionary importance.
+The fusiform face area (FFA, right > left, mid-fusiform) responds selectively to faces — far more than to any other visual category. It is not exclusively for faces: it is activated by any category of objects for which the person has developed perceptual expertise (bird experts, car experts). This suggests it is a general expert-level visual discrimination area that has been "captured" by faces across human development.
 
-Damage to the right FFA causes prosopagnosia: the patient cannot recognize faces, including their own in a mirror, though they can recognize voices and identify objects normally. Some patients develop compensatory strategies (recognizing people by voice, hair, or gait).
+Damage to right FFA causes prosopagnosia: inability to recognise familiar faces, including one's own in a mirror, despite normal object recognition and vision. Patients develop compensatory strategies (recognising people by voice, hairstyle, or gait). Congenital prosopagnosia (~2% of population) has normal anatomy but functional hypoconnectivity of the FFA.
 
-Nearby on the left fusiform is the visual word form area (VWFA), sometimes called the "letterbox area" — it responds to written words and is critical for rapid, automatic reading. Damage causes pure alexia (difficulty reading despite normal writing and speech).`
+The visual word form area (VWFA, left fusiform) is sometimes called the "letterbox" — it responds preferentially to strings of letters (words) and is critical for rapid, automatic, parallel reading. Damage causes pure alexia (letter-by-letter reading): the patient reads words one letter at a time, losing reading fluency despite intact writing and comprehension.`
   },
 
-  // ── OCCIPITAL LOBE ────────────────────────────────────────
+  /* ═══════ OCCIPITAL LOBE ═══════════════════════════════════ */
+
   primary_visual: {
     name: 'Primary Visual Cortex (V1)',
     lobe: 'Occipital Lobe',
     color: '#C0392B',
-    pos3d: { x: 0, y: 0.05, z: -1.1 },
-    scale3d: { x: 0.6, y: 0.5, z: 0.3 },
-    mriLevels: [10, 11, 12, 13, 14],
-    brief: 'First cortical processing stage for vision. Receives raw visual information from the eyes via the thalamus (LGN).',
-    full: `The primary visual cortex (V1, striate cortex, BA17) is located in the calcarine sulcus on the medial surface of the occipital lobe. It receives topographically organized (retinotopic) input from the lateral geniculate nucleus (LGN) of the thalamus.
+    pos3d:   { x: 0,     y:  0.06, z: -1.13 },
+    scale3d: { x: 0.60,  y:  0.45, z:  0.28 },
+    mriLevels: [10,11,12,13,14],
+    brief: 'Calcarine cortex (BA 17) — first cortical stage of vision. Retinotopically mapped; fovea at occipital pole.',
+    full: `The primary visual cortex (V1, striate cortex, BA 17) is located in the depths and lips of the calcarine sulcus on the medial occipital surface. It receives topographically organised (retinotopic) input from the lateral geniculate nucleus (LGN), layers 2,3,5,6 of LGN → V1 layers 4Cα and 4Cβ respectively.
 
-V1 is organized retinotopically: the central visual field (fovea) is represented at the occipital pole and occupies a disproportionately large cortical area (cortical magnification), while the peripheral field is represented more anteriorly. The upper visual field maps to below the calcarine sulcus, the lower field above it.
+V1 has a massive cortical magnification factor: the central 10 degrees of vision (the fovea) occupies ~50% of V1's surface despite covering only 2% of the retina. This is why lesions at the occipital pole cause central scotomas while posterior parietal lesions spare central vision (macular sparing — also partly due to dual MCA/PCA blood supply at the tip).
 
-V1 neurons respond to basic visual features: orientation (edges), spatial frequency, color, and motion direction. They are organized in columns sharing these preferences. V1 performs the initial decomposition of the visual image into elementary features that higher areas combine into objects and scenes.
+Layer 4 of V1 has a distinctly dark appearance (the stria of Gennari, visible to the naked eye) from dense myelinated horizontal fibres in layer 4B — hence "striate cortex." Ocular dominance columns and orientation columns in V1 were discovered by Hubel and Wiesel (Nobel Prize 1981), establishing the columnar organisation of visual cortex.
 
-Damage to V1 causes contralateral homonymous hemianopia — blindness in the opposite visual field. A small region may be spared at the occipital tip (macular sparing) due to dual blood supply. V1 lesions cause a "cortical blindness" — patients genuinely cannot see, but some may show "blindsight" (unconscious responses to visual stimuli they deny seeing).`
+Damage causes contralateral homonymous hemianopia (same visual field quadrant or half lost in both eyes). Patients with total V1 destruction may show blindsight — unconscious responses to visual stimuli they deny seeing, mediated by the superior colliculus pathway.`
   },
 
   visual_association: {
-    name: 'Visual Association Areas (V2–V5)',
+    name: 'Visual Association Cortex (V2–V5)',
     lobe: 'Occipital Lobe',
     color: '#A93226',
-    pos3d: { x: 0, y: 0.2, z: -0.9 },
-    scale3d: { x: 0.75, y: 0.45, z: 0.3 },
-    mriLevels: [11, 12, 13, 14, 15],
-    brief: 'Process progressively complex visual features: V4 for color, V5/MT for motion, leading to object and spatial perception.',
-    full: `Beyond V1, multiple extrastriate visual areas (V2, V3, V4, V5/MT) process progressively more complex aspects of the visual scene, arranged in a hierarchy.
+    pos3d:   { x: 0,     y:  0.19, z: -1.00 },
+    scale3d: { x: 0.75,  y:  0.42, z:  0.28 },
+    mriLevels: [11,12,13,14,15],
+    brief: 'V2 (BA 18), V3, V4 (colour), V5/MT (motion) — progressive extraction of form, colour, and motion from V1 output.',
+    full: `Beyond V1, a hierarchy of extrastriate visual areas processes increasingly complex visual attributes. Each area has its own complete retinotopic map and functional specialisation.
 
-V4 is specialized for color constancy — perceiving consistent color despite changes in illumination. Selective damage to V4 causes achromatopsia: the world appears in shades of gray. Interestingly, patients may lose all color imagery too (they can no longer imagine colors).
+V2 (BA 18) surrounds V1 and receives direct V1 input. V3 processes global form and depth. V4 is specialised for colour and shape — it receives M and P pathway inputs and computes colour constancy (stable colour perception despite changing illumination). Selective V4 damage causes cerebral achromatopsia: the world is seen in shades of grey despite normal cone function; patients often lose colour imagery as well.
 
-V5 (also called MT, middle temporal area) is specialized for motion perception. Its neurons fire in response to moving stimuli, with preferred directions and speeds. Damage causes akinetopsia: the patient cannot perceive motion — traffic appears as a series of frozen positions, pouring tea looks like a solid frozen arc.
+V5/MT (middle temporal area, dorsal occipitotemporal cortex) is specialised for motion detection. Neurons in MT respond to moving stimuli with preferred directions and speeds, providing the neural basis for coherent motion perception. Selective MT damage causes akinetopsia: the world appears as a series of frozen snapshots — pouring tea looks like a solid frozen arc, and traffic cannot be tracked.
 
-These areas split into two processing streams: the dorsal stream (V1 → V5 → parietal) processes spatial location and guides action ("where/how"), while the ventral stream (V1 → V4 → temporal) processes object identity ("what"). This dissociation explains patients who can "use" objects without recognizing them, and vice versa.`
+These areas bifurcate into two streams: the dorsal stream (V1→V3→V5/MT→parietal) for spatial processing and action guidance, and the ventral stream (V1→V4→fusiform→temporal) for object identity. The double dissociation between these streams is demonstrated by patients who can accurately grasp objects they cannot identify (dorsal intact, ventral damaged) and vice versa.`
   },
 
-  // ── LIMBIC SYSTEM ─────────────────────────────────────────
+  /* ═══════ LIMBIC SYSTEM ════════════════════════════════════ */
+
   cingulate_cortex: {
     name: 'Cingulate Cortex',
     lobe: 'Limbic System',
     color: '#8E44AD',
-    pos3d: { x: 0, y: 0.45, z: 0.0 },
-    scale3d: { x: 0.25, y: 0.55, z: 0.9 },
-    mriLevels: [11, 12, 13, 14, 15, 16],
-    brief: 'Anterior cingulate: conflict monitoring and pain affect. Posterior cingulate: self-referential thought and memory retrieval.',
-    full: `The cingulate cortex arches over the corpus callosum on the medial surface of each hemisphere. It is divided into the anterior cingulate cortex (ACC) and posterior cingulate cortex (PCC) with very different functions.
+    pos3d:   { x: 0,     y:  0.50, z:  0.19 },
+    scale3d: { x: 0.22,  y:  0.52, z:  0.90 },
+    mriLevels: [11,12,13,14,15,16],
+    brief: 'Anterior cingulate: conflict monitoring, pain affect, autonomic control. Posterior cingulate: DMN hub, episodic memory.',
+    full: `The cingulate cortex arches over the corpus callosum on the medial hemisphere. Gilroy divides it into: anterior cingulate cortex (ACC, BA 24/32), mid-cingulate (MCC, BA 24'), posterior cingulate cortex (PCC, BA 23/31), and retrosplenial cortex (RSC, BA 29/30).
 
-The ACC is part of the salience network and is activated by cognitive conflict (when you have to override an automatic response), pain (the emotional/suffering component, not the sensory location), and error detection. It monitors for conflicts and recruits the prefrontal cortex to apply cognitive control. The ACC is consistently implicated in depression and anxiety.
+The ACC has two divisions: affective (subgenual, below the genu) and cognitive (pregenual/dorsal). The affective ACC is part of the pain neuromatrix — it processes the emotional distress component of pain without the sensory-discriminative aspect. Cingulotomy (surgical ACC lesion) reduces suffering from chronic pain without eliminating pain sensation. The cognitive ACC monitors for response conflict and error (anterior cingulate is activated on incongruent Stroop trials), recruiting cognitive control when needed.
 
-The PCC is a major hub of the default mode network (DMN) — a set of regions active during rest, self-referential thought, mind-wandering, and autobiographical memory retrieval. It is one of the most metabolically active regions at rest and is among the first to accumulate amyloid plaques in Alzheimer's disease.
+The PCC is the metabolically most active region at rest (highest glucose uptake) and is a central hub of the default mode network (DMN) — the network active during rest, mind-wandering, autobiographical memory, and self-referential thought. It is among the first regions to accumulate amyloid plaques in Alzheimer's disease and shows early metabolic decline in preclinical AD.
 
-The midcingulate cortex bridges motor and emotional processing, integrating pain with avoidance behavior. Cingulotomy (surgical lesion of the ACC) was historically used for intractable pain and OCD — reducing emotional suffering without eliminating the sensory perception of pain.`
+The MCC bridges motor and emotional systems and contains nociceptive neurons that project to the spinal cord, modulating pain transmission. The RSC is critical for spatial navigation and forms part of the "scene-selective" network with the parahippocampal cortex.`
   },
 
   insula: {
     name: 'Insula',
     lobe: 'Limbic System',
     color: '#7D3C98',
-    pos3d: { x: 0, y: 0.2, z: 0.3 },
-    scale3d: { x: 0.75, y: 0.5, z: 0.35 },
-    mriLevels: [10, 11, 12, 13],
-    brief: 'Hidden deep in the lateral sulcus — integrates body state signals into conscious feelings (interoception), disgust, and empathy.',
-    full: `The insula (insular cortex) lies hidden within the lateral sulcus, covered by the frontal, parietal, and temporal opercula. It is a complex region with distinct anterior and posterior portions.
+    pos3d:   { x: 0,     y:  0.19, z:  0.06 },
+    scale3d: { x: 0.82,  y:  0.48, z:  0.30 },
+    mriLevels: [10,11,12,13],
+    brief: 'Hidden in the lateral sulcus — interoception (body state), disgust, pain affect, empathy; anterior insula is primary gustatory cortex.',
+    full: `The insula (insular cortex) is folded within the lateral (Sylvian) sulcus, covered by the frontal, parietal, and temporal opercula. It has a distinct cytoarchitectural gradient: the posterior insula is granular (like sensory cortex), while the anterior insula is agranular (like limbic cortex).
 
-The posterior insula receives raw interoceptive signals from the body — pain, temperature, itch, visceral sensations, cardiovascular state, and breathing. These signals arrive via the thalamus (VPL and VMpo nuclei).
+The posterior insula receives interoceptive signals from the body — pain, temperature, itch, visceral sensations, cardiovascular state, and respiratory effort — via the thalamus (VPL, VMpo nuclei). These are the raw "body state" signals. The anterior insula integrates these with emotional context to create the subjective felt quality of bodily states — a process Damasio calls "somatic markers," and Craig calls the neural substrate of feelings.
 
-The anterior insula integrates these body signals with emotional and cognitive context to create the subjective "feeling" of body state — the basis of all felt emotions according to interoceptive theories. It is active during pain empathy (watching others in pain), disgust, craving (addiction), and romantic love.
+The anterior insula is consistently activated across a remarkable range of subjective states: pain empathy, hunger, thirst, social rejection, disgust, romantic love, craving, and aesthetic pleasure. The right anterior insula is considered the substrate of the sense of self as an embodied entity.
 
-The right anterior insula is critical for the "sense of self" as a bodily entity. Damage can impair the ability to feel emotions, recognize facial expressions of disgust, and may contribute to disorders of body awareness (anosognosia — denial of paralysis; anorexia nervosa — distorted body perception).
+The anterior insula is primary gustatory cortex — the first cortical taste area, receiving from the thalamic VPMpc nucleus (which relays from the nucleus tractus solitarius). Taste information then projects forward to the OFC for flavour integration.
 
-The insula also plays a role in taste (anterior insula is primary gustatory cortex), language (especially speech articulation), and salience detection.`
+Insular lesions contribute to: anosognosia (denial of illness), impaired recognition of disgust, pain asymbolia (pain sensation without distress), and reduced cardiac interoception.`
   },
 
   hippocampus: {
     name: 'Hippocampus',
     lobe: 'Limbic System',
     color: '#6C3483',
-    pos3d: { x: 0, y: -0.25, z: -0.3 },
-    scale3d: { x: 0.8, y: 0.2, z: 0.4 },
-    mriLevels: [7, 8, 9, 10],
-    brief: 'Essential for forming new declarative memories. Without it, you cannot create new long-term memories (anterograde amnesia).',
-    full: `The hippocampus is a curved structure in the medial temporal lobe, resembling a seahorse (Greek: hippos = horse, kampos = sea monster). It consists of the dentate gyrus, CA fields (Cornu Ammonis 1-4), and subiculum.
+    pos3d:   { x: 0,     y: -0.15, z: -0.31 },
+    scale3d: { x: 0.78,  y:  0.18, z:  0.38 },
+    mriLevels: [7,8,9,10],
+    brief: 'Essential for forming new declarative (episodic + semantic) memories. Contains place cells for spatial navigation.',
+    full: `The hippocampus (Latin for seahorse) is a curved structure in the medial temporal lobe, constituting the most medial part of the temporal cortex. It has three subdivisions: the dentate gyrus (DG), Cornu Ammonis (CA1-CA4), and subiculum. The perforant path (from entorhinal cortex → DG) is the main input; the fornix is the major output (to mammillary bodies and septal nuclei).
 
-Its essential role is in the formation of new declarative (explicit) memories — both episodic memories (personal events: "what I did yesterday") and semantic memories (facts: "Paris is in France"). It "binds" elements of an experience together across the cortex and consolidates them into long-term memory during sleep.
+The trisynaptic circuit (EC → DG via perforant path → CA3 via mossy fibres → CA1 via Schaffer collaterals → subiculum → EC) is essential for memory encoding. Long-term potentiation (LTP) at CA3 and CA1 synapses — discovered by Bliss and Lømo (1973) — is the primary synaptic model of memory consolidation.
 
-The famous patient H.M. had his hippocampus bilaterally removed for epilepsy in 1953. He developed profound anterograde amnesia — he could not form any new long-term memories, living permanently in 1953. Yet his procedural memory (skills) and working memory were intact, revealing that different memory systems exist in different brain regions.
+Patient H.M. (Henry Molaison), whose bilateral hippocampectomy in 1953 caused profound anterograde amnesia, established that the hippocampus is necessary for forming new declarative memories (both episodic and semantic) but not for procedural learning, working memory, or immediate recall. He could not remember anything from 1953 onward, yet could learn new motor skills.
 
-The hippocampus also contains place cells (neurons that fire in specific locations) and is essential for spatial navigation — the famous "London taxi driver study" showed structural enlargement of the posterior hippocampus in drivers who memorized the city's streets. It is one of the primary sites of neurogenesis in adults.`
+The hippocampus contains place cells (O'Keefe, Nobel Prize 2014) — neurons that fire in specific locations — providing the neural substrate for the cognitive map of space. The London taxi driver study (Maguire, 2000) showed structural enlargement of the posterior hippocampus in drivers who memorised ~25,000 streets.`
   },
 
   amygdala: {
     name: 'Amygdala',
     lobe: 'Limbic System',
     color: '#5B2C6F',
-    pos3d: { x: 0, y: -0.2, z: 0.2 },
-    scale3d: { x: 0.7, y: 0.2, z: 0.25 },
-    mriLevels: [7, 8, 9, 10],
-    brief: 'Fear and emotional learning center. Attaches emotional significance to experiences, especially threats.',
-    full: `The amygdala is an almond-shaped cluster of nuclei (Latin: amygdala = almond) located in the anterior temporal lobe, just anterior to the hippocampus. It consists of multiple nuclei, the most important being the basolateral complex and central nucleus.
+    pos3d:   { x: 0,     y: -0.22, z: -0.06 },
+    scale3d: { x: 0.68,  y:  0.19, z:  0.22 },
+    mriLevels: [7,8,9,10],
+    brief: 'Fear processing and emotional memory — attaches emotional significance to stimuli; danger signals bypass cortex via thalamo-amygdala shortcut.',
+    full: `The amygdala (Greek for almond) is a nuclear complex in the anterior temporal lobe, just anterior and superior to the hippocampal head. Gilroy divides it into three main groups: the basolateral complex (BLA — lateral, basal, accessory basal nuclei), the centromedial group, and the cortical nuclei.
 
-Its primary role is emotional learning and fear conditioning. It receives sensory input (including a fast, crude "low road" directly from the thalamus bypassing the cortex) and evaluates stimuli for emotional significance, especially threat. When danger is detected, the central nucleus triggers the fear response via the hypothalamus and brainstem: heart rate increase, cortisol release, freezing, and heightened attention.
+The BLA receives sensory input from all modalities — including a fast "low road" directly from the thalamus (bypassing cortical processing) for rapid threat responses. It evaluates stimuli for emotional significance and projects to the orbitofrontal and cingulate cortex to influence decision-making. The central nucleus is the main output nucleus — it coordinates the autonomic (via hypothalamus/brainstem), endocrine (via hypothalamus), and behavioural (via BNST/basal forebrain) components of the fear response.
 
-The amygdala also modulates memory consolidation in the hippocampus — emotionally arousing events are remembered better because the amygdala signals "this is important, consolidate this." This explains why you remember where you were during shocking news but not routine conversations.
+Amygdala activation is critical for fear conditioning (learning that a neutral stimulus predicts danger). It modulates hippocampal memory consolidation via noradrenergic and cholinergic projections — explaining why emotionally arousing events are remembered better (amygdala tags them as important).
 
-Patient S.M. (amygdala bilaterally destroyed by disease) cannot feel fear — she approached a snake, voluntarily watched horror films unfazed, and cannot recognize fearful facial expressions. Yet she is not reckless; she feels other emotions normally, suggesting the amygdala is selective for fear-relevant signals.`
+Patient S.M. (Urbach-Wiethe disease, bilateral amygdala calcification): cannot feel fear, approaches snakes and spiders without hesitation, rates neutral faces as more approachable, cannot recognise fearful facial expressions, and failed to acquire conditioned fear responses. Yet she is not reckless — all other emotions are intact.`
   },
 
-  // ── SUBCORTICAL ───────────────────────────────────────────
+  parahippocampal: {
+    name: 'Parahippocampal Gyrus',
+    lobe: 'Limbic System',
+    color: '#4A235A',
+    pos3d:   { x: 0,     y: -0.28, z: -0.31 },
+    scale3d: { x: 0.70,  y:  0.18, z:  0.40 },
+    mriLevels: [6,7,8,9],
+    brief: 'Entorhinal cortex + parahippocampal place area — the gateway to the hippocampus and scene recognition.',
+    full: `The parahippocampal gyrus wraps around the hippocampus on the inferior temporal surface. Its anterior portion is the entorhinal cortex (EC, BA 28) and perirhinal cortex (BA 35/36); its posterior portion contains the parahippocampal place area (PPA).
+
+The entorhinal cortex is the primary input/output gateway to the hippocampus: ~70% of hippocampal input arrives via the perforant path from EC layer II (to dentate gyrus and CA3) and layer III (to CA1). EC layer II neurons contain grid cells (Moser & Moser, Nobel Prize 2014) — neurons that fire in a hexagonal spatial grid across an environment, providing metric spatial information to hippocampal place cells.
+
+The perirhinal cortex is critical for object recognition memory (familiarity-based recognition) and may allow objects to be recognised as familiar without full recollection of when/where they were encountered. This dissociation maps onto the Remember/Know distinction in cognitive psychology.
+
+The PPA (posterior parahippocampal gyrus) responds selectively to places and scenes — more than to any other category. It is a critical node of the "scene-selective" network together with the retrosplenial cortex. PPA lesions cause topographical disorientation: patients cannot navigate by landmarks despite recognising individual buildings.`
+  },
+
+  /* ═══════ SUBCORTICAL ══════════════════════════════════════ */
+
   thalamus: {
     name: 'Thalamus',
     lobe: 'Diencephalon',
     color: '#E74C3C',
-    pos3d: { x: 0, y: -0.1, z: -0.15 },
-    scale3d: { x: 0.5, y: 0.35, z: 0.45 },
-    mriLevels: [7, 8, 9, 10, 11],
-    brief: 'The grand relay station — every sensory modality except olfaction passes through the thalamus on its way to the cortex.',
-    full: `The thalamus is a paired egg-shaped structure forming the dorsal part of the diencephalon, flanking the third ventricle. It consists of many distinct nuclei, each serving as a relay for specific functions between the cortex, subcortical structures, and brainstem.
+    pos3d:   { x: 0,     y:  0.06, z: -0.25 },
+    scale3d: { x: 0.52,  y:  0.33, z:  0.44 },
+    mriLevels: [7,8,9,10,11],
+    brief: 'Grand relay station — all sensory modalities except olfaction pass through specific thalamic nuclei on the way to cortex.',
+    full: `The thalamus is a paired egg-shaped diencephalic structure flanking the third ventricle (inter-thalamic adhesion often connects the two across the midline). Gilroy divides thalamic nuclei by function: specific relay, association, non-specific, and reticular (TRN).
 
-Major sensory relays: the lateral geniculate nucleus (LGN) relays visual information to V1; the medial geniculate nucleus (MGN) relays auditory information to A1; the ventral posterolateral nucleus (VPL) relays somatosensory information from the body to S1; the ventral posteromedial nucleus (VPM) relays somatosensory input from the face.
+Specific relay nuclei: VPL → somatosensory cortex (body touch/proprioception via medial lemniscus); VPM → somatosensory cortex (face, taste); MGN → A1 (auditory, via lateral lemniscus and inferior brachium); LGN → V1 (visual, via optic radiation/Meyer's loop); VL/VA → motor cortex (motor output from cerebellum via dentato-rubro-thalamic tract, and basal ganglia).
 
-Motor relays: the ventral anterior (VA) and ventral lateral (VL) nuclei relay output from the cerebellum and basal ganglia to the motor cortex — allowing these structures to influence movement without directly contacting motor neurons.
+Association nuclei: pulvinar (largest thalamic nucleus — visual and language association, implicated in neglect); mediodorsal nucleus (MD) → prefrontal cortex (emotion, memory — damaged in Wernicke-Korsakoff syndrome); anterior nucleus → cingulate cortex (part of Papez circuit for memory).
 
-The thalamus is the gateway to consciousness. It gates sensory information based on arousal state (during sleep, sensory signals are blocked). The intralaminar nuclei are part of the ascending reticular activating system and maintain wakefulness. Bilateral thalamic damage causes severe amnesia (thalamic amnesia) and impaired consciousness.`
+The thalamic reticular nucleus (TRN) is a sheet of GABAergic neurons wrapping the thalamus — all thalamocortical and corticothalamic fibres pass through it. TRN gates sensory information based on attentional state and is critical for the alpha rhythms of sleep and the sleep spindles of NREM sleep.
+
+Bilateral paramedian thalamic infarcts cause thalamic amnesia (disproportionate difficulty with episodic memory, similar to medial temporal amnesia) and disorders of arousal.`
   },
 
   hypothalamus: {
     name: 'Hypothalamus',
     lobe: 'Diencephalon',
     color: '#CB4335',
-    pos3d: { x: 0, y: -0.45, z: 0.15 },
-    scale3d: { x: 0.35, y: 0.2, z: 0.3 },
-    mriLevels: [7, 8, 9],
-    brief: 'Controls body homeostasis: hunger, thirst, temperature, sleep-wake cycle, and hormonal release via the pituitary gland.',
-    full: `The hypothalamus lies below the thalamus (hypo = below), forming the floor and lower walls of the third ventricle. Despite being only 4 grams (less than 1% of brain weight), it is the master regulator of homeostasis and the link between the nervous and endocrine systems.
+    pos3d:   { x: 0,     y: -0.13, z:  0.06 },
+    scale3d: { x: 0.33,  y:  0.19, z:  0.28 },
+    mriLevels: [7,8,9],
+    brief: 'Master homeostasis regulator — hunger, thirst, temperature, circadian rhythm; controls pituitary hormone release.',
+    full: `The hypothalamus (4g, <1% of brain weight) forms the floor and lateral walls of the third ventricle. Despite its tiny size, it is the master regulator of autonomic function, endocrine output, and homeostatic behaviour. Gilroy emphasises its two-way communication with the pituitary gland.
 
-Through direct neural connections to the pituitary gland (neurohypophysis for ADH and oxytocin; tuberoinfundibular pathway for releasing hormones controlling the anterior pituitary), the hypothalamus controls growth, metabolism, stress response (CRH → ACTH → cortisol), reproduction (GnRH), and thyroid function.
+Hypothalamo-hypophysial tract: large magnocellular neurons in the paraventricular nucleus (PVN) and supraoptic nucleus (SON) synthesise ADH (vasopressin) and oxytocin, which travel down axons to the posterior pituitary for direct release. Parvocellular PVN neurons release CRH (stress), TRH (thyroid), GnRH (reproductive), GHRH/somatostatin (growth) into the hypothalamo-hypophysial portal system → anterior pituitary.
 
-Key nuclei and functions: suprachiasmatic nucleus (SCN) — the body's master circadian clock, synchronized by light; ventromedial nucleus — satiety center (damage causes hyperphagia and obesity); lateral hypothalamus — hunger center (damage causes anorexia); anterior hypothalamus — heat dissipation (cooling); posterior hypothalamus — heat conservation and arousal.
+Key nuclei (mnemonic: four F's of the hypothalamus): Feeding (lateral — hunger; ventromedial — satiety; arcuate — leptin/ghrelin sensing), Fighting/Fleeing (dorsomedial, posterior), F*cking (preoptic area, sexually dimorphic nucleus), and Fever/thermoregulation (anterior — heat dissipation; posterior — heat conservation).
 
-The hypothalamus integrates signals from blood (glucose, osmolarity, hormones), visceral afferents, limbic inputs, and the cortex to coordinate behavioral (feeding, drinking, mating) and autonomic (heart rate, blood pressure) responses.`
+Suprachiasmatic nucleus (SCN): master circadian clock, ~20,000 neurons, entrained by retinal light input via retinohypothalamic tract. Ablation of SCN destroys all circadian rhythmicity. It expresses molecular clockwork (CLOCK/BMAL1/PER/CRY feedback loop), serving as the pacemaker for all peripheral tissue clocks.`
+  },
+
+  mammillary_bodies: {
+    name: 'Mammillary Bodies',
+    lobe: 'Diencephalon',
+    color: '#B03A2E',
+    pos3d:   { x: 0,     y: -0.22, z:  0.10 },
+    scale3d: { x: 0.28,  y:  0.14, z:  0.16 },
+    mriLevels: [7,8],
+    brief: 'Papez circuit relay — receive hippocampal output via fornix; project to anterior thalamus for episodic memory.',
+    full: `The mammillary bodies are paired spherical structures on the inferior hypothalamic surface, visible on the brain's ventral surface. They are a critical relay in the Papez circuit (Papez, 1937), the classic limbic loop for memory: hippocampus → fornix → mammillary bodies → mammillothalamic tract → anterior thalamic nucleus → cingulate cortex → entorhinal cortex → hippocampus.
+
+The mammillary bodies receive the bulk of hippocampal output via the fornix. Medial mammillary neurons project strongly to the anterior thalamic nucleus (ATN) via the mammillothalamic tract of Vicq d'Azyr — one of the most prominent white matter tracts in the diencephalon, visible on MRI. Lateral mammillary neurons project to the tegmental nuclei.
+
+The mammillary bodies are selectively vulnerable to thiamine (vitamin B1) deficiency. In Wernicke's encephalopathy, petechial haemorrhages occur in the mammillary bodies and periaqueductal grey — the classic pathological finding. Atrophy of the mammillary bodies on MRI is a sensitive marker for Wernicke-Korsakoff syndrome. The resulting amnesia (Korsakoff syndrome) is characterised by severe anterograde and retrograde amnesia with confabulation, attributed to disruption of the Papez circuit.
+
+In temporal lobe epilepsy, the mammillary bodies and hippocampus atrophy together, reflecting repeated seizure-induced excitotoxicity through the circuit.`
   },
 
   caudate: {
     name: 'Caudate Nucleus',
     lobe: 'Basal Ganglia',
     color: '#F0A500',
-    pos3d: { x: 0, y: 0.2, z: 0.4 },
-    scale3d: { x: 0.6, y: 0.25, z: 0.45 },
-    mriLevels: [9, 10, 11, 12],
-    brief: 'Part of the basal ganglia — involved in reward-based learning, habit formation, and cognitive flexibility.',
-    full: `The caudate nucleus is a C-shaped structure consisting of a head (anterior, near the frontal horn of the lateral ventricle), body, and tail (curving into the temporal lobe near the amygdala). Together with the putamen, it forms the striatum, the main input structure of the basal ganglia.
+    pos3d:   { x: 0,     y:  0.19, z:  0.13 },
+    scale3d: { x: 0.62,  y:  0.23, z:  0.44 },
+    mriLevels: [9,10,11,12],
+    brief: 'Part of the striatum — receives prefrontal input; mediates goal-directed learning, cognitive flexibility, and reward.',
+    full: `The caudate nucleus (CN) is a C-shaped structure with a head (bulging into the frontal horn of the lateral ventricle anteriorly), body (along the lateral ventricle), and tail (curving into the temporal lobe near the amygdala). Together with the putamen, it forms the striatum (neostriatum) — the main input nucleus of the basal ganglia.
 
-The caudate receives massive input from the prefrontal cortex and is involved in goal-directed behavior — especially learning which actions lead to rewards. It is a key node in the cortico-striato-thalamo-cortical loops that regulate cognitive control and action selection.
+The head of the caudate is strongly connected to the prefrontal cortex (dorsolateral → dorsal head; orbitofrontal → ventral head) via the corticostriatal pathway. This cortico-striato-thalamo-cortical loop regulates cognitive control, habit formation, and reward-based learning. Dopamine from the substantia nigra (D1 receptors: direct pathway, movement facilitation) and VTA (D1/D2: reward signalling) modulates striatal activity.
 
-The head of the caudate is specifically connected to the prefrontal cortex and is involved in executive function. Damage or dysfunction in this circuit is implicated in OCD (hyperactivity of caudate-orbitofrontal loops), ADHD, and Tourette syndrome.
+Caudate dysfunction is implicated in OCD (hyperactivity of the OFC-caudate loop — excessive checking is a stuck "error detection" signal), ADHD (hypoactive caudate-prefrontal loop), and Tourette syndrome (tic generation via striatal-thalamo-cortical disinhibition).
 
-In Huntington's disease, the caudate and putamen are selectively destroyed (preferentially GABAergic medium spiny neurons). This releases the thalamus from inhibition, causing involuntary movements (chorea), dementia, and psychiatric symptoms. The caudate atrophy is visible on MRI as widening of the frontal horns of the lateral ventricles.`
+In Huntington's disease (HD), caudate head atrophy is the earliest and most dramatic structural change visible on MRI — the normally concave medial border of the frontal horn straightens and then bulges outward ("boxing glove" appearance). HD results from mutant huntingtin protein toxic to striatal medium spiny neurons (MSNs), particularly those expressing enkephalin (indirect pathway), explaining early chorea from selective indirect pathway loss.`
   },
 
   putamen: {
     name: 'Putamen',
     lobe: 'Basal Ganglia',
     color: '#D4A017',
-    pos3d: { x: 0, y: 0.1, z: 0.3 },
-    scale3d: { x: 0.65, y: 0.35, z: 0.4 },
-    mriLevels: [9, 10, 11, 12],
-    brief: 'Controls habitual motor learning and automatic movements. Most active when a skill becomes automatic.',
-    full: `The putamen lies lateral to the caudate nucleus, separated from it by the internal capsule (except anteriorly where they join in the striatum). Together with the caudate, it forms the striatum, the primary input nucleus of the basal ganglia.
+    pos3d:   { x: 0,     y:  0.06, z:  0.06 },
+    scale3d: { x: 0.68,  y:  0.33, z:  0.38 },
+    mriLevels: [9,10,11,12],
+    brief: 'Largest striatal nucleus — receives motor cortex input; essential for habitual motor learning and automatisation.',
+    full: `The putamen is the largest component of the basal ganglia and the lateral part of the lenticular nucleus (putamen + globus pallidus). It receives massive input from the sensorimotor cortex (precentral, postcentral, premotor) via the corticostriatal pathway. This circuit is the "habit learning" loop: repeated sensorimotor experience gradually transfers motor control from the prefrontal/caudate circuit (deliberate, flexible) to the sensorimotor/putamen circuit (automatic, efficient).
 
-While the caudate is more connected to prefrontal/cognitive circuits, the putamen is more connected to sensorimotor cortex and is the primary basal ganglia structure for motor learning and the automatization of movements. As a motor skill is learned, activity shifts from prefrontal/caudate circuits (deliberate, effortful) to sensorimotor/putamen circuits (automatic, habitual).
+The putamen projects via two parallel pathways: the direct pathway (striatum → GPi → thalamus, via D1 MSNs expressing substance P) facilitates desired movements; the indirect pathway (striatum → GPe → STN → GPi → thalamus, via D2 MSNs expressing enkephalin) suppresses competing movements. Dopamine facilitates the direct and inhibits the indirect pathway, biasing the system toward movement.
 
-The putamen is most affected in Parkinson's disease. Dopaminergic neurons from the substantia nigra pars compacta (SNc) project to the putamen (nigrostriatal pathway). When >80% of these dopaminergic neurons die, the characteristic motor symptoms emerge: resting tremor, rigidity, bradykinesia (slowness), and postural instability.
+The putamen is preferentially affected in Parkinson's disease: dopaminergic fibres from the substantia nigra pars compacta first lose their projections to the caudal putamen (the motor territory), explaining why motor symptoms predominate early while cognitive symptoms emerge later as the disease progresses to the caudate and VTA.
 
-Treatment with levodopa (a dopamine precursor) restores dopamine in the striatum, dramatically improving motor symptoms in early Parkinson's disease.`
+On MRI (susceptibility-weighted imaging), the putamen normally appears dark due to iron accumulation — this increases with age. In multiple system atrophy (MSA), abnormal iron deposition produces the characteristic "hot cross bun sign" in the pons and a hypointense putaminal rim.`
   },
 
   globus_pallidus: {
-    name: 'Globus Pallidus',
+    name: 'Globus Pallidus (GPe/GPi)',
     lobe: 'Basal Ganglia',
     color: '#B8860B',
-    pos3d: { x: 0, y: 0.05, z: 0.2 },
-    scale3d: { x: 0.45, y: 0.3, z: 0.3 },
-    mriLevels: [9, 10, 11],
-    brief: 'The main output nucleus of the basal ganglia — tonically inhibits the thalamus and is released to allow movement.',
-    full: `The globus pallidus (pale globe in Latin) is the principal output nucleus of the basal ganglia, divided into an internal segment (GPi) and external segment (GPe). It lies medial to the putamen.
+    pos3d:   { x: 0,     y:  0.00, z:  0.00 },
+    scale3d: { x: 0.47,  y:  0.28, z:  0.28 },
+    mriLevels: [9,10,11],
+    brief: 'Main output nucleus of basal ganglia — tonically inhibits thalamus; must be released (disinhibited) to allow movement.',
+    full: `The globus pallidus (pale globe) is the medial component of the lenticular nucleus, divided into an external (GPe) and internal (GPi) segment by the medial medullary lamina. On cross-section it appears paler than the putamen due to dense myelinated fibres.
 
-The GPi sends inhibitory (GABAergic) projections to the motor thalamus (VA/VL nuclei) and brainstem. At rest, GPi neurons fire tonically at high rates, continuously suppressing the thalamus and preventing movement. When you want to move, the striatum inhibits the GPi ("indirect disinhibition"), releasing the thalamus and allowing movement initiation.
+The GPi is the principal basal ganglia output nucleus. Its neurons fire tonically at ~60-80 Hz at rest, continuously inhibiting the motor thalamus (VA/VL nuclei). To generate a movement, the striatum (via the direct pathway) inhibits GPi neurons, releasing the thalamus from inhibition — a "disinhibition" mechanism. GPi output also reaches the pedunculopontine nucleus (PPN) and superior colliculus.
 
-This basal ganglia circuit is the basis for deep brain stimulation (DBS) therapy — high-frequency stimulation of the GPi or subthalamic nucleus effectively silences the overactive inhibition in Parkinson's disease, dramatically improving symptoms without destroying tissue.
+The GPe is part of the indirect pathway, receiving striatal inhibition and inhibiting the subthalamic nucleus in turn. GPe acts as a gating mechanism modulating the strength of indirect pathway inhibition.
 
-In hemiballismus — violent flinging movements of the arm — the contralateral subthalamic nucleus is damaged (usually by lacunar infarct), releasing GPi from STN excitation, leading to thalamic disinhibition and uncontrolled movement.`
+Deep brain stimulation (DBS) of GPi is a standard treatment for Parkinson's disease (improving all cardinal motor symptoms), dystonia (often dramatically effective), and Tourette syndrome. The mechanism is controversial — high-frequency stimulation (~130 Hz) may functionally silence GPi, mimic the therapeutic effect of pallidotomy, or alter pathological oscillatory patterns (exaggerated beta rhythms in Parkinson's disease).
+
+Hemiballismus — violent flinging movements of the contralateral arm — results from acute GPi disinhibition after lacunar infarct of the subthalamic nucleus (ipsilateral STN destroys the excitatory drive to GPi, releasing thalamus from inhibition).`
   },
 
   subthalamic_nucleus: {
-    name: 'Subthalamic Nucleus',
+    name: 'Subthalamic Nucleus (STN)',
     lobe: 'Basal Ganglia',
     color: '#A0522D',
-    pos3d: { x: 0, y: -0.25, z: 0.05 },
-    scale3d: { x: 0.4, y: 0.15, z: 0.25 },
-    mriLevels: [8, 9, 10],
-    brief: 'A key modulator in the basal ganglia indirect pathway. Its damage causes hemiballismus; its stimulation treats Parkinson\'s disease.',
-    full: `The subthalamic nucleus (STN) is a small lens-shaped nucleus located below the thalamus, between the cerebral peduncle and the zona incerta. Despite its small size, it is critical for basal ganglia function.
+    pos3d:   { x: 0,     y: -0.06, z: -0.06 },
+    scale3d: { x: 0.40,  y:  0.14, z:  0.22 },
+    mriLevels: [8,9,10],
+    brief: 'The only excitatory (glutamatergic) nucleus in the basal ganglia — amplifies inhibition via the indirect pathway; DBS target for Parkinson\'s.',
+    full: `The subthalamic nucleus (STN) is a lens-shaped nucleus lying beneath the thalamus and above the substantia nigra, at the junction of the diencephalon and mesencephalon. It is the only excitatory (glutamatergic) nucleus within the basal ganglia proper.
 
-The STN is the only excitatory (glutamatergic) nucleus in the basal ganglia. It forms part of the "indirect pathway" — the pathway that enhances inhibition of unwanted movements. In the indirect pathway: striatum (inhibits GPe) → GPe (stops inhibiting STN) → STN (excites GPi) → GPi (inhibits thalamus). This leads to movement suppression.
+In the classic basal ganglia model, the STN is the key relay of the indirect pathway: striatum (indirect, D2/enkephalin MSNs) → GPe → STN (disinhibited) → GPi (excited) → thalamus (inhibited). This circuit ultimately suppresses unwanted movements. The STN also receives a "hyperdirect" pathway directly from prefrontal cortex, which can stop actions rapidly without going through the striatum.
 
-In Parkinson's disease, the loss of dopaminergic input to the striatum leads to overactivity of the STN, which over-excites the GPi, which over-inhibits the thalamus — resulting in the bradykinesia and rigidity of Parkinson's disease.
+The STN shows synchronised beta oscillations (13-30 Hz) in Parkinson's disease, a pathological rhythmic "braking" signal that correlates with motor slowness (bradykinesia). DBS of the STN at 130 Hz suppresses these oscillations, allowing more normal thalamic throughput. STN-DBS is now the standard surgical therapy for advanced Parkinson's disease, producing dramatic, levodopa-like improvements in all motor symptoms.
 
-Deep brain stimulation (DBS) of the STN at 130+ Hz effectively silences it, restoring balance. STN-DBS is now standard treatment for advanced Parkinson's disease and is being investigated for OCD, depression, and Tourette syndrome.`
+Lesion: hemiballismus (contralateral, as described under GPi). Small lacunar infarcts of the STN from posterior cerebral artery perforating branches are the most common cause.`
   },
 
   substantia_nigra: {
     name: 'Substantia Nigra',
     lobe: 'Midbrain',
-    color: '#2C1810',
-    pos3d: { x: 0, y: -0.75, z: -0.15 },
-    scale3d: { x: 0.6, y: 0.15, z: 0.25 },
-    mriLevels: [5, 6, 7],
-    brief: 'Midbrain nucleus that produces dopamine for the striatum. Its degeneration causes Parkinson\'s disease.',
-    full: `The substantia nigra (Latin: black substance) is a midbrain nucleus that appears dark on gross examination due to melanin pigment in dopaminergic neurons (neuromelanin, a byproduct of dopamine synthesis). It is divided into the pars compacta (SNc) and pars reticulata (SNr).
+    color: '#1a1008',
+    pos3d:   { x: 0,     y: -0.19, z: -0.25 },
+    scale3d: { x: 0.58,  y:  0.13, z:  0.22 },
+    mriLevels: [5,6,7],
+    brief: 'Midbrain dopamine nucleus — degeneration causes Parkinson\'s disease. Appears dark on MRI due to neuromelanin pigment.',
+    full: `The substantia nigra (SN, Latin: black substance) is a midbrain nucleus appearing dark macroscopically due to neuromelanin — a byproduct of dopamine synthesis — in its pars compacta (SNc) neurons. It is divided into the pars compacta (SNc, dorsal, dopaminergic neurons) and pars reticulata (SNr, ventral, GABAergic output neurons similar to GPi).
 
-The SNc is the origin of the nigrostriatal dopaminergic pathway — projecting to the caudate and putamen (striatum). These dopaminergic neurons modulate the basal ganglia circuitry: dopamine via D1 receptors facilitates the direct pathway (movement enabling), and via D2 receptors inhibits the indirect pathway (movement suppressing). Net effect: dopamine promotes movement.
+The SNc is the origin of the nigrostriatal pathway — projecting to the caudate and putamen (striatum). Dopamine from SNc modulates basal ganglia circuits: via D1 receptors it facilitates the direct pathway; via D2 receptors it inhibits the indirect pathway. Net effect: dopamine promotes movement initiation and vigour. A separate mesocortical pathway (SNc/VTA → prefrontal cortex) modulates working memory, and the mesolimbic pathway (VTA → nucleus accumbens) mediates reward.
 
-The SNr serves as an additional output nucleus of the basal ganglia alongside the GPi, projecting to the superior colliculus (for eye movements) and the thalamus.
+Parkinson's disease (PD): loss of >80% of SNc neurons produces the cardinal features: resting tremor ("pill-rolling"), rigidity (cogwheel, lead pipe), bradykinesia, and postural instability. The substantia nigra appears pale on post-mortem examination (neuromelanin lost). Lewy bodies (alpha-synuclein aggregates) are the pathological hallmark. Levodopa (L-DOPA) replenishes striatal dopamine, dramatically improving motor symptoms.
 
-Parkinson's disease is defined pathologically by loss of >80% of SNc dopaminergic neurons and the presence of Lewy bodies (intraneuronal inclusions of alpha-synuclein). The substantia nigra appears pale in post-mortem examination of Parkinson's patients. The "lost" substantia nigra has been visible on MRI as reduced T2* signal (loss of neuromelanin) in advanced Parkinson's.`
+On MRI, the normal SNc appears dark on T2* images (neuromelanin/iron signal). Reduced T2* signal ("nigrosome-1 loss") is now an established imaging marker for PD. Neuromelanin-sensitive MRI directly visualises SNc pigmented neurons and shows ~20% volume reduction in PD.`
   },
 
-  // ── WHITE MATTER ──────────────────────────────────────────
+  /* ═══════ WHITE MATTER ═════════════════════════════════════ */
+
   corpus_callosum: {
     name: 'Corpus Callosum',
     lobe: 'White Matter',
     color: '#BDC3C7',
-    pos3d: { x: 0, y: 0.4, z: 0.1 },
-    scale3d: { x: 0.2, y: 0.15, z: 0.95 },
-    mriLevels: [11, 12, 13, 14, 15],
-    brief: 'The largest white matter tract — 200-300 million axons connecting the two hemispheres so they can share information.',
-    full: `The corpus callosum is the largest white matter commissure in the brain, containing approximately 200-300 million myelinated axons connecting corresponding and non-corresponding regions of the two cerebral hemispheres. It has four parts: rostrum (most anterior), genu (knee — connects prefrontal cortices), body (connects parietal cortices), and splenium (most posterior — connects occipital and temporal cortices).
+    pos3d:   { x: 0,     y:  0.31, z:  0.00 },
+    scale3d: { x: 0.18,  y:  0.14, z:  0.95 },
+    mriLevels: [11,12,13,14,15],
+    brief: '200-300 million axons connecting both hemispheres — four parts: rostrum, genu (prefrontal), body (parietal), splenium (occipito-temporal).',
+    full: `The corpus callosum (CC) is the largest white matter commissure in the human brain, containing ~200-300 million myelinated axons connecting homotopic and heterotopic cortical areas across hemispheres. It has four parts from anterior to posterior: rostrum (connects orbitofrontal cortices), genu (prefrontal), body (parietal and motor/sensory), splenium (occipital, temporal, and parietal association cortices).
 
-The corpus callosum allows the two hemispheres to share information, coordinate activity, and maintain a unified conscious experience despite functional specialization. Visual information from each half-field is processed in the contralateral hemisphere, and the corpus callosum integrates this into a single visual percept.
+The CC is essential for interhemispheric integration: visual information from each half-field is processed in the contralateral hemisphere, and the CC allows this to be unified into a single percept. It also enables the dominant (left) hemisphere's language system to name stimuli processed by the right hemisphere.
 
-Split-brain patients (corpus callosotomy performed for intractable epilepsy) have been studied extensively by Sperry and Gazzaniga. With the callosum severed, each hemisphere operates independently — an object shown to the left visual field can be picked up by the left hand but cannot be named, because language is in the left hemisphere which has no access to the right hemisphere's perception.
+Split-brain patients (callosotomy for intractable epilepsy, studied by Sperry and Gazzaniga): each hemisphere functions independently. An object shown to the left visual field (processed by right hemisphere) can be picked up by the left hand but cannot be named — because language is in the left hemisphere which has no access to the right hemisphere's perception. Two independent "conscious" agents appear to coexist.
 
-Agenesis of the corpus callosum can occur as a congenital anomaly — surprisingly, many individuals with this condition appear cognitively normal, suggesting remarkable neural compensation occurs.`
+Agenesis of the corpus callosum (ACC, congenital absence) occurs in ~1/4000 births. Surprisingly, many individuals appear cognitively normal — the brain compensates via enlarged anterior and posterior commissures and strengthened ipsilateral connections. However, subtle deficits in processing complex social and linguistic information emerge on detailed testing.`
   },
 
   internal_capsule: {
     name: 'Internal Capsule',
     lobe: 'White Matter',
     color: '#ABB2B9',
-    pos3d: { x: 0, y: 0.15, z: 0.2 },
-    scale3d: { x: 0.55, y: 0.5, z: 0.4 },
-    mriLevels: [9, 10, 11, 12],
-    brief: 'The white matter highway carrying all descending motor and ascending sensory fibers between cortex and brainstem/spinal cord.',
-    full: `The internal capsule is a compact band of white matter lying between the lenticular nucleus (putamen + globus pallidus) laterally and the thalamus and caudate medially. It carries virtually all ascending and descending fibers connecting the cerebral cortex to subcortical structures.
+    pos3d:   { x: 0,     y:  0.13, z:  0.06 },
+    scale3d: { x: 0.58,  y:  0.48, z:  0.38 },
+    mriLevels: [9,10,11,12],
+    brief: 'White matter highway — all cortical motor (descending) and sensory (ascending) fibres converge here between lenticular nucleus and thalamus.',
+    full: `The internal capsule (IC) is a compact band of white matter between the lenticular nucleus (putamen + GP) laterally and the caudate nucleus and thalamus medially. It carries virtually all ascending and descending fibres connecting the cerebral cortex to subcortical structures.
 
-It is divided into an anterior limb (between caudate and globus pallidus — carries frontothalamic and frontopontine fibers), a genu (contains corticobulbar fibers for voluntary control of face, head, and neck muscles), and a posterior limb (between thalamus and globus pallidus — carries the corticospinal tract and thalamocortical sensory fibers).
+On axial MRI at basal ganglia level, the IC has a distinctive V-shaped (or boomerang) appearance: the anterior limb (between caudate and lenticular nucleus) contains frontothalamic and frontopontine fibres; the genu (at the bend) contains corticobulbar fibres for voluntary facial, pharyngeal, and laryngeal muscles; the posterior limb (between thalamus and lenticular nucleus) contains the corticospinal tract (CST), thalamocortical somatosensory radiations, and visual/auditory radiations.
 
-The posterior limb carries the corticospinal tract (voluntary movement), the corticobulbar tract (motor to cranial nerves), and somatosensory thalamocortical projections. These fibers are compactly arranged, making the posterior limb an extremely high-stakes location — a small lacunar infarct here can cause contralateral hemiplegia and hemisensory loss.
+Somatotopic arrangement in the posterior limb (anterior to posterior): face → arm → leg representations of the CST.
 
-The internal capsule is supplied by the lenticulostriate arteries, small perforating branches of the MCA that are highly vulnerable to hypertension. Hypertensive intracerebral hemorrhage classically occurs here, causing devastating contralateral motor and sensory deficits.`
+The posterior limb is supplied by the lenticulostriate arteries — small perforating branches of the MCA vulnerable to hypertension. Hypertensive lacunar infarcts and intracerebral haemorrhage classically occur here, producing contralateral dense hemiplegia. A 1cm3 lesion here can paralyse an entire side of the body — the highest density of motor fibres anywhere in the brain.`
   },
 
   lateral_ventricles: {
     name: 'Lateral Ventricles',
     lobe: 'Ventricular System',
-    color: '#85C1E9',
-    pos3d: { x: 0, y: 0.3, z: 0.05 },
-    scale3d: { x: 0.65, y: 0.35, z: 0.8 },
-    mriLevels: [10, 11, 12, 13, 14],
-    brief: 'CSF-filled spaces within the cerebral hemispheres. Produced by choroid plexus, they cushion and nourish the brain.',
-    full: `The lateral ventricles are paired C-shaped cavities within the cerebral hemispheres, one in each hemisphere. They communicate with the third ventricle via the interventricular foramina (foramina of Monro). Each lateral ventricle has a frontal horn, body, occipital horn, and temporal horn.
+    color: '#5DADE2',
+    pos3d:   { x: 0,     y:  0.25, z:  0.06 },
+    scale3d: { x: 0.62,  y:  0.32, z:  0.78 },
+    mriLevels: [10,11,12,13,14],
+    brief: 'CSF-filled cavities within each hemisphere — C-shaped, with frontal horn, body, occipital horn, and temporal horn.',
+    full: `The lateral ventricles are paired C-shaped cavities within the cerebral hemispheres, reflecting the C-shaped rotation of the telencephalon during development. Each consists of a frontal horn (anterior to interventricular foramen), body, occipital horn, and temporal horn (extending into the temporal lobe, alongside the hippocampus).
 
-Cerebrospinal fluid (CSF) is produced by the choroid plexus (a vascular structure in the lateral, third, and fourth ventricles) at a rate of ~500 ml/day, with a total volume of ~150 ml at any time. CSF flows from the lateral ventricles → third ventricle → cerebral aqueduct → fourth ventricle → subarachnoid space → absorbed by arachnoid granulations into the dural venous sinuses.
+CSF is produced by the choroid plexus at ~500 ml/day (total volume ~150 ml). Flow: lateral ventricles → interventricular foramen (of Monro) → third ventricle → cerebral aqueduct (of Sylvius) → fourth ventricle → foramina of Luschka (lateral) and Magendie (medial) → subarachnoid space → absorbed by arachnoid granulations into the dural venous sinuses. Disturbance at any point causes hydrocephalus.
 
-On MRI, the lateral ventricles appear as bright signal on T2-weighted images. The size of the ventricles is diagnostically important: enlargement (ventriculomegaly) can indicate hydrocephalus (obstructed CSF flow causing increased pressure) or cortical atrophy (ex vacuo enlargement as brain tissue is lost — seen in Alzheimer's, Huntington's, and aging).
+On axial MRI: at the level of the basal ganglia, the frontal horns appear as two butterfly-shaped CSF spaces flanked medially by the septum pellucidum and laterally by the caudate head. Higher up, the ventricular bodies enlarge; the corpus callosum forms the roof.
 
-The caudate head bulges into the frontal horn — in Huntington's disease, caudate atrophy causes the frontal horns to look "boxy" rather than curved, a characteristic MRI finding.`
+Ventriculomegaly: enlargement may indicate (1) obstructive hydrocephalus (blocked CSF flow → raised ICP → papilloedema, headache, vomiting), (2) communicating hydrocephalus (impaired absorption at arachnoid granulations — after SAH or meningitis), or (3) hydrocephalus ex vacuo (passive enlargement as brain tissue is lost — Alzheimer's, Huntington's, ageing). Distinguishing these requires clinical and radiological correlation.`
   },
 
-  // ── CEREBELLUM ────────────────────────────────────────────
+  /* ═══════ CEREBELLUM ════════════════════════════════════════ */
+
   cerebellar_hemispheres: {
     name: 'Cerebellar Hemispheres',
     lobe: 'Cerebellum',
     color: '#1ABC9C',
-    pos3d: { x: 0, y: -0.65, z: -0.85 },
-    scale3d: { x: 0.9, y: 0.45, z: 0.5 },
-    mriLevels: [3, 4, 5, 6, 7],
-    brief: 'Coordinates movement timing and precision. Damage causes ipsilateral limb ataxia — clumsy, inaccurate movements.',
-    full: `The cerebellar hemispheres consist of three lobes: the anterior lobe, posterior lobe (largest, also called neocerebellum or pontocerebellum), and flocculonodular lobe. The cortex is arranged in fine parallel folds (folia), giving the cerebellum a distinctive appearance.
+    pos3d:   { x: 0,     y: -0.31, z: -0.81 },
+    scale3d: { x: 0.90,  y:  0.42, z:  0.48 },
+    mriLevels: [3,4,5,6,7],
+    brief: 'Neocerebellum — coordinates timing and precision of voluntary limb movements; damage causes ipsilateral limb ataxia.',
+    full: `The cerebellar hemispheres (neocerebellum or pontocerebellum) are the largest part of the cerebellum and the most recently evolved. Their characteristic folded surface (folia) is separated by fissures, giving enormously increased surface area. Each hemisphere is connected to the brainstem by three peduncles: inferior (restiform body, to medulla), middle (brachium pontis, largest, from pontine nuclei), and superior (brachium conjunctivum, to midbrain, carrying output).
 
-The neocerebellum (lateral hemispheres) receives input from the ipsilateral pontine nuclei (which relay from the contralateral cerebral cortex) and sends output via the dentate nucleus → contralateral red nucleus → thalamus → motor and premotor cortex. This circuit coordinates voluntary, skilled movements — especially those involving sequential, precise movements of the limbs.
+The cerebellar cortex has a uniform three-layer structure: molecular layer (sparse stellate and basket cells, Purkinje cell dendrites), Purkinje cell layer (large inhibitory Purkinje neurons — the sole output of the cortex), and granule cell layer (the most numerous neurons in the brain — ~50 billion). Information arrives via mossy fibres (from pontine nuclei, relaying cortical signals) and climbing fibres (from inferior olivary nucleus, providing error signals).
 
-The cerebellum computes "motor error" — the difference between the intended movement and the actual movement — and sends corrective signals to adjust ongoing and future movements. It is essential for timing, rate, force, and direction of movements.
+The neocerebellum implements internal models of movement dynamics — a "forward model" predicting sensory consequences of motor commands and a "inverse model" computing motor commands from desired trajectories. It compares intended and actual movement in real time, sending corrective signals back to motor cortex via dentate nucleus → superior cerebellar peduncle → contralateral red nucleus → thalamus (VL) → motor cortex.
 
-Lesions of the cerebellar hemisphere cause ipsilateral limb ataxia (cerebellar disease causes ipsilateral signs — because the circuit crosses twice): dysmetria (past-pointing on finger-nose test), dysdiadochokinesia (inability to perform rapid alternating movements), intention tremor (tremor that worsens as the target is approached), and rebound (failure of check reflex). Speech is dysarthric with scanning quality.`
+Neocerebellum lesions cause ipsilateral limb ataxia (DANISH mnemonic: Dysdiadochokinesia, Ataxia, Nystagmus, Intention tremor, Scanning dysarthria, Hypotonia). Because the circuit crosses twice (cortex → pons → contralateral cerebellum → contralateral SCP → recross → ipsilateral VL → ipsilateral cortex), cerebellar lesions produce ipsilateral signs.`
   },
 
   vermis: {
-    name: 'Vermis',
+    name: 'Vermis & Flocculonodular Lobe',
     lobe: 'Cerebellum',
     color: '#17A589',
-    pos3d: { x: 0, y: -0.65, z: -0.85 },
-    scale3d: { x: 0.2, y: 0.45, z: 0.5 },
-    mriLevels: [3, 4, 5, 6, 7],
-    brief: 'Midline cerebellum — controls trunk and gait stability. Damage causes truncal ataxia and a wide-based, "drunken" gait.',
-    full: `The vermis (worm in Latin) is the midline portion of the cerebellum connecting the two hemispheres. It receives input from the spinal cord (spinocerebellar tracts), vestibular system, and some visual input, and projects via the fastigial nucleus to the vestibular nuclei and reticular formation.
+    pos3d:   { x: 0,     y: -0.31, z: -0.81 },
+    scale3d: { x: 0.18,  y:  0.42, z:  0.48 },
+    mriLevels: [3,4,5,6,7],
+    brief: 'Midline cerebellum — controls trunk/gait (spinocerebellum); flocculonodular lobe controls eye movements and balance (vestibulocerebellum).',
+    full: `The vermis (Latin: worm) is the midline strip of the cerebellum connecting the two hemispheres. Together with the paravermis (intermediate zone), it constitutes the spinocerebellum, which receives somatotopic input from the spinal cord (dorsal and ventral spinocerebellar tracts), trigeminal nuclei, and some visual/auditory input. It projects via the fastigial nucleus to the vestibular nuclei and reticular formation, controlling axial (trunk and proximal limb) muscles and gait.
 
-The vermis controls axial (trunk and proximal limb) muscles and gait stability. It integrates proprioceptive information from the spine with vestibular balance signals to maintain posture during movement.
+The flocculonodular lobe (vestibulocerebellum) is the oldest part of the cerebellum phylogenetically. It receives input from the vestibular nuclei (direct, without thalamic relay) and controls balance, eye movements (smooth pursuit, VOR adaptation), and postural adjustments.
 
-Vermal lesions cause truncal ataxia and gait ataxia — the characteristic wide-based, staggering "drunken" gait with difficulty walking in tandem (heel-to-toe). Sitting balance may be impaired. Unlike hemispheric lesions, limb coordination may be relatively preserved.
+Vermal lesions produce truncal ataxia and gait ataxia — wide-based, staggering "drunken sailor" gait with difficulty walking in tandem. This is the pattern of alcoholic cerebellar degeneration: preferential anterior vermis atrophy from thiamine deficiency causes isolated gait ataxia with relatively spared limb coordination — a clinical hallmark.
 
-This pattern is especially seen in alcohol-related cerebellar degeneration, which preferentially affects the anterior vermis. Chronic alcoholics may develop pure gait ataxia with intact limb coordination — a clinical hallmark of alcoholic cerebellar degeneration that reflects the topographic vulnerability of the anterior vermis to thiamine deficiency and alcohol toxicity.`
+Flocculonodular lobe lesions (typically medulloblastoma in children, arising from the roof of the fourth ventricle) produce cerebellar-type nystagmus, dysequilibrium, and truncal ataxia, often with obstructive hydrocephalus from fourth ventricular compression.`
   },
 
-  // ── BRAINSTEM ─────────────────────────────────────────────
+  /* ═══════ BRAINSTEM ════════════════════════════════════════ */
+
   midbrain: {
     name: 'Midbrain (Mesencephalon)',
     lobe: 'Brainstem',
     color: '#E91E63',
-    pos3d: { x: 0, y: -0.65, z: -0.35 },
-    scale3d: { x: 0.35, y: 0.3, z: 0.35 },
-    mriLevels: [4, 5, 6],
-    brief: 'Contains CN III and IV nuclei, the substantia nigra, red nucleus, and major ascending/descending tracts.',
-    full: `The midbrain (mesencephalon) is the most superior part of the brainstem, connecting the diencephalon above to the pons below. It is divided into the tectum (dorsal: superior and inferior colliculi), tegmentum (central core), and cerebral peduncles (large ventral fiber bundles).
+    pos3d:   { x: 0,     y: -0.06, z: -0.31 },
+    scale3d: { x: 0.33,  y:  0.28, z:  0.33 },
+    mriLevels: [4,5,6],
+    brief: 'CN III/IV, substantia nigra, red nucleus, superior/inferior colliculi, cerebral aqueduct, cerebral peduncles.',
+    full: `The midbrain (mesencephalon) is the most superior part of the brainstem, ~2cm long, connecting the diencephalon to the pons. On axial MRI it has a characteristic "Mickey Mouse" appearance: the two cerebral peduncles form the "ears" and the tegmentum forms the "head." The cerebral aqueduct (of Sylvius) traverses its centre.
 
-The tectum: the superior colliculi control reflexive eye movements and visual orienting (turning head/eyes toward a sudden stimulus); the inferior colliculi are key relay stations in the auditory pathway.
+Tectum (dorsal): superior colliculi control reflexive orienting to visual stimuli (turning eyes/head toward sudden movement, targeting saccades via the superior colliculus-FEF pathway) and mediate the pupillary light reflex (optic nerve → pretectal nucleus → bilateral Edinger-Westphal → ciliary ganglion → constrictor pupillae). Inferior colliculi are obligatory auditory relay stations.
 
-The tegmentum contains: the red nucleus (motor coordination, receives cerebellar output via the superior cerebellar peduncle); the periaqueductal gray (PAG, critical for pain modulation and defensive behavior); the nuclei of CN III (oculomotor) and CN IV (trochlear); the decussation of the superior cerebellar peduncle.
+Tegmentum: contains the periaqueductal grey (PAG), the brain's endogenous pain control centre — stimulation produces opioid-independent analgesia by activating descending serotonergic/noradrenergic pathways to the spinal dorsal horn. Also contains the red nucleus (rubrospinal tract, mainly active in infancy), cranial nerve nuclei (CN III — oculomotor, CN IV — trochlear), and the decussation of the superior cerebellar peduncle.
 
-The cerebral peduncles carry the corticospinal and corticobulbar tracts. Midbrain lesions cause specific "crossed" syndromes: Weber syndrome (CN III palsy + contralateral hemiplegia — lesion in cerebral peduncle damaging CN III and corticospinal tract) and Parinaud syndrome (dorsal lesion at superior colliculi — paralysis of upward gaze).`
+Classic midbrain vascular syndromes: Weber (CN III palsy + contralateral hemiplegia — basal/peduncular lesion); Benedikt (CN III palsy + contralateral tremor — tegmental, red nucleus damage); Parinaud (upgaze paralysis, light-near dissociation, convergence-retraction nystagmus — dorsal lesion at superior colliculus/posterior commissure, typical of pineal region tumours).`
   },
 
   pons: {
     name: 'Pons',
     lobe: 'Brainstem',
     color: '#C2185B',
-    pos3d: { x: 0, y: -0.9, z: -0.2 },
-    scale3d: { x: 0.45, y: 0.3, z: 0.35 },
-    mriLevels: [2, 3, 4, 5],
-    brief: 'Contains CN V, VI, VII, VIII nuclei. The major relay between cortex and cerebellum. Houses critical respiratory centers.',
-    full: `The pons (Latin: bridge) is the bulging central part of the brainstem, named for the prominent transverse fibers on its ventral surface that form the middle cerebellar peduncle — the largest cerebellar peduncle, carrying corticopontocerebellar fibers.
+    pos3d:   { x: 0,     y: -0.31, z: -0.38 },
+    scale3d: { x: 0.44,  y:  0.28, z:  0.33 },
+    mriLevels: [2,3,4,5],
+    brief: 'CN V-VIII, pontine respiratory centres, locus coeruleus; relay to cerebellum via middle cerebellar peduncle.',
+    full: `The pons is the bulging central part of the brainstem. Its ventral surface bulges prominently due to the transverse pontocerebellar fibres (pontine nuclei → middle cerebellar peduncle → cerebellum) — the largest cerebellar peduncle, relaying corticopontocerebellar signals for the neocerebellum.
 
-The pons contains nuclei for cranial nerves V (trigeminal — face sensation and jaw muscles), VI (abducens — lateral gaze), VII (facial — facial expression and taste), and VIII (vestibulocochlear — hearing and balance). It is a relay station for all cortical motor signals destined for the cerebellum (via pontine nuclei → middle cerebellar peduncle).
+Cranial nerve nuclei in the pons: CN V (trigeminal — main sensory nucleus for tactile sensation; motor nucleus for jaw muscles); CN VI (abducens — lateral rectus, medial to the floor of the fourth ventricle); CN VII (facial — motor: facial expression; parasympathetic: lacrimal/salivary; taste: anterior 2/3 tongue); CN VIII (vestibulocochlear — cochlear nuclei at pontomedullary junction, vestibular nuclei).
 
-The dorsal pons contains important respiratory centers: the pneumotaxic center (controls breathing rate) and apneustic center. The reticular formation here contains the locus coeruleus (the brain's main noradrenaline source — important in attention, alertness, and stress response) and nuclei involved in REM sleep.
+Locus coeruleus (LC): compact nucleus in the dorsal pontine tegmentum containing ~15,000 noradrenergic neurons, the largest noradrenergic nucleus in the brain. It projects diffusely to virtually all brain regions (cortex, cerebellum, spinal cord) and is the brain's primary noradrenaline source. The LC is critical for arousal, stress response, and attentional modulation. It degenerates early in Parkinson's disease (Braak stage 2) and Alzheimer's disease.
 
-Pontine lesions are famous for "locked-in syndrome" — bilateral ventral pontine injury destroys all motor pathways while sparing the reticular activating system. The patient is fully conscious and aware but cannot move or speak, and can only communicate by voluntary vertical eye movements (which are spared because their control is in the midbrain).`
+Locked-in syndrome from bilateral ventral pontine infarct (basilar artery occlusion): destruction of all motor pathways (pyramidal, corticobulbar) renders the patient tetraplegic and anarthric, while preserving the reticular activating system in the tegmentum. The patient is fully conscious, can hear and understand everything, but can only communicate by voluntary vertical eye movements (midbrain-controlled upgaze is spared).`
   },
 
   medulla: {
     name: 'Medulla Oblongata',
     lobe: 'Brainstem',
     color: '#AD1457',
-    pos3d: { x: 0, y: -1.1, z: -0.1 },
-    scale3d: { x: 0.3, y: 0.35, z: 0.3 },
-    mriLevels: [0, 1, 2, 3],
-    brief: 'Controls vital functions: breathing, heart rate, blood pressure. Contains CN IX-XII nuclei. Site of corticospinal decussation.',
-    full: `The medulla oblongata is the lowest part of the brainstem, continuous with the spinal cord at the foramen magnum. It is indispensable for life, containing the cardiovascular and respiratory control centers in the reticular formation.
+    pos3d:   { x: 0,     y: -0.56, z: -0.44 },
+    scale3d: { x: 0.28,  y:  0.32, z:  0.28 },
+    mriLevels: [0,1,2,3],
+    brief: 'Controls vital functions — breathing, heart rate, blood pressure. Site of corticospinal decussation. CN IX–XII nuclei.',
+    full: `The medulla oblongata is continuous with the spinal cord at the foramen magnum. It is indispensable for life — containing the cardiovascular and respiratory control centres whose bilateral destruction is immediately fatal.
 
-Critical centers: the dorsal respiratory group (inspiration) and ventral respiratory group (expiration and forced breathing), cardiac center (heart rate and contractility), and vasomotor center (blood pressure via sympathetic tone). Bilateral damage → immediate death.
+Critical control centres in the reticular formation: dorsal respiratory group (nucleus tractus solitarius — inspiration); ventral respiratory group (nucleus ambiguus, pre-Bötzinger complex — rhythmic breathing pattern generation and forced expiration); cardiac centre (nucleus ambiguus via vagus — heart rate slowing); vasomotor centre (rostral ventrolateral medulla — sympathetic tone to blood vessels for blood pressure).
 
-The medulla contains nuclei for cranial nerves IX (glossopharyngeal — pharyngeal sensation/gag reflex), X (vagus — parasympathetic control of thorax/abdomen), XI (accessory — sternomastoid/trapezius), and XII (hypoglossal — tongue movement). The nucleus gracilis and cuneatus relay fine touch and proprioception from the body.
+Cranial nerve nuclei: CN IX (glossopharyngeal — pharyngeal sensation, carotid body/sinus afferents, stylopharyngeus); CN X (vagus — parasympathetic to thorax and abdomen, pharyngeal/laryngeal muscles, visceral afferents); CN XI (accessory — sternomastoid and trapezius); CN XII (hypoglossal — tongue movements, in hypoglossal canal).
 
-Most importantly, the medulla is where the corticospinal tract decussates: ~85% of fibers cross to form the lateral corticospinal tract in the spinal cord — explaining why cortical lesions cause contralateral paralysis. The lateral medullary syndrome (Wallenberg syndrome) from PICA occlusion is the most common brainstem stroke: crossed sensory loss (ipsilateral face, contralateral body), ataxia, dysphagia, Horner syndrome, and hiccups.`
-  }
+The pyramidal decussation occurs in the lower medulla: ~85% of corticospinal fibres cross, forming the lateral corticospinal tract of the spinal cord. This anatomical crossing explains why cortical lesions cause contralateral paralysis.
+
+Lateral medullary syndrome (Wallenberg syndrome, posterior inferior cerebellar artery occlusion): ipsilateral Horner's, ipsilateral facial hemianalgesia (trigeminal), ipsilateral palatal/vocal cord/pharyngeal palsy (CN IX/X), ipsilateral ataxia (inferior cerebellar peduncle), contralateral body hemianalgesia (spinothalamic) — due to crossed sensory loss. One of the most recognisable vascular syndromes in neurology.`
+  },
+
+  /* ═══════ ADDITIONAL STRUCTURES ════════════════════════════ */
+
+  pineal_gland: {
+    name: 'Pineal Gland',
+    lobe: 'Diencephalon',
+    color: '#E8A020',
+    pos3d:   { x: 0,     y:  0.03, z: -0.40 },
+    scale3d: { x: 0.12,  y:  0.10, z:  0.12 },
+    mriLevels: [7,8],
+    brief: 'Neuroendocrine organ secreting melatonin — entrains circadian rhythm to light-dark cycles; calcifies with age.',
+    full: `The pineal gland (epiphysis cerebri) is a small unpaired midline structure attached to the posterior third ventricle roof, lying in the quadrigeminal cistern above the superior colliculi. It is a circumventricular organ (outside the blood-brain barrier) and the brain's primary melatonin secretory gland.
+
+The retinohypothalamic tract → suprachiasmatic nucleus (SCN) → paraventricular nucleus → spinal cord intermediolateral column → superior cervical ganglion → postganglionic sympathetic fibres → pineal gland. In darkness, noradrenaline from sympathetic terminals activates beta-adrenergic receptors, stimulating N-acetyltransferase (rate-limiting enzyme) → melatonin synthesis and secretion into CSF and blood. Light suppresses melatonin. Melatonin coordinates peripheral circadian clocks (liver, kidney, fat) and promotes sleep onset by lowering core body temperature.
+
+Pineal calcification (acervuli, "brain sand") begins in puberty and is present in >90% of adults by age 30. It is a normal MRI/CT finding. Excessive calcification (pinealoma/pineocytoma) can cause obstructive hydrocephalus (blocking CSF flow at the aqueduct) and Parinaud syndrome (tectal plate compression).
+
+Melatonin is used clinically for jet lag, circadian rhythm sleep disorders, and as an adjunct for sleep-onset insomnia. Melatonin receptors (MT1, MT2) are targets for ramelteon and tasimelteon (approved circadian rhythm disorder treatments).`
+  },
+
+  fornix: {
+    name: 'Fornix',
+    lobe: 'White Matter',
+    color: '#C0C8D0',
+    pos3d:   { x: 0,     y:  0.22, z: -0.06 },
+    scale3d: { x: 0.16,  y:  0.14, z:  0.75 },
+    mriLevels: [9,10,11,12],
+    brief: 'C-shaped white matter tract — main output of the hippocampus to the mammillary bodies and septal nuclei (Papez circuit).',
+    full: `The fornix is a C-shaped white matter bundle that is the principal output tract of the hippocampus, carrying fibres from the subiculum and CA1 to subcortical targets. It mirrors the embryological rotation of the hippocampus, arching over the thalamus on both sides and joining at the midline as the hippocampal commissure.
+
+Anatomy: hippocampal fimbria → crura fornicis (beneath splenium of CC) → body of fornix (under the corpus callosum) → columns of fornix (descending anterior to interventricular foramen) → precommissural fornix (to septal nuclei and basal forebrain) and postcommissural fornix (to mammillary bodies via mammillothalamic tract).
+
+The postcommissural fornix is the critical memory limb — carrying the hippocampal output that enters the Papez circuit. Bilateral fornix lesions cause anterograde amnesia comparable to hippocampal lesions. Unilateral fornix lesions produce mild, often transient amnesia due to bilateral hippocampal projections.
+
+The fornix is visible on midsagittal MRI as a thin white arc beneath the corpus callosum. Fornix volume measured on structural MRI is a sensitive biomarker of hippocampal atrophy and is reduced early in Alzheimer's disease, temporal lobe epilepsy, and after transient global amnesia. It is an important surgical landmark — damage during third ventricular surgery can cause severe amnesia.`
+  },
+
+  anterior_commissure: {
+    name: 'Anterior Commissure',
+    lobe: 'White Matter',
+    color: '#A0A8B0',
+    pos3d:   { x: 0,     y: -0.06, z:  0.22 },
+    scale3d: { x: 0.55,  y:  0.10, z:  0.12 },
+    mriLevels: [10,11],
+    brief: 'Connects anterior temporal lobes and olfactory cortices; visible as a small round white matter bundle at the base of the septum pellucidum.',
+    full: `The anterior commissure (AC) is a compact bundle of white matter crossing the midline at the base of the septum pellucidum, just anterior to the columns of the fornix. It connects homologous areas of both temporal lobes (olfactory cortex, anterior temporal pole, middle and inferior temporal gyri) and the olfactory bulbs.
+
+On axial MRI at the level of the globus pallidus/basal forebrain, the anterior commissure appears as a small round white matter "dot" at the midline — a reliable neuroanatomical landmark used in MRI-space stereotactic surgery (the AC-PC line, connecting anterior commissure to posterior commissure, defines the standard axial plane for deep brain stimulation targeting).
+
+The anterior commissure is enlarged (by ~10%) in individuals who underwent corpus callosum agenesis, suggesting compensatory expansion for interhemispheric transfer. In split-brain patients with callosotomy sparing the anterior commissure, some non-verbal interhemispheric transfer persists via this route.
+
+The AC is much smaller in humans than in most mammals — reflecting the evolutionary expansion of the corpus callosum as the neocortex enlarged, taking over most interhemispheric communication. In humans, the AC primarily serves the older olfactory and limbic temporal connections.`
+  },
 };
 
-// Lobe groupings for the sidebar filter
+/* ── Lobe groupings ─────────────────────────────────────────── */
 window.BRAIN_LOBES = [
-  { id: 'Frontal Lobe',    color: '#3A7BD5' },
-  { id: 'Parietal Lobe',   color: '#27AE60' },
-  { id: 'Temporal Lobe',   color: '#E67E22' },
-  { id: 'Occipital Lobe',  color: '#C0392B' },
-  { id: 'Limbic System',   color: '#8E44AD' },
-  { id: 'Diencephalon',    color: '#E74C3C' },
-  { id: 'Basal Ganglia',   color: '#F0A500' },
-  { id: 'White Matter',    color: '#BDC3C7' },
-  { id: 'Ventricular System', color: '#85C1E9' },
-  { id: 'Cerebellum',      color: '#1ABC9C' },
-  { id: 'Brainstem',       color: '#E91E63' },
-  { id: 'Midbrain',        color: '#E91E63' },
-  { id: 'Parietal/Temporal Junction', color: '#16A085' }
+  { id: 'Frontal Lobe',                   color: '#3A7BD5' },
+  { id: 'Parietal Lobe',                  color: '#27AE60' },
+  { id: 'Temporal Lobe',                  color: '#E67E22' },
+  { id: 'Occipital Lobe',                 color: '#C0392B' },
+  { id: 'Limbic System',                  color: '#8E44AD' },
+  { id: 'Diencephalon',                   color: '#E74C3C' },
+  { id: 'Basal Ganglia',                  color: '#F0A500' },
+  { id: 'White Matter',                   color: '#BDC3C7' },
+  { id: 'Ventricular System',             color: '#5DADE2' },
+  { id: 'Cerebellum',                     color: '#1ABC9C' },
+  { id: 'Brainstem',                      color: '#E91E63' },
+  { id: 'Midbrain',                       color: '#E91E63' },
+  { id: 'Temporal-Parietal Junction',     color: '#16A085' },
 ];
 
-// MRI axial slice level labels (inferior to superior)
+/* ── MRI axial slice level definitions ──────────────────────── */
 window.MRI_LEVELS = [
-  { label: 'Level of Medulla', structures: ['medulla'] },
-  { label: 'Medulla / Pons Junction', structures: ['medulla', 'pons'] },
-  { label: 'Level of Pons', structures: ['pons'] },
-  { label: 'Pons / Cerebellum', structures: ['pons', 'cerebellar_hemispheres', 'vermis'] },
-  { label: 'Midbrain / Cerebellum', structures: ['midbrain', 'cerebellar_hemispheres', 'vermis', 'substantia_nigra'] },
-  { label: 'Level of Midbrain', structures: ['midbrain', 'substantia_nigra', 'cerebellar_hemispheres'] },
-  { label: 'Midbrain / Thalamus', structures: ['midbrain', 'substantia_nigra', 'thalamus'] },
-  { label: 'Amygdala / Hippocampus', structures: ['amygdala', 'hippocampus', 'hypothalamus', 'thalamus'] },
-  { label: 'Temporal Horn / Hippocampus', structures: ['hippocampus', 'amygdala', 'thalamus', 'subthalamic_nucleus', 'fusiform_gyrus'] },
-  { label: 'Basal Ganglia — Inferior', structures: ['caudate', 'putamen', 'globus_pallidus', 'thalamus', 'temporal_gyri'] },
-  { label: 'Basal Ganglia — Main Level', structures: ['caudate', 'putamen', 'globus_pallidus', 'thalamus', 'internal_capsule', 'lateral_ventricles', 'insula'] },
-  { label: 'Basal Ganglia — Superior', structures: ['caudate', 'putamen', 'thalamus', 'lateral_ventricles', 'insula', 'superior_temporal', 'auditory_cortex', 'wernickes_area'] },
-  { label: 'Lateral Ventricles Body', structures: ['caudate', 'lateral_ventricles', 'corpus_callosum', 'cingulate_cortex', 'insula'] },
-  { label: 'Level of Corpus Callosum', structures: ['corpus_callosum', 'lateral_ventricles', 'cingulate_cortex', 'prefrontal_cortex', 'somatosensory_cortex', 'motor_cortex'] },
-  { label: 'Corona Radiata', structures: ['corpus_callosum', 'lateral_ventricles', 'cingulate_cortex', 'prefrontal_cortex', 'premotor_cortex', 'somatosensory_cortex', 'visual_association'] },
-  { label: 'Semi-oval Centre', structures: ['cingulate_cortex', 'frontal_eye_fields', 'motor_cortex', 'sma', 'superior_parietal', 'primary_visual'] },
-  { label: 'Superior Cortex', structures: ['sma', 'motor_cortex', 'somatosensory_cortex', 'superior_parietal', 'prefrontal_cortex'] },
-  { label: 'Vertex', structures: ['motor_cortex', 'somatosensory_cortex', 'superior_parietal'] },
+  { label: 'Foramen Magnum / Medulla',             structures: ['medulla'] },
+  { label: 'Lower Medulla + Cerebellar Tonsils',   structures: ['medulla', 'cerebellar_hemispheres'] },
+  { label: 'Pons + Cerebellum + 4th Ventricle',    structures: ['pons', 'cerebellar_hemispheres', 'vermis'] },
+  { label: 'Mid-Pons + Cerebellum',                structures: ['pons', 'cerebellar_hemispheres', 'vermis'] },
+  { label: 'Upper Pons + Sup. Cerebellar Peduncles', structures: ['pons', 'cerebellar_hemispheres'] },
+  { label: 'Inferior Colliculus Level',            structures: ['midbrain', 'cerebellar_hemispheres'] },
+  { label: 'Superior Colliculus + Substantia Nigra', structures: ['midbrain', 'substantia_nigra'] },
+  { label: 'Mammillary Bodies + Amygdala + Hippocampus', structures: ['mammillary_bodies', 'amygdala', 'hippocampus', 'thalamus', 'parahippocampal'] },
+  { label: 'Lower Thalamus + Amygdala + Hippocampus', structures: ['thalamus', 'amygdala', 'hippocampus', 'hypothalamus', 'subthalamic_nucleus'] },
+  { label: 'Basal Ganglia (Inferior) + Thalamus',  structures: ['caudate', 'putamen', 'globus_pallidus', 'thalamus', 'internal_capsule', 'insula'] },
+  { label: 'Basal Ganglia (Main Level) + Internal Capsule', structures: ['caudate', 'putamen', 'globus_pallidus', 'thalamus', 'internal_capsule', 'lateral_ventricles', 'insula', 'anterior_commissure'] },
+  { label: 'Upper Basal Ganglia + Lateral Ventricles', structures: ['caudate', 'lateral_ventricles', 'corpus_callosum', 'cingulate_cortex', 'fornix', 'insula', 'auditory_cortex', 'wernickes_area'] },
+  { label: 'Lateral Ventricle Bodies + Corpus Callosum', structures: ['lateral_ventricles', 'corpus_callosum', 'cingulate_cortex', 'fornix'] },
+  { label: 'Corona Radiata + Corpus Callosum Body', structures: ['corpus_callosum', 'cingulate_cortex', 'motor_cortex', 'somatosensory_cortex', 'prefrontal_cortex'] },
+  { label: 'Centrum Semiovale',                    structures: ['motor_cortex', 'sma', 'premotor_cortex', 'somatosensory_cortex', 'superior_parietal', 'prefrontal_cortex'] },
+  { label: 'Superior Corona Radiata',              structures: ['motor_cortex', 'sma', 'somatosensory_cortex', 'superior_parietal'] },
+  { label: 'Paracentral Lobule',                   structures: ['motor_cortex', 'somatosensory_cortex', 'superior_parietal'] },
+  { label: 'Vertex',                               structures: ['motor_cortex', 'somatosensory_cortex'] },
 ];
