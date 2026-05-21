@@ -8641,6 +8641,75 @@ function drawMRISlice(canvas, level) {
 }
 
 
+/* ── MRI Quiz: marker positions (xf/yf = fractions of bW/bH from canvas centre) ── */
+const QUIZ_MARKERS = [
+  { key:'medulla_1',    name:'Medulla Oblongata',           level:1,  xf:0,      yf:0.24,   atlasKey:'medulla'               },
+  { key:'pons_3',       name:'Pons',                        level:3,  xf:0,      yf:0.28,   atlasKey:'pons'                  },
+  { key:'cerebellum_3', name:'Cerebellum',                  level:3,  xf:-0.38,  yf:-0.18,  atlasKey:'cerebellar_hemispheres'},
+  { key:'fourth_v_3',   name:'Fourth Ventricle',            level:3,  xf:0,      yf:0.03,   atlasKey:null                    },
+  { key:'midbrain_5',   name:'Midbrain',                    level:5,  xf:0,      yf:0.14,   atlasKey:'midbrain'              },
+  { key:'red_n_5',      name:'Red Nucleus',                 level:5,  xf:0.065,  yf:0.08,   atlasKey:null                    },
+  { key:'sub_n_5',      name:'Substantia Nigra',            level:5,  xf:0.12,   yf:0.18,   atlasKey:'substantia_nigra'      },
+  { key:'aqueduct_4',   name:'Cerebral Aqueduct',           level:4,  xf:0,      yf:0.045,  atlasKey:null                    },
+  { key:'peduncle_5',   name:'Cerebral Peduncles',          level:5,  xf:0.22,   yf:0.27,   atlasKey:null                    },
+  { key:'hypothal_7',   name:'Hypothalamus',                level:7,  xf:0.055,  yf:0.24,   atlasKey:'hypothalamus'          },
+  { key:'mamm_6',       name:'Mammillary Bodies',           level:6,  xf:0.04,   yf:0.32,   atlasKey:'mammillary_bodies'     },
+  { key:'amygdala_7',   name:'Amygdala',                    level:7,  xf:0.44,   yf:0.14,   atlasKey:'amygdala'              },
+  { key:'hippo_7',      name:'Hippocampus',                 level:7,  xf:0.46,   yf:0.21,   atlasKey:'hippocampus'           },
+  { key:'hippo_8',      name:'Hippocampus',                 level:8,  xf:0.42,   yf:0.22,   atlasKey:'hippocampus'           },
+  { key:'thalamus_8',   name:'Thalamus',                    level:8,  xf:0.15,   yf:0.06,   atlasKey:'thalamus'              },
+  { key:'thalamus_9',   name:'Thalamus',                    level:9,  xf:0.17,   yf:0.14,   atlasKey:'thalamus'              },
+  { key:'insula_7',     name:'Insula',                      level:7,  xf:0.66,   yf:-0.08,  atlasKey:'insula'                },
+  { key:'insula_9',     name:'Insula',                      level:9,  xf:0.70,   yf:-0.02,  atlasKey:'insula'                },
+  { key:'caudate_10',   name:'Caudate Nucleus',             level:10, xf:0.205,  yf:-0.065, atlasKey:'caudate'               },
+  { key:'caudate_11',   name:'Caudate Nucleus',             level:11, xf:0.28,   yf:-0.02,  atlasKey:'caudate'               },
+  { key:'putamen_9',    name:'Putamen',                     level:9,  xf:0.545,  yf:-0.03,  atlasKey:'putamen'               },
+  { key:'putamen_8',    name:'Putamen',                     level:8,  xf:0.52,   yf:-0.02,  atlasKey:'putamen'               },
+  { key:'gp_9',         name:'Globus Pallidus',             level:9,  xf:0.40,   yf:0.02,   atlasKey:'globus_pallidus'       },
+  { key:'gp_8',         name:'Globus Pallidus',             level:8,  xf:0.38,   yf:-0.04,  atlasKey:'globus_pallidus'       },
+  { key:'ic_9',         name:'Internal Capsule',            level:9,  xf:0.215,  yf:0.02,   atlasKey:'internal_capsule'      },
+  { key:'ic_8',         name:'Internal Capsule',            level:8,  xf:0.215,  yf:0.02,   atlasKey:'internal_capsule'      },
+  { key:'lat_v_10',     name:'Lateral Ventricle',           level:10, xf:0.10,   yf:-0.16,  atlasKey:'lateral_ventricles'    },
+  { key:'lat_v_12',     name:'Lateral Ventricle',           level:12, xf:0.16,   yf:0.05,   atlasKey:'lateral_ventricles'    },
+  { key:'third_v_8',    name:'Third Ventricle',             level:8,  xf:0,      yf:0.05,   atlasKey:null                    },
+  { key:'cc_genu_11',   name:'Corpus Callosum',             level:11, xf:0,      yf:-0.14,  atlasKey:'corpus_callosum'       },
+  { key:'cc_body_12',   name:'Corpus Callosum',             level:12, xf:0,      yf:0.03,   atlasKey:'corpus_callosum'       },
+  { key:'cingulate_12', name:'Cingulate Cortex',            level:12, xf:0.055,  yf:-0.44,  atlasKey:'cingulate_cortex'      },
+  { key:'motor_16',     name:'Primary Motor Cortex',        level:16, xf:-0.28,  yf:-0.50,  atlasKey:'motor_cortex'          },
+  { key:'sensory_16',   name:'Somatosensory Cortex',        level:16, xf:0.28,   yf:-0.34,  atlasKey:'somatosensory_cortex'  },
+];
+
+function drawQuizMarker(canvas, level, xf, yf, state) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height, cx = W/2, cy = H/2;
+  const scales = [0.36,0.50,0.62,0.70,0.76,0.82,0.87,0.91,0.95,0.98,0.99,0.97,0.94,0.91,0.87,0.82,0.74,0.52];
+  const sc  = scales[Math.min(level, 17)];
+  const R   = Math.min(W,H) * 0.38 * sc;
+  const bW  = R * 1.14, bH = R;
+  const px  = cx + xf * bW, py = cy + yf * bH;
+  const col = state === 'correct' ? [80,255,120] : state === 'wrong' ? [255,80,80] : [255,220,0];
+  const rgba = a => `rgba(${col[0]},${col[1]},${col[2]},${a})`;
+  const solid = `rgb(${col[0]},${col[1]},${col[2]})`;
+  ctx.save();
+  ctx.beginPath(); ctx.arc(px,py,26,0,Math.PI*2);
+  ctx.strokeStyle=rgba(0.10); ctx.lineWidth=3; ctx.stroke();
+  ctx.beginPath(); ctx.arc(px,py,17,0,Math.PI*2);
+  ctx.strokeStyle=rgba(0.22); ctx.lineWidth=2; ctx.stroke();
+  ctx.strokeStyle=solid; ctx.lineWidth=1.5;
+  ctx.setLineDash([3,3]);
+  ctx.beginPath();
+  ctx.moveTo(px-28,py); ctx.lineTo(px-13,py);
+  ctx.moveTo(px+13,py); ctx.lineTo(px+28,py);
+  ctx.moveTo(px,py-28); ctx.lineTo(px,py-13);
+  ctx.moveTo(px,py+13); ctx.lineTo(px,py+28);
+  ctx.stroke(); ctx.setLineDash([]);
+  ctx.beginPath(); ctx.arc(px,py,10,0,Math.PI*2);
+  ctx.strokeStyle=solid; ctx.lineWidth=2; ctx.stroke();
+  ctx.beginPath(); ctx.arc(px,py,3.5,0,Math.PI*2);
+  ctx.fillStyle=solid; ctx.fill();
+  ctx.restore();
+}
+
 /* ── Brain Atlas React Component ── */
 function BrainAtlas({ onBack }) {
   const mountRef    = useRef(null);
@@ -8652,6 +8721,23 @@ function BrainAtlas({ onBack }) {
   const [sliceLevel,  setSliceLevel]  = useState(9);
   const [selectedId,  setSelectedId]  = useState(null);
   const [showFull,    setShowFull]    = useState(false);
+  const [quizQ,        setQuizQ]        = useState(null);
+  const [quizOptions,  setQuizOptions]  = useState([]);
+  const [quizAnswered, setQuizAnswered] = useState(null);
+  const [quizSelected, setQuizSelected] = useState(null);
+  const [quizScore,    setQuizScore]    = useState({ correct:0, total:0 });
+  const quizRef      = useRef(null);
+  const usedQuizKeys = useRef(new Set());
+
+  function pickQuizQuestion() {
+    let pool = QUIZ_MARKERS.filter(m => !usedQuizKeys.current.has(m.key));
+    if (pool.length === 0) { usedQuizKeys.current.clear(); pool = [...QUIZ_MARKERS]; }
+    const q    = pool[Math.floor(Math.random() * pool.length)];
+    usedQuizKeys.current.add(q.key);
+    const uniq = [...new Set(QUIZ_MARKERS.map(m => m.name))].filter(n => n !== q.name);
+    const opts = [q.name, ...uniq.sort(()=>Math.random()-0.5).slice(0,3)].sort(()=>Math.random()-0.5);
+    setQuizQ(q); setQuizOptions(opts); setQuizAnswered(null); setQuizSelected(null);
+  }
 
   const region = selectedId ? (window.BRAIN_ATLAS_DATA || {})[selectedId] : null;
 
@@ -8791,6 +8877,13 @@ function BrainAtlas({ onBack }) {
     drawMRISlice(mriRef.current, sliceLevel);
   }, [viewMode, sliceLevel]);
 
+  /* Quiz canvas redraw */
+  useEffect(() => {
+    if (viewMode !== 'quiz' || !quizRef.current || !quizQ) return;
+    drawMRISlice(quizRef.current, quizQ.level);
+    drawQuizMarker(quizRef.current, quizQ.level, quizQ.xf, quizQ.yf, quizAnswered);
+  }, [viewMode, quizQ, quizAnswered]);
+
   const levelInfo = (window.MRI_LEVELS || [])[sliceLevel] || {};
   const allRegions = Object.entries(window.BRAIN_ATLAS_DATA || {});
 
@@ -8821,6 +8914,12 @@ function BrainAtlas({ onBack }) {
                       background:'rgba(255,255,255,0.06)', borderRadius:8, padding:3 }}>
           <button style={modeBtn(viewMode==='3d')}  onClick={() => {setViewMode('3d');  setSelectedId(null); setShowFull(false);}}>3D View</button>
           <button style={modeBtn(viewMode==='mri')} onClick={() => {setViewMode('mri'); setSelectedId(null); setShowFull(false);}}>MRI Scroll</button>
+          <button style={modeBtn(viewMode==='quiz')} onClick={() => {
+            usedQuizKeys.current.clear();
+            setQuizScore({correct:0,total:0});
+            setViewMode('quiz'); setSelectedId(null); setShowFull(false);
+            pickQuizQuestion();
+          }}>MRI Quiz</button>
         </div>
       </div>
 
@@ -8873,6 +8972,110 @@ function BrainAtlas({ onBack }) {
                 );
               })}
             </div>
+          </div>
+        )}
+
+        {/* MRI Quiz */}
+        {viewMode === 'quiz' && (
+          <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center',
+                        justifyContent:'flex-start', padding:'14px 16px 20px',
+                        overflowY:'auto', background:'#08080e' }}>
+
+            {/* Score row */}
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between',
+                          width:'100%', maxWidth:460, marginBottom:10 }}>
+              <div style={{ color:'#7ac', fontSize:13 }}>
+                Correct:{'  '}
+                <span style={{ color:'#fff', fontWeight:700 }}>{quizScore.correct}</span>
+                {' / '}
+                <span style={{ color:'#ccc' }}>{quizScore.total}</span>
+                {quizScore.total > 0 && (
+                  <span style={{ color:'#555', fontSize:11, marginLeft:8 }}>
+                    ({Math.round(quizScore.correct / quizScore.total * 100)}%)
+                  </span>
+                )}
+              </div>
+              <button onClick={() => { usedQuizKeys.current.clear(); setQuizScore({correct:0,total:0}); pickQuizQuestion(); }}
+                style={{ background:'none', border:'1px solid #252525', borderRadius:6,
+                         color:'#444', padding:'3px 10px', cursor:'pointer', fontSize:11 }}>
+                Restart
+              </button>
+            </div>
+
+            {/* Slice label */}
+            {quizQ && (
+              <div style={{ color:'#383838', fontSize:11, marginBottom:6 }}>
+                Axial slice {quizQ.level + 1} / 18
+              </div>
+            )}
+
+            {/* Canvas */}
+            <canvas ref={quizRef} width={420} height={420}
+              style={{ borderRadius:210, border:'2px solid rgba(100,120,180,0.14)',
+                       maxWidth:'min(420px, 88vw)', maxHeight:'min(420px, 38vh)' }} />
+
+            {/* Question */}
+            <div style={{ marginTop:13, color:'#bbb', fontSize:14, fontWeight:500,
+                          textAlign:'center', letterSpacing:0.1 }}>
+              What structure is marked?
+            </div>
+
+            {/* Option buttons */}
+            {quizQ && (
+              <div style={{ marginTop:10, display:'grid', gridTemplateColumns:'1fr 1fr',
+                            gap:8, width:'100%', maxWidth:460 }}>
+                {quizOptions.map(opt => {
+                  let bg = 'rgba(255,255,255,0.04)';
+                  let bd = 'rgba(255,255,255,0.10)';
+                  let fc = '#bbb';
+                  if (quizAnswered) {
+                    if (opt === quizQ.name)        { bg='rgba(80,255,120,0.10)'; bd='rgba(80,255,120,0.45)'; fc='#50ff78'; }
+                    else if (opt===quizSelected)   { bg='rgba(255,80,80,0.10)';  bd='rgba(255,80,80,0.45)';  fc='#ff5050'; }
+                  }
+                  return (
+                    <button key={opt} onClick={() => {
+                      if (quizAnswered) return;
+                      const ok = opt === quizQ.name;
+                      setQuizAnswered(ok ? 'correct' : 'wrong');
+                      setQuizSelected(opt);
+                      setQuizScore(s => ({ correct: s.correct + (ok?1:0), total: s.total+1 }));
+                    }}
+                      style={{ background:bg, border:`1px solid ${bd}`, borderRadius:10,
+                               color:fc, padding:'11px 8px', fontSize:13, lineHeight:1.3,
+                               cursor: quizAnswered ? 'default' : 'pointer',
+                               textAlign:'center', transition:'background .12s, color .12s, border-color .12s' }}>
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Feedback + next */}
+            {quizAnswered && quizQ && (
+              <div style={{ marginTop:12, width:'100%', maxWidth:460 }}>
+                <div style={{ background:'rgba(255,255,255,0.03)',
+                              border:'1px solid rgba(255,255,255,0.07)',
+                              borderRadius:10, padding:'12px 15px', marginBottom:9 }}>
+                  <div style={{ color: quizAnswered==='correct' ? '#50ff78' : '#ff6060',
+                                fontWeight:700, fontSize:13, marginBottom:6 }}>
+                    {quizAnswered==='correct' ? 'Correct!' : `Incorrect — it is the ${quizQ.name}`}
+                  </div>
+                  {(() => {
+                    const e = quizQ.atlasKey ? (window.BRAIN_ATLAS_DATA||{})[quizQ.atlasKey] : null;
+                    return e
+                      ? <div style={{ color:'#888', fontSize:12, lineHeight:1.55 }}>{e.brief}</div>
+                      : null;
+                  })()}
+                </div>
+                <button onClick={pickQuizQuestion}
+                  style={{ background:'rgba(79,195,247,0.10)', border:'1px solid rgba(79,195,247,0.45)',
+                           borderRadius:10, color:'#4fc3f7', padding:'11px 0',
+                           cursor:'pointer', fontSize:14, width:'100%', fontWeight:600 }}>
+                  Next Question
+                </button>
+              </div>
+            )}
           </div>
         )}
 
