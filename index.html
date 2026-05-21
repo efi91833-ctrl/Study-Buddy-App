@@ -8127,414 +8127,515 @@ function drawMRISlice(canvas, level) {
   const W = canvas.width, H = canvas.height, cx = W/2, cy = H/2;
   ctx.clearRect(0,0,W,H);
 
-  /* Background */
-  ctx.fillStyle = '#050508';
+  /* MRI scanner dark background */
+  ctx.fillStyle = '#06060c';
   ctx.fillRect(0,0,W,H);
 
-  /* Scale per level (0=inferior → 17=superior) */
-  const scales = [0.38,0.52,0.68,0.75,0.80,0.84,0.87,0.91,
-                  0.96,0.98,0.99,0.97,0.95,0.92,0.89,0.85,0.76,0.56];
+  /* Scale per axial level, inferior(0) → superior(17) */
+  const scales = [0.36,0.50,0.62,0.70,0.76,0.82,0.87,0.91,0.95,0.98,0.99,0.97,0.94,0.91,0.87,0.82,0.74,0.52];
   const sc = scales[Math.min(level, scales.length-1)];
-  const bW = W * 0.44 * sc, bH = H * 0.40 * sc;
+  const R  = Math.min(W,H) * 0.38 * sc;
+  const bW = R * 1.14, bH = R;          /* slightly wider than tall */
 
-  /* T1-weighted MRI colour palette */
+  /* ── T1-weighted colour palette ──────────────────────────── */
   const C = {
-    csf:'#050812', wm:'#c8c0d8', wmDark:'#2a2535', gm:'#706880',
-    th:'#d06050', ca:'#c88020', pu:'#d49510', gp:'#a86020',
-    ic:'#dcd8e8', hi:'#7048a8', am:'#904868', ve:'#05060e',
-    cb:'#4a5860', cbWm:'#b0a8c0', po:'#304858', me:'#203838',
-    mb:'#284850', cc:'#e0dce8', sn:'#181010', rn:'#a03020',
-    aq:'#05060e', ci:'#605878', ins:'#584868', cho:'#c08828',
-    fr:'#486090', pa:'#388060', tmp:'#785090', ma:'#50a080',
-    hy:'#904040', fn:'#c0b0d0', cn:'#606878',
+    bg:'#06060c',
+    wm:'#8a8498',    /* white matter – medium-gray on T1 */
+    wmH:'#b0a8c0',   /* bright WM (tracts, CC) */
+    gm:'#525065',    /* cortical gray matter */
+    csf:'#060810',   /* CSF / ventricles – dark on T1 */
+    sulc:'#030308',  /* sulcal space */
+    /* Deep structures – tinted for teaching */
+    th:'#c05040', ca:'#b07818', pu:'#c88810', gp:'#906010',
+    ic:'#ccc4dc', hi:'#6038a0', am:'#803858', ve:'#050810',
+    cb:'#384f48', cbW:'#a098b0', po:'#283840', me:'#182830',
+    mb:'#203040', cc:'#d4d0e4', sn:'#141008', rn:'#901810',
+    aq:'#050810', ci:'#504868', ins:'#484060', cho:'#b07820',
+    hy:'#803030', ma:'#408060',
   };
 
-  /* ── Helpers ── */
+  /* ── Tiny helpers ─────────────────────────────────────────── */
   function el(x,y,rx,ry,fill,stroke,lw,rot) {
     if(rx<=0||ry<=0) return;
     ctx.save(); ctx.beginPath();
-    ctx.ellipse(x,y,rx,ry,rot||0,0,Math.PI*2);
+    ctx.ellipse(x,y,Math.max(1,rx),Math.max(1,ry),rot||0,0,Math.PI*2);
     if(fill){ctx.fillStyle=fill;ctx.fill();}
     if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw||1.5;ctx.stroke();}
     ctx.restore();
   }
-  function lbl(text,x,y,col,size) {
-    ctx.save(); ctx.fillStyle=col||'rgba(255,255,255,0.65)';
-    ctx.font=(size||9)+'px "Helvetica Neue",sans-serif';
-    ctx.textAlign='center';
-    ctx.shadowColor='rgba(0,0,0,0.8)'; ctx.shadowBlur=3;
-    ctx.fillText(text,x,y); ctx.restore();
+  function lbl(t,x,y,col,sz) {
+    ctx.save(); ctx.fillStyle=col||'#ccc';
+    ctx.font=(sz||9)+'px "Helvetica Neue",sans-serif';
+    ctx.textAlign='center'; ctx.shadowColor='#000'; ctx.shadowBlur=4;
+    ctx.fillText(t,x,y); ctx.restore();
+  }
+  function line(x1,y1,x2,y2,col,lw,dash) {
+    ctx.save(); ctx.strokeStyle=col; ctx.lineWidth=lw||1.5;
+    if(dash) ctx.setLineDash(dash);
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    ctx.restore();
   }
 
-  /* Brain outline — gradient fill + cortical rim + sulcal nicks */
-  function drawBrainOutline() {
-    const grad = ctx.createRadialGradient(cx,cy-bH*0.08,bW*0.05,cx,cy,bW*0.95);
-    grad.addColorStop(0,'#353048'); grad.addColorStop(0.7,'#2c2840');
-    grad.addColorStop(0.9,'#383050'); grad.addColorStop(1,'#1a1525');
-    ctx.save(); ctx.beginPath();
-    ctx.ellipse(cx,cy,bW,bH,0,0,Math.PI*2);
-    ctx.fillStyle=grad; ctx.fill();
-    ctx.strokeStyle='rgba(100,88,128,0.5)';
-    ctx.lineWidth=Math.max(4,bW*0.045); ctx.stroke();
-    ctx.strokeStyle='rgba(5,5,10,0.4)'; ctx.lineWidth=1.5;
-    for(let i=0;i<14;i++){
-      const a=(i/14)*Math.PI*2;
-      ctx.beginPath();
-      ctx.moveTo(cx+bW*0.86*Math.cos(a),cy+bH*0.86*Math.sin(a));
-      ctx.lineTo(cx+bW*0.97*Math.cos(a),cy+bH*0.97*Math.sin(a));
-      ctx.stroke();
+  /* ── Brain outline path ───────────────────────────────────── */
+  /*   hasTemp  = level has visible temporal lobes (Sylvian fissure)
+       isPFossa = posterior-fossa only (tiny, levels 0-3)           */
+  function buildBrainPath(hasTemp) {
+    ctx.beginPath();
+    if (hasTemp) {
+      /* Realistic shape with temporal-lobe bulges and Sylvian notches */
+      /* Traced from Gilroy fig 51.7 MRI proportions                   */
+      ctx.moveTo(cx, cy - bH*1.00);                          /* top midline */
+      /* Frontal pole – right */
+      ctx.bezierCurveTo(cx+bW*0.28,cy-bH*1.02, cx+bW*0.70,cy-bH*0.82, cx+bW*0.96,cy-bH*0.42);
+      /* Right Sylvian notch – creates inward indentation */
+      ctx.bezierCurveTo(cx+bW*1.00,cy-bH*0.10, cx+bW*0.96,cy+bH*0.10, cx+bW*0.82,cy+bH*0.18);
+      /* Right temporal pole */
+      ctx.bezierCurveTo(cx+bW*0.72,cy+bH*0.42, cx+bW*0.56,cy+bH*0.70, cx+bW*0.32,cy+bH*0.88);
+      /* Frontal base */
+      ctx.bezierCurveTo(cx+bW*0.12,cy+bH*0.98, cx-bW*0.12,cy+bH*0.98, cx-bW*0.32,cy+bH*0.88);
+      /* Left temporal pole */
+      ctx.bezierCurveTo(cx-bW*0.56,cy+bH*0.70, cx-bW*0.72,cy+bH*0.42, cx-bW*0.82,cy+bH*0.18);
+      /* Left Sylvian notch */
+      ctx.bezierCurveTo(cx-bW*0.96,cy+bH*0.10, cx-bW*1.00,cy-bH*0.10, cx-bW*0.96,cy-bH*0.42);
+      /* Frontal pole – left */
+      ctx.bezierCurveTo(cx-bW*0.70,cy-bH*0.82, cx-bW*0.28,cy-bH*1.02, cx,cy-bH*1.00);
+    } else {
+      ctx.ellipse(cx,cy,bW,bH,0,0,Math.PI*2);
+    }
+    ctx.closePath();
+  }
+
+  function fillBrain(hasTemp) {
+    buildBrainPath(hasTemp);
+    /* Radial WM→GM gradient */
+    const g = ctx.createRadialGradient(cx,cy-bH*0.08,bW*0.04,cx,cy,bW*1.05);
+    g.addColorStop(0,   '#969099');
+    g.addColorStop(0.70,'#8a8498');
+    g.addColorStop(0.85,'#5e5870');  /* gray-matter zone */
+    g.addColorStop(0.94,'#464258');
+    g.addColorStop(1.0, '#1a1525');
+    ctx.fillStyle = g; ctx.fill();
+    /* Cortical rim */
+    buildBrainPath(hasTemp);
+    ctx.strokeStyle='rgba(60,54,80,0.80)';
+    ctx.lineWidth = Math.max(5, bW*0.060);
+    ctx.stroke();
+  }
+
+  /* Sulcal texture – short radial nicks mimicking gyral crowns */
+  function drawSulci(hasTemp) {
+    ctx.save(); ctx.strokeStyle='rgba(3,3,8,0.45)'; ctx.lineWidth=1.2;
+    const n = 18;
+    for(let i=0;i<n;i++){
+      /* skip the interhemispheric arc (top & bottom) */
+      const frac = i/n;
+      if(frac > 0.46 && frac < 0.54) continue;
+      const a = frac*Math.PI*2;
+      const cx2=hasTemp ? cx+bW*Math.cos(a)*0.92 : cx+bW*Math.cos(a)*0.87;
+      const cy2=hasTemp ? cy+bH*Math.sin(a)*0.92 : cy+bH*Math.sin(a)*0.87;
+      const cx3=cx+bW*Math.cos(a)*(hasTemp?0.99:0.97);
+      const cy3=cy+bH*Math.sin(a)*(hasTemp?0.99:0.97);
+      ctx.beginPath(); ctx.moveTo(cx2,cy2); ctx.lineTo(cx3,cy3); ctx.stroke();
     }
     ctx.restore();
   }
 
-  /* Interhemispheric midline (dashed) */
-  function midline() {
-    ctx.save(); ctx.strokeStyle='rgba(5,5,15,0.55)'; ctx.lineWidth=2;
-    ctx.setLineDash([3,4]);
-    ctx.beginPath(); ctx.moveTo(cx,cy-bH-8); ctx.lineTo(cx,cy+bH+8);
-    ctx.stroke(); ctx.restore();
+  /* Interhemispheric fissure (runs along top midline) */
+  function drawIHF(depthTop, depthBot) {
+    ctx.save(); ctx.strokeStyle=C.csf; ctx.lineWidth=3.5;
+    ctx.beginPath(); ctx.moveTo(cx,cy-bH*depthTop); ctx.lineTo(cx,cy-bH*0.22); ctx.stroke();
+    if(depthBot){
+      ctx.beginPath(); ctx.moveTo(cx,cy+bH*0.55); ctx.lineTo(cx,cy+bH*depthBot); ctx.stroke();
+    }
+    ctx.restore();
   }
 
-  /* V-shaped internal capsule (one side) */
-  function drawIC(side) {
-    const s=side;
-    const alX=cx+s*bW*0.17, alY=cy-bH*0.05;
-    const gnX=cx+s*bW*0.24, gnY=cy+bH*0.05;
-    const plX=cx+s*bW*0.26, plY=cy+bH*0.20;
+  /* Sylvian fissure (lateral sulcus) – visible at levels 6-12 */
+  function drawSylvian() {
+    ctx.save(); ctx.strokeStyle=C.csf; ctx.lineWidth=3;
+    [-1,1].forEach(s=>{
+      ctx.beginPath();
+      ctx.moveTo(cx+s*bW*0.48,cy-bH*0.12);
+      ctx.quadraticCurveTo(cx+s*bW*0.65,cy-bH*0.06,cx+s*bW*0.80,cy+bH*0.16);
+      ctx.stroke();
+    });
+    ctx.restore();
+  }
+
+  /* V-shaped internal capsule */
+  function drawIC(s) {
+    const w=bW*0.055;
+    const alx=cx+s*bW*0.155, aly=cy-bH*0.15;
+    const gnx=cx+s*bW*0.215, gny=cy+bH*0.02;
+    const plx=cx+s*bW*0.225, ply=cy+bH*0.22;
     ctx.save(); ctx.beginPath();
-    ctx.moveTo(alX,alY-bH*0.15);
-    ctx.quadraticCurveTo(alX,alY,gnX,gnY);
-    ctx.quadraticCurveTo(gnX+s*bW*0.03,gnY+bH*0.08,plX,plY);
-    ctx.lineTo(plX+s*bW*0.06,plY+bH*0.06);
-    ctx.quadraticCurveTo(gnX+s*bW*0.08,gnY+bH*0.10,gnX+s*bW*0.06,gnY);
-    ctx.quadraticCurveTo(alX+s*bW*0.06,alY,alX+s*bW*0.06,alY-bH*0.15);
+    ctx.moveTo(alx-s*w*0.5,aly);
+    ctx.lineTo(alx+s*w*0.5,aly);
+    ctx.quadraticCurveTo(gnx+s*w*0.5,gny,plx+s*w*0.5,ply);
+    ctx.lineTo(plx-s*w*0.5,ply);
+    ctx.quadraticCurveTo(gnx-s*w*0.5,gny,alx-s*w*0.5,aly);
     ctx.closePath(); ctx.fillStyle=C.ic; ctx.fill(); ctx.restore();
   }
 
-  /* Comma-shaped frontal horn of lateral ventricle */
-  function drawFrontalHorn(side) {
-    const s=side;
+  /* Frontal horn of lateral ventricle (comma-shaped) */
+  function drawFrontalHorn(s) {
     ctx.save(); ctx.beginPath();
-    ctx.moveTo(cx+s*bW*0.04,cy-bH*0.28);
-    ctx.quadraticCurveTo(cx+s*bW*0.18,cy-bH*0.30,cx+s*bW*0.22,cy-bH*0.15);
-    ctx.quadraticCurveTo(cx+s*bW*0.20,cy-bH*0.02,cx+s*bW*0.10,cy+bH*0.02);
-    ctx.quadraticCurveTo(cx+s*bW*0.06,cy,cx+s*bW*0.04,cy-bH*0.05);
-    ctx.quadraticCurveTo(cx+s*bW*0.02,cy-bH*0.15,cx+s*bW*0.04,cy-bH*0.28);
+    ctx.moveTo(cx+s*bW*0.03,cy-bH*0.30);
+    ctx.bezierCurveTo(cx+s*bW*0.15,cy-bH*0.32,cx+s*bW*0.22,cy-bH*0.14,cx+s*bW*0.12,cy+bH*0.02);
+    ctx.bezierCurveTo(cx+s*bW*0.06,cy+bH*0.04,cx+s*bW*0.02,cy-bH*0.05,cx+s*bW*0.03,cy-bH*0.30);
     ctx.closePath();
-    ctx.fillStyle=C.ve; ctx.strokeStyle='#0a1030'; ctx.lineWidth=1;
-    ctx.fill(); ctx.stroke(); ctx.restore();
-  }
-
-  /* Curved hippocampus (C-shape) */
-  function drawHippocampus(side) {
-    const s=side, hx=cx+s*bW*0.45, hy=cy+bH*0.22;
-    ctx.save(); ctx.beginPath();
-    ctx.moveTo(hx+s*bW*0.10,hy-bH*0.08);
-    ctx.quadraticCurveTo(hx+s*bW*0.14,hy,hx+s*bW*0.10,hy+bH*0.08);
-    ctx.quadraticCurveTo(hx,hy+bH*0.12,hx-s*bW*0.06,hy+bH*0.06);
-    ctx.quadraticCurveTo(hx-s*bW*0.10,hy,hx-s*bW*0.06,hy-bH*0.06);
-    ctx.quadraticCurveTo(hx,hy-bH*0.12,hx+s*bW*0.10,hy-bH*0.08);
-    ctx.closePath();
-    ctx.fillStyle=C.hi; ctx.strokeStyle='#9060c0'; ctx.lineWidth=1.5;
-    ctx.fill(); ctx.stroke();
-    /* dentate gyrus hint */
-    ctx.beginPath();
-    ctx.arc(hx,hy,bW*0.035,Math.PI*(s>0?0.1:-0.1),Math.PI*(s>0?0.9:-0.9));
-    ctx.strokeStyle='rgba(50,30,80,0.6)'; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle=C.ve; ctx.strokeStyle='#080810'; ctx.lineWidth=1; ctx.fill(); ctx.stroke();
     ctx.restore();
   }
 
-  drawBrainOutline();
-  midline();
+  /* Body of lateral ventricle (butterfly half) */
+  function drawVentBody(s) {
+    ctx.save(); ctx.beginPath();
+    ctx.moveTo(cx+s*bW*0.04,cy-bH*0.04);
+    ctx.bezierCurveTo(cx+s*bW*0.20,cy-bH*0.09,cx+s*bW*0.28,cy,cx+s*bW*0.24,cy+bH*0.13);
+    ctx.bezierCurveTo(cx+s*bW*0.18,cy+bH*0.17,cx+s*bW*0.05,cy+bH*0.14,cx+s*bW*0.04,cy-bH*0.04);
+    ctx.closePath();
+    ctx.fillStyle=C.ve; ctx.strokeStyle='#080810'; ctx.lineWidth=1; ctx.fill(); ctx.stroke();
+    ctx.restore();
+  }
 
-  /* ════════════════ PER-LEVEL ANATOMY ════════════════ */
+  /* Hippocampus – C-shaped, medial temporal */
+  function drawHippo(s) {
+    const hx=cx+s*bW*0.46, hy=cy+bH*0.21;
+    ctx.save(); ctx.beginPath();
+    ctx.moveTo(hx+s*bW*0.11,hy-bH*0.09);
+    ctx.bezierCurveTo(hx+s*bW*0.15,hy-bH*0.01,hx+s*bW*0.14,hy+bH*0.09,hx+s*bW*0.07,hy+bH*0.13);
+    ctx.bezierCurveTo(hx,hy+bH*0.16,hx-s*bW*0.07,hy+bH*0.11,hx-s*bW*0.09,hy+bH*0.02);
+    ctx.bezierCurveTo(hx-s*bW*0.11,hy-bH*0.09,hx-s*bW*0.02,hy-bH*0.15,hx+s*bW*0.11,hy-bH*0.09);
+    ctx.closePath();
+    ctx.fillStyle=C.hi; ctx.strokeStyle='#7040b0'; ctx.lineWidth=1.5; ctx.fill(); ctx.stroke();
+    /* CA fields arc */
+    ctx.beginPath();
+    ctx.arc(hx,hy+bH*0.02,bW*0.04,Math.PI*(s>0?0.15:-0.15),Math.PI*(s>0?0.88:-0.88));
+    ctx.strokeStyle='rgba(30,15,60,0.55)'; ctx.lineWidth=1.8; ctx.stroke();
+    ctx.restore();
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     DRAW BASE LAYER
+  ═══════════════════════════════════════════════════════════ */
+  const hasTemporal = (level >= 5 && level <= 12);
+
+  fillBrain(hasTemporal);
+  drawSulci(hasTemporal);
+
+  if (level >= 9)            drawIHF(0.98, 0.95);
+  else if (level >= 7)       drawIHF(0.95, null);
+
+  if (level >= 6 && level <= 12) drawSylvian();
+
+  /* ═══════════════════════════════════════════════════════════
+     PER-LEVEL ANATOMY
+  ═══════════════════════════════════════════════════════════ */
 
   if (level <= 1) {
-    /* Levels 0-1 — Medulla / Foramen magnum */
-    el(cx-bW*0.42,cy-bH*0.08,bW*0.32,bH*0.34,C.cb,'#3a6050',1.5);
-    el(cx+bW*0.42,cy-bH*0.08,bW*0.32,bH*0.34,C.cb,'#3a6050',1.5);
-    el(cx-bW*0.42,cy-bH*0.08,bW*0.16,bH*0.20,C.cbWm,null);
-    el(cx+bW*0.42,cy-bH*0.08,bW*0.16,bH*0.20,C.cbWm,null);
-    lbl('Cerebellum',cx-bW*0.44,cy+bH*0.28,'#4fb090',10);
-    el(cx,cy-bH*0.10,bW*0.10,bH*0.18,C.cb,'#3a6050',1.5);
-    el(cx,cy-bH*0.10,bW*0.04,bH*0.10,C.cbWm,null);
-    lbl('Vermis',cx,cy-bH*0.26,'#4fb090',9);
-    el(cx,cy+bH*0.22,bW*0.18,bH*0.22,C.me,'#30a080',1.5);
-    el(cx-bW*0.055,cy+bH*0.26,bW*0.05,bH*0.12,'#254840',null);
-    el(cx+bW*0.055,cy+bH*0.26,bW*0.05,bH*0.12,'#254840',null);
-    el(cx-bW*0.14,cy+bH*0.22,bW*0.04,bH*0.06,'#286858',null);
-    el(cx+bW*0.14,cy+bH*0.22,bW*0.04,bH*0.06,'#286858',null);
-    lbl('Medulla',cx,cy+bH*0.44,'#30a080',10);
+    /* ── Levels 0-1  Medulla / Foramen magnum ── */
+    el(cx-bW*0.40,cy-bH*0.08,bW*0.30,bH*0.34,C.cb,'#3a5848',1.5);
+    el(cx+bW*0.40,cy-bH*0.08,bW*0.30,bH*0.34,C.cb,'#3a5848',1.5);
+    el(cx-bW*0.40,cy-bH*0.08,bW*0.13,bH*0.18,C.cbW,null);
+    el(cx+bW*0.40,cy-bH*0.08,bW*0.13,bH*0.18,C.cbW,null);
+    lbl('Cerebellum',cx-bW*0.44,cy+bH*0.30,'#40b080',10);
+    /* Vermis */
+    el(cx,cy-bH*0.10,bW*0.10,bH*0.17,C.cb,'#3a5848',1.5);
+    el(cx,cy-bH*0.10,bW*0.04,bH*0.09,C.cbW,null);
+    lbl('Vermis',cx,cy-bH*0.28,'#40b080',9);
+    /* Medulla */
+    el(cx,cy+bH*0.24,bW*0.17,bH*0.22,C.me,'#30a070',1.5);
+    /* Pyramids */
+    el(cx-bW*0.055,cy+bH*0.28,bW*0.048,bH*0.12,'#1e4030',null);
+    el(cx+bW*0.055,cy+bH*0.28,bW*0.048,bH*0.12,'#1e4030',null);
+    /* Olives */
+    el(cx-bW*0.14,cy+bH*0.22,bW*0.038,bH*0.07,'#285048',null);
+    el(cx+bW*0.14,cy+bH*0.22,bW*0.038,bH*0.07,'#285048',null);
+    lbl('Medulla',cx,cy+bH*0.46,'#30a070',10);
+    lbl('Olive',cx+bW*0.22,cy+bH*0.22,'#306858',8);
+    /* 4th ventricle */
     ctx.save(); ctx.beginPath();
-    ctx.moveTo(cx,cy+bH*0.06); ctx.lineTo(cx-bW*0.07,cy-bH*0.06); ctx.lineTo(cx+bW*0.07,cy-bH*0.06);
-    ctx.closePath(); ctx.fillStyle=C.csf; ctx.fill(); ctx.restore();
-    lbl('4th Ventricle',cx+bW*0.14,cy,'#4fc3f7',9);
-    el(cx-bW*0.84,cy+bH*0.15,bW*0.16,bH*0.22,'#151518','#333',1);
-    el(cx+bW*0.84,cy+bH*0.15,bW*0.16,bH*0.22,'#151518','#333',1);
+    ctx.moveTo(cx,cy+bH*0.06); ctx.lineTo(cx-bW*0.07,cy-bH*0.07); ctx.lineTo(cx+bW*0.07,cy-bH*0.07);
+    ctx.closePath(); ctx.fillStyle=C.ve; ctx.fill(); ctx.restore();
+    lbl('4th Ventricle',cx+bW*0.16,cy,'#4fc3f7',9);
 
   } else if (level <= 3) {
-    /* Levels 2-3 — Pons / Cerebellum */
-    el(cx,cy-bH*0.18,bW*0.70,bH*0.52,C.cb,'#3a6050',2);
-    el(cx,cy-bH*0.18,bW*0.34,bH*0.30,C.cbWm,null);
-    el(cx,cy-bH*0.26,bW*0.10,bH*0.14,0,'#306050',null);
-    lbl('Vermis',cx,cy-bH*0.38,'#50c090',9);
-    lbl('Cerebellum',cx-bW*0.45,cy-bH*0.18,'#40c090',10);
-    el(cx-bW*0.28,cy-bH*0.10,bW*0.06,bH*0.06,C.cn,'#507060',1);
-    el(cx+bW*0.28,cy-bH*0.10,bW*0.06,bH*0.06,C.cn,'#507060',1);
-    lbl('Dentate n.',cx-bW*0.36,cy-bH*0.06,'#508060',9);
+    /* ── Levels 2-3  Pons / Cerebellum ── */
+    el(cx,cy-bH*0.18,bW*0.72,bH*0.54,C.cb,'#3a5848',2);
+    el(cx,cy-bH*0.20,bW*0.32,bH*0.30,C.cbW,null);
+    /* Vermis */
+    el(cx,cy-bH*0.26,bW*0.10,bH*0.14,'#305040','#3a5848',1);
+    lbl('Vermis',cx,cy-bH*0.40,'#40c090',9);
+    lbl('Cerebellum',cx-bW*0.46,cy-bH*0.18,'#40c090',10);
+    /* Dentate nuclei */
+    el(cx-bW*0.28,cy-bH*0.10,bW*0.06,bH*0.06,'#506870','#508060',1);
+    el(cx+bW*0.28,cy-bH*0.10,bW*0.06,bH*0.06,'#506870','#508060',1);
+    lbl('Dentate n.',cx-bW*0.38,cy-bH*0.06,'#50a070',8);
     /* 4th ventricle tent */
     ctx.save(); ctx.beginPath();
-    ctx.moveTo(cx,cy+bH*0.12); ctx.lineTo(cx-bW*0.10,cy);
-    ctx.lineTo(cx-bW*0.09,cy-bH*0.06); ctx.lineTo(cx+bW*0.09,cy-bH*0.06);
+    ctx.moveTo(cx,cy+bH*0.13); ctx.lineTo(cx-bW*0.10,cy);
+    ctx.lineTo(cx-bW*0.09,cy-bH*0.07); ctx.lineTo(cx+bW*0.09,cy-bH*0.07);
     ctx.lineTo(cx+bW*0.10,cy); ctx.closePath();
-    ctx.fillStyle=C.csf; ctx.fill(); ctx.restore();
-    lbl('4th Ventricle',cx+bW*0.16,cy+bH*0.04,'#4fc3f7',9);
-    el(cx,cy+bH*0.28,bW*0.34,bH*0.20,C.po,'#30a080',1.5);
-    el(cx,cy+bH*0.43,bW*0.018,bH*0.018,'#cc2020',null);
+    ctx.fillStyle=C.ve; ctx.fill(); ctx.restore();
+    lbl('4th Ventricle',cx+bW*0.18,cy+bH*0.05,'#4fc3f7',9);
+    /* Pons */
+    el(cx,cy+bH*0.28,bW*0.36,bH*0.22,C.po,'#30a080',1.5);
+    /* Corticospinal tract bundles inside pons */
+    el(cx-bW*0.09,cy+bH*0.28,bW*0.038,bH*0.10,'#384858',null);
+    el(cx+bW*0.09,cy+bH*0.28,bW*0.038,bH*0.10,'#384858',null);
     lbl('Pons',cx,cy+bH*0.28,'#40c090',11);
-    lbl('Basilar a.',cx+bW*0.10,cy+bH*0.44,'#c04040',9);
-    el(cx-bW*0.80,cy+bH*0.22,bW*0.16,bH*0.20,'#111115','#2a2a2a',1);
-    el(cx+bW*0.80,cy+bH*0.22,bW*0.16,bH*0.20,'#111115','#2a2a2a',1);
+    /* Basilar artery */
+    el(cx,cy+bH*0.46,bW*0.018,bH*0.018,'#cc2020',null);
+    lbl('Basilar a.',cx+bW*0.12,cy+bH*0.47,'#c04040',8);
 
   } else if (level <= 5) {
-    /* Levels 4-5 — Midbrain */
-    el(cx,cy-bH*0.25,bW*0.56,bH*0.38,C.cb,'#3a6050',1.5);
-    el(cx,cy-bH*0.28,bW*0.22,bH*0.22,C.cbWm,null);
-    lbl('Superior Cerebellum',cx,cy-bH*0.48,'#40c090',9);
-    /* colliculi */
-    el(cx-bW*0.08,cy-bH*0.04,bW*0.06,bH*0.06,'#287050','#40a060',1);
-    el(cx+bW*0.08,cy-bH*0.04,bW*0.06,bH*0.06,'#287050','#40a060',1);
-    lbl(level===4?'Inf. colliculi':'Sup. colliculi',cx,cy-bH*0.02,'#40c060',9);
-    el(cx,cy+bH*0.04,bW*0.022,bH*0.022,C.aq,'#0a2040',1);
-    lbl('Aqueduct',cx+bW*0.12,cy+bH*0.06,'#4fc3f7',8);
-    el(cx,cy+bH*0.14,bW*0.24,bH*0.18,C.mb,'#30a0a0',1.5);
-    el(cx-bW*0.065,cy+bH*0.08,bW*0.048,bH*0.048,C.rn,'#c04030',1.5);
-    el(cx+bW*0.065,cy+bH*0.08,bW*0.048,bH*0.048,C.rn,'#c04030',1.5);
-    lbl('Red nuclei',cx,cy+bH*0.07,'#c04030',9);
-    el(cx-bW*0.12,cy+bH*0.17,bW*0.09,bH*0.04,C.sn,'#333',1);
-    el(cx+bW*0.12,cy+bH*0.17,bW*0.09,bH*0.04,C.sn,'#333',1);
-    lbl('Substantia nigra',cx,cy+bH*0.23,'#555',9);
-    el(cx-bW*0.22,cy+bH*0.26,bW*0.14,bH*0.10,'#1a4848','#30a0a0',1.5);
-    el(cx+bW*0.22,cy+bH*0.26,bW*0.14,bH*0.10,'#1a4848','#30a0a0',1.5);
-    lbl('Cerebral peduncles',cx,cy+bH*0.40,'#4fc3f7',9);
-    el(cx-bW*0.72,cy+bH*0.20,bW*0.18,bH*0.24,C.gm,'#888',1);
-    el(cx+bW*0.72,cy+bH*0.20,bW*0.18,bH*0.24,C.gm,'#888',1);
+    /* ── Levels 4-5  Midbrain ("Mickey Mouse") ── */
+    el(cx,cy-bH*0.24,bW*0.56,bH*0.38,C.cb,'#3a5848',1.5);
+    el(cx,cy-bH*0.27,bW*0.22,bH*0.22,C.cbW,null);
+    lbl('Sup. Cerebellum',cx,cy-bH*0.48,'#40c090',9);
+    /* Tectum – 4 colliculi */
+    el(cx,cy-bH*0.04,bW*0.14,bH*0.11,'#285048','#40a060',1);
+    el(cx-bW*0.056,cy-bH*0.07,bW*0.044,bH*0.044,'#306050','#40a060',1);
+    el(cx+bW*0.056,cy-bH*0.07,bW*0.044,bH*0.044,'#306050','#40a060',1);
+    el(cx-bW*0.052,cy-bH*0.01,bW*0.040,bH*0.040,'#306050','#40a060',1);
+    el(cx+bW*0.052,cy-bH*0.01,bW*0.040,bH*0.040,'#306050','#40a060',1);
+    lbl(level<=4?'Inf. colliculi':'Sup. colliculi',cx,cy-bH*0.04,'#40c060',8);
+    /* Cerebral aqueduct */
+    el(cx,cy+bH*0.045,bW*0.020,bH*0.020,C.aq,'#0a1840',1);
+    lbl('Aqueduct',cx+bW*0.13,cy+bH*0.055,'#4fc3f7',8);
+    /* Tegmentum */
+    el(cx,cy+bH*0.14,bW*0.23,bH*0.18,C.mb,'#30a0a0',1.5);
+    /* Red nuclei */
+    el(cx-bW*0.065,cy+bH*0.08,bW*0.048,bH*0.048,C.rn,'#c03020',1.5);
+    el(cx+bW*0.065,cy+bH*0.08,bW*0.048,bH*0.048,C.rn,'#c03020',1.5);
+    lbl('Red nuclei',cx,cy+bH*0.07,'#c03020',9);
+    /* Substantia nigra – dark crescentic band */
+    ctx.save();
+    ctx.beginPath(); ctx.ellipse(cx-bW*0.12,cy+bH*0.18,bW*0.10,bH*0.038,-0.20,0,Math.PI*2);
+    ctx.fillStyle=C.sn; ctx.fill(); ctx.restore();
+    ctx.save();
+    ctx.beginPath(); ctx.ellipse(cx+bW*0.12,cy+bH*0.18,bW*0.10,bH*0.038,0.20,0,Math.PI*2);
+    ctx.fillStyle=C.sn; ctx.fill(); ctx.restore();
+    lbl('Substantia nigra',cx,cy+bH*0.23,'#666',8);
+    /* Cerebral peduncles */
+    el(cx-bW*0.22,cy+bH*0.27,bW*0.14,bH*0.11,'#1a4848','#30a0a0',1.5);
+    el(cx+bW*0.22,cy+bH*0.27,bW*0.14,bH*0.11,'#1a4848','#30a0a0',1.5);
+    lbl('Cerebral peduncles',cx,cy+bH*0.42,'#4fc3f7',9);
     lbl('Midbrain',cx,cy+bH*0.15,'#40c0c0',11);
+    /* Temporal lobes */
+    el(cx-bW*0.76,cy+bH*0.24,bW*0.18,bH*0.26,C.gm,'#888',1);
+    el(cx+bW*0.76,cy+bH*0.24,bW*0.18,bH*0.26,C.gm,'#888',1);
 
   } else if (level <= 7) {
-    /* Levels 6-7 — Hypothalamus / Amygdala / Hippocampus */
-    el(cx,cy,bW*0.82,bH*0.82,C.wmDark,null);
-    el(cx-bW*0.06,cy+bH*0.24,bW*0.06,bH*0.07,C.hy,'#c04040',1.5);
-    el(cx+bW*0.06,cy+bH*0.24,bW*0.06,bH*0.07,C.hy,'#c04040',1.5);
+    /* ── Levels 6-7  Hypothalamus / Amygdala / Hippocampus ── */
+    el(cx,cy,bW*0.82,bH*0.82,C.wm,null);
+    /* Hypothalamus */
+    el(cx-bW*0.055,cy+bH*0.24,bW*0.055,bH*0.07,C.hy,'#c04040',1.5);
+    el(cx+bW*0.055,cy+bH*0.24,bW*0.055,bH*0.07,C.hy,'#c04040',1.5);
     lbl('Hypothalamus',cx,cy+bH*0.34,'#c04040',9);
-    if(level===6) {
-      el(cx-bW*0.04,cy+bH*0.30,bW*0.030,bH*0.030,C.ma,'#60c0a0',1.5);
-      el(cx+bW*0.04,cy+bH*0.30,bW*0.030,bH*0.030,C.ma,'#60c0a0',1.5);
-      lbl('Mamm. bodies',cx,cy+bH*0.40,'#60c0a0',9);
-      /* optic tracts */
-      ctx.save(); ctx.lineWidth=2;
-      ctx.strokeStyle='#e0d8f0';
-      ctx.beginPath();
-      ctx.moveTo(cx-bW*0.02,cy+bH*0.16);
-      ctx.quadraticCurveTo(cx-bW*0.18,cy+bH*0.16,cx-bW*0.30,cy+bH*0.10);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(cx+bW*0.02,cy+bH*0.16);
-      ctx.quadraticCurveTo(cx+bW*0.18,cy+bH*0.16,cx+bW*0.30,cy+bH*0.10);
-      ctx.stroke(); ctx.restore();
-      lbl('Optic tracts',cx-bW*0.34,cy+bH*0.08,'#e0d8f0',8);
+    if (level===6) {
+      /* Mammillary bodies */
+      el(cx-bW*0.040,cy+bH*0.32,bW*0.028,bH*0.028,C.ma,'#60c0a0',1.5);
+      el(cx+bW*0.040,cy+bH*0.32,bW*0.028,bH*0.028,C.ma,'#60c0a0',1.5);
+      lbl('Mamm. bodies',cx,cy+bH*0.41,'#60c0a0',9);
+      /* Optic tracts */
+      ctx.save(); ctx.lineWidth=2.5; ctx.strokeStyle='#d8d0e8';
+      ctx.beginPath(); ctx.moveTo(cx-bW*0.02,cy+bH*0.18);
+      ctx.quadraticCurveTo(cx-bW*0.20,cy+bH*0.18,cx-bW*0.32,cy+bH*0.10); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx+bW*0.02,cy+bH*0.18);
+      ctx.quadraticCurveTo(cx+bW*0.20,cy+bH*0.18,cx+bW*0.32,cy+bH*0.10); ctx.stroke();
+      ctx.restore(); lbl('Optic tracts',cx-bW*0.38,cy+bH*0.08,'#d8d0e8',8);
     }
-    if(level===7) {
+    if (level===7) {
       el(cx-bW*0.14,cy+bH*0.02,bW*0.13,bH*0.18,C.th,'#d05040',1.5);
       el(cx+bW*0.14,cy+bH*0.02,bW*0.13,bH*0.18,C.th,'#d05040',1.5);
       lbl('Thalamus',cx,cy+bH*0.12,'#d05040',10);
       ctx.save(); ctx.strokeStyle=C.ve; ctx.lineWidth=3;
-      ctx.beginPath(); ctx.moveTo(cx,cy-bH*0.12); ctx.lineTo(cx,cy+bH*0.20);
-      ctx.stroke(); ctx.restore();
-      lbl('3rd Vent.',cx+bW*0.08,cy-bH*0.08,'#4fc3f7',8);
+      ctx.beginPath(); ctx.moveTo(cx,cy-bH*0.12); ctx.lineTo(cx,cy+bH*0.20); ctx.stroke(); ctx.restore();
+      lbl('3rd Vent.',cx+bW*0.09,cy-bH*0.08,'#4fc3f7',8);
     }
+    /* Amygdala */
     el(cx-bW*0.44,cy+bH*0.14,bW*0.10,bH*0.10,C.am,'#b05080',1.5);
     el(cx+bW*0.44,cy+bH*0.14,bW*0.10,bH*0.10,C.am,'#b05080',1.5);
-    lbl('Amygdala',cx-bW*0.56,cy+bH*0.20,'#b05080',9);
-    drawHippocampus(-1); drawHippocampus(1);
-    lbl('Hippocampus',cx+bW*0.60,cy+bH*0.30,'#9060c0',9);
-    el(cx-bW*0.38,cy+bH*0.02,bW*0.06,bH*0.04,C.ve,null);
-    el(cx+bW*0.38,cy+bH*0.02,bW*0.06,bH*0.04,C.ve,null);
-    lbl('Temporal horn',cx-bW*0.52,cy+bH*0.02,'#4fc3f7',8);
-    el(cx-bW*0.82,cy+bH*0.10,bW*0.20,bH*0.36,C.gm,'#888',1);
-    el(cx+bW*0.82,cy+bH*0.10,bW*0.20,bH*0.36,C.gm,'#888',1);
+    lbl('Amygdala',cx-bW*0.60,cy+bH*0.20,'#b05080',9);
+    /* Hippocampus */
+    drawHippo(-1); drawHippo(1);
+    lbl('Hippocampus',cx+bW*0.64,cy+bH*0.30,'#8050c0',9);
+    /* Temporal horn */
+    el(cx-bW*0.38,cy+bH*0.02,bW*0.055,bH*0.040,C.ve,null);
+    el(cx+bW*0.38,cy+bH*0.02,bW*0.055,bH*0.040,C.ve,null);
+    lbl('Temporal horn',cx-bW*0.54,cy+bH*0.01,'#4fc3f7',8);
+    /* Insula */
+    el(cx-bW*0.66,cy-bH*0.08,bW*0.07,bH*0.14,C.ins,'#8040a0',1.5);
+    el(cx+bW*0.66,cy-bH*0.08,bW*0.07,bH*0.14,C.ins,'#8040a0',1.5);
+    lbl('Insula',cx+bW*0.78,cy-bH*0.08,'#8040a0',9);
 
-  } else if (level === 8) {
-    /* Level 8 — Thalamus + early basal ganglia */
-    el(cx,cy,bW*0.86,bH*0.86,C.wmDark,null);
-    el(cx-bW*0.16,cy+bH*0.06,bW*0.16,bH*0.23,C.th,'#d05040',1.5);
-    el(cx+bW*0.16,cy+bH*0.06,bW*0.16,bH*0.23,C.th,'#d05040',1.5);
-    lbl('Thalamus',cx-bW*0.32,cy+bH*0.08,'#d05040',10);
+  } else if (level===8) {
+    /* ── Level 8  Thalamus + early basal ganglia ── */
+    el(cx,cy,bW*0.84,bH*0.84,C.wm,null);
+    el(cx-bW*0.15,cy+bH*0.06,bW*0.15,bH*0.23,C.th,'#d05040',1.5);
+    el(cx+bW*0.15,cy+bH*0.06,bW*0.15,bH*0.23,C.th,'#d05040',1.5);
+    lbl('Thalamus',cx-bW*0.34,cy+bH*0.08,'#d05040',10);
     ctx.save(); ctx.strokeStyle=C.ve; ctx.lineWidth=4;
-    ctx.beginPath(); ctx.moveTo(cx,cy-bH*0.18); ctx.lineTo(cx,cy+bH*0.28);
-    ctx.stroke(); ctx.restore();
-    lbl('3rd Ventricle',cx+bW*0.08,cy-bH*0.14,'#4fc3f7',8);
+    ctx.beginPath(); ctx.moveTo(cx,cy-bH*0.18); ctx.lineTo(cx,cy+bH*0.28); ctx.stroke(); ctx.restore();
+    lbl('3rd Ventricle',cx+bW*0.09,cy-bH*0.14,'#4fc3f7',8);
     drawIC(-1); drawIC(1);
-    lbl('Int. Capsule',cx-bW*0.42,cy-bH*0.04,'#b0c0e0',9);
+    lbl('Int. Capsule',cx-bW*0.44,cy-bH*0.06,'#b0c0e0',9);
     el(cx-bW*0.38,cy-bH*0.04,bW*0.08,bH*0.14,C.gp,'#c08020',1.5);
     el(cx+bW*0.38,cy-bH*0.04,bW*0.08,bH*0.14,C.gp,'#c08020',1.5);
-    lbl('GP',cx-bW*0.38,cy-bH*0.04,'#c08020',9);
+    lbl('GP',cx-bW*0.40,cy-bH*0.04,'#c08020',9);
     el(cx-bW*0.52,cy-bH*0.02,bW*0.10,bH*0.18,C.pu,'#d4900f',1.5);
     el(cx+bW*0.52,cy-bH*0.02,bW*0.10,bH*0.18,C.pu,'#d4900f',1.5);
-    lbl('Putamen',cx-bW*0.64,cy-bH*0.02,'#d4900f',10);
-    el(cx-bW*0.42,cy+bH*0.22,bW*0.12,bH*0.08,C.hi,'#9060c0',1.5,0.3);
-    el(cx+bW*0.42,cy+bH*0.22,bW*0.12,bH*0.08,C.hi,'#9060c0',1.5,-0.3);
-    lbl('Hippocampus',cx+bW*0.56,cy+bH*0.28,'#9060c0',9);
+    lbl('Putamen',cx-bW*0.65,cy-bH*0.02,'#d4900f',10);
+    el(cx-bW*0.42,cy+bH*0.22,bW*0.12,bH*0.08,C.hi,'#8050c0',1.5,0.3);
+    el(cx+bW*0.42,cy+bH*0.22,bW*0.12,bH*0.08,C.hi,'#8050c0',1.5,-0.3);
+    lbl('Hippocampus',cx+bW*0.58,cy+bH*0.28,'#8050c0',9);
     el(cx-bW*0.68,cy-bH*0.04,bW*0.07,bH*0.16,C.ins,'#8040a0',1.5);
     el(cx+bW*0.68,cy-bH*0.04,bW*0.07,bH*0.16,C.ins,'#8040a0',1.5);
-    lbl('Insula',cx+bW*0.78,cy-bH*0.04,'#8040a0',9);
-    el(cx-bW*0.84,cy+bH*0.06,bW*0.18,bH*0.32,C.gm,'#888',1);
-    el(cx+bW*0.84,cy+bH*0.06,bW*0.18,bH*0.32,C.gm,'#888',1);
+    lbl('Insula',cx+bW*0.80,cy-bH*0.04,'#8040a0',9);
 
-  } else if (level <= 10) {
-    /* Levels 9-10 — Full basal ganglia */
-    el(cx,cy,bW*0.88,bH*0.88,C.wmDark,null);
+  } else if (level<=10) {
+    /* ── Levels 9-10  Full basal ganglia (key level) ── */
+    el(cx,cy,bW*0.88,bH*0.88,C.wm,null);
     drawFrontalHorn(-1); drawFrontalHorn(1);
-    lbl('Lateral Ventricles',cx,cy-bH*0.34,'#4fc3f7',10);
-    el(cx-bW*0.20,cy-bH*0.06,bW*0.075,bH*0.15,C.ca,'#c88020',1.5);
-    el(cx+bW*0.20,cy-bH*0.06,bW*0.075,bH*0.15,C.ca,'#c88020',1.5);
-    lbl('Caudate',cx-bW*0.34,cy-bH*0.06,'#c88020',10);
+    lbl('Lat. Ventricles',cx,cy-bH*0.36,'#4fc3f7',10);
+    /* Caudate head */
+    el(cx-bW*0.205,cy-bH*0.065,bW*0.075,bH*0.15,C.ca,'#c88020',1.5);
+    el(cx+bW*0.205,cy-bH*0.065,bW*0.075,bH*0.15,C.ca,'#c88020',1.5);
+    lbl('Caudate',cx-bW*0.36,cy-bH*0.065,'#c88020',10);
+    /* Internal capsule – bright V */
     drawIC(-1); drawIC(1);
-    lbl('Int. Capsule',cx+bW*0.38,cy-bH*0.10,'#b0c0e0',9);
-    el(cx-bW*0.40,cy+bH*0.02,bW*0.07,bH*0.15,C.gp,'#c08020',1.5);
-    el(cx+bW*0.40,cy+bH*0.02,bW*0.07,bH*0.15,C.gp,'#c08020',1.5);
+    lbl('Int. Capsule',cx+bW*0.38,cy-bH*0.10,'#c0c8e0',9);
+    /* Globus pallidus (medial lentiform) */
+    el(cx-bW*0.40,cy+bH*0.02,bW*0.078,bH*0.15,C.gp,'#c08020',1.5);
+    el(cx+bW*0.40,cy+bH*0.02,bW*0.078,bH*0.15,C.gp,'#c08020',1.5);
     lbl('GP',cx-bW*0.42,cy+bH*0.02,'#c08020',9);
-    el(cx-bW*0.54,cy-bH*0.03,bW*0.10,bH*0.22,C.pu,'#d4900f',1.5);
-    el(cx+bW*0.54,cy-bH*0.03,bW*0.10,bH*0.22,C.pu,'#d4900f',1.5);
+    /* Putamen (largest, lateral) */
+    el(cx-bW*0.545,cy-bH*0.03,bW*0.102,bH*0.235,C.pu,'#d4900f',1.5);
+    el(cx+bW*0.545,cy-bH*0.03,bW*0.102,bH*0.235,C.pu,'#d4900f',1.5);
     lbl('Putamen',cx+bW*0.66,cy-bH*0.03,'#d4900f',10);
-    if(level===9) {
+    /* Thalamus at level 9 */
+    if(level===9){
       el(cx-bW*0.17,cy+bH*0.14,bW*0.14,bH*0.20,C.th,'#d05040',1.5);
       el(cx+bW*0.17,cy+bH*0.14,bW*0.14,bH*0.20,C.th,'#d05040',1.5);
       ctx.save(); ctx.strokeStyle=C.ve; ctx.lineWidth=3;
-      ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx,cy+bH*0.32);
-      ctx.stroke(); ctx.restore();
-      lbl('3rd Vent.',cx+bW*0.08,cy+bH*0.04,'#4fc3f7',8);
-      lbl('Thalamus',cx+bW*0.35,cy+bH*0.14,'#d05040',10);
+      ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx,cy+bH*0.32); ctx.stroke(); ctx.restore();
+      lbl('3rd Vent.',cx+bW*0.09,cy+bH*0.04,'#4fc3f7',8);
+      lbl('Thalamus',cx+bW*0.36,cy+bH*0.14,'#d05040',10);
     }
     el(cx-bW*0.70,cy-bH*0.02,bW*0.07,bH*0.18,C.ins,'#8040a0',1.5);
     el(cx+bW*0.70,cy-bH*0.02,bW*0.07,bH*0.18,C.ins,'#8040a0',1.5);
     lbl('Insula',cx-bW*0.82,cy-bH*0.02,'#8040a0',9);
-    el(cx-bW*0.84,cy+bH*0.04,bW*0.16,bH*0.28,C.gm,'#888',1);
-    el(cx+bW*0.84,cy+bH*0.04,bW*0.16,bH*0.28,C.gm,'#888',1);
 
-  } else if (level <= 12) {
-    /* Levels 11-12 — Lateral ventricle body + corpus callosum */
-    el(cx,cy,bW*0.86,bH*0.86,C.wmDark,null);
+  } else if (level<=12) {
+    /* ── Levels 11-12  Lateral ventricle body / Corpus callosum ── */
+    el(cx,cy,bW*0.86,bH*0.86,C.wm,null);
     /* Corpus callosum */
     ctx.save(); ctx.beginPath();
-    if(level===11) {
+    if(level===11){
+      /* Genu (curved arc) */
       ctx.moveTo(cx-bW*0.04,cy-bH*0.24);
-      ctx.quadraticCurveTo(cx-bW*0.22,cy-bH*0.26,cx-bW*0.22,cy-bH*0.12);
-      ctx.quadraticCurveTo(cx-bW*0.22,cy-bH*0.04,cx-bW*0.04,cy-bH*0.04);
-      ctx.lineTo(cx+bW*0.04,cy-bH*0.04);
-      ctx.quadraticCurveTo(cx+bW*0.22,cy-bH*0.04,cx+bW*0.22,cy-bH*0.12);
-      ctx.quadraticCurveTo(cx+bW*0.22,cy-bH*0.26,cx+bW*0.04,cy-bH*0.24);
+      ctx.bezierCurveTo(cx-bW*0.26,cy-bH*0.28,cx-bW*0.28,cy-bH*0.04,cx-bW*0.05,cy-bH*0.04);
+      ctx.lineTo(cx+bW*0.05,cy-bH*0.04);
+      ctx.bezierCurveTo(cx+bW*0.28,cy-bH*0.04,cx+bW*0.26,cy-bH*0.28,cx+bW*0.04,cy-bH*0.24);
       ctx.closePath(); ctx.fillStyle=C.cc; ctx.fill();
-      lbl('Genu (CC)',cx,cy-bH*0.22,'#303050',9);
+      lbl('Genu CC',cx,cy-bH*0.22,'#303050',9);
     } else {
-      ctx.moveTo(cx-bW*0.24,cy-bH*0.02); ctx.lineTo(cx+bW*0.24,cy-bH*0.02);
-      ctx.lineTo(cx+bW*0.24,cy+bH*0.06); ctx.lineTo(cx-bW*0.24,cy+bH*0.06);
-      ctx.closePath(); ctx.fillStyle=C.cc; ctx.fill();
-      lbl('Corpus Callosum',cx,cy+bH*0.02,'#303050',9);
+      /* Body */
+      ctx.moveTo(cx-bW*0.26,cy-bH*0.01);
+      ctx.lineTo(cx+bW*0.26,cy-bH*0.01); ctx.lineTo(cx+bW*0.26,cy+bH*0.07);
+      ctx.lineTo(cx-bW*0.26,cy+bH*0.07); ctx.closePath();
+      ctx.fillStyle=C.cc; ctx.fill();
+      lbl('Corpus Callosum',cx,cy+bH*0.03,'#303050',9);
     }
     ctx.restore();
-    /* Lateral ventricles butterfly */
-    ctx.save();
-    function ventBody(s) {
-      ctx.beginPath();
-      ctx.moveTo(cx+s*bW*0.05,cy-bH*0.04);
-      ctx.quadraticCurveTo(cx+s*bW*0.20,cy-bH*0.08,cx+s*bW*0.26,cy);
-      ctx.quadraticCurveTo(cx+s*bW*0.24,cy+bH*0.10,cx+s*bW*0.10,cy+bH*0.12);
-      ctx.quadraticCurveTo(cx+s*bW*0.04,cy+bH*0.10,cx+s*bW*0.04,cy-bH*0.04);
-      ctx.closePath();
-      ctx.fillStyle=C.ve; ctx.strokeStyle='#0a1020'; ctx.lineWidth=1;
-      ctx.fill(); ctx.stroke();
-    }
-    ventBody(-1); ventBody(1); ctx.restore();
+    /* Butterfly ventricles */
+    drawVentBody(-1); drawVentBody(1);
     lbl('Lateral Ventricles',cx,cy-bH*0.24,'#4fc3f7',10);
+    /* Caudate body */
     el(cx-bW*0.28,cy-bH*0.02,bW*0.07,bH*0.12,C.ca,'#c88020',1.5);
     el(cx+bW*0.28,cy-bH*0.02,bW*0.07,bH*0.12,C.ca,'#c88020',1.5);
     lbl('Caudate',cx-bW*0.42,cy-bH*0.02,'#c88020',9);
-    el(cx-bW*0.13,cy+bH*0.04,bW*0.04,bH*0.03,C.cho,null);
-    el(cx+bW*0.13,cy+bH*0.04,bW*0.04,bH*0.03,C.cho,null);
-    lbl('Choroid pl.',cx-bW*0.24,cy+bH*0.08,'#c08828',8);
-    el(cx-bW*0.06,cy-bH*0.44,bW*0.06,bH*0.10,C.ci,'#9080c0',1.5);
-    el(cx+bW*0.06,cy-bH*0.44,bW*0.06,bH*0.10,C.ci,'#9080c0',1.5);
+    /* Choroid plexus */
+    el(cx-bW*0.13,cy+bH*0.05,bW*0.042,bH*0.030,C.cho,null);
+    el(cx+bW*0.13,cy+bH*0.05,bW*0.042,bH*0.030,C.cho,null);
+    lbl('Choroid pl.',cx-bW*0.25,cy+bH*0.09,'#c08828',8);
+    /* Cingulate gyrus */
+    el(cx-bW*0.055,cy-bH*0.44,bW*0.055,bH*0.10,C.ci,'#9080c0',1.5);
+    el(cx+bW*0.055,cy-bH*0.44,bW*0.055,bH*0.10,C.ci,'#9080c0',1.5);
     lbl('Cingulate',cx,cy-bH*0.52,'#9080c0',9);
-    el(cx-bW*0.83,cy,bW*0.16,bH*0.28,C.gm,'#888',1);
-    el(cx+bW*0.83,cy,bW*0.16,bH*0.28,C.gm,'#888',1);
 
-  } else if (level <= 14) {
-    /* Levels 13-14 — Corona radiata */
-    el(cx,cy,bW*0.84,bH*0.84,C.wmDark,null);
-    const wmGrad=ctx.createRadialGradient(cx,cy-bH*0.08,bW*0.05,cx,cy,bW*0.62);
-    wmGrad.addColorStop(0,'#3a3555'); wmGrad.addColorStop(0.8,'#2c2840');
+  } else if (level<=14) {
+    /* ── Levels 13-14  Corona radiata ── */
+    el(cx,cy,bW*0.84,bH*0.84,C.wm,null);
+    /* Semi-oval white matter centre (slightly lighter) */
+    el(cx,cy,bW*0.50,bH*0.50,C.wmH,null);
+    lbl('Semi-oval WM',cx,cy,'#686480',9);
+    /* Corpus callosum body / splenium */
     ctx.save(); ctx.beginPath();
-    ctx.ellipse(cx,cy,bW*0.55,bH*0.55,0,0,Math.PI*2);
-    ctx.fillStyle=wmGrad; ctx.fill(); ctx.restore();
-    lbl('Semi-oval WM',cx,cy,'#5a5880',9);
-    ctx.save(); ctx.beginPath();
-    ctx.moveTo(cx-bW*0.22,cy+bH*0.14); ctx.lineTo(cx+bW*0.22,cy+bH*0.14);
-    ctx.lineTo(cx+bW*0.22,cy+bH*0.22); ctx.lineTo(cx-bW*0.22,cy+bH*0.22);
+    ctx.moveTo(cx-bW*0.24,cy+bH*0.13); ctx.lineTo(cx+bW*0.24,cy+bH*0.13);
+    ctx.lineTo(cx+bW*0.24,cy+bH*0.21); ctx.lineTo(cx-bW*0.24,cy+bH*0.21);
     ctx.closePath(); ctx.fillStyle=C.cc; ctx.fill(); ctx.restore();
-    lbl('Corpus Callosum',cx,cy+bH*0.26,'#9090c0',9);
+    lbl('Corpus Callosum',cx,cy+bH*0.27,'#9090c0',9);
+    /* Posterior horns */
     el(cx-bW*0.14,cy+bH*0.10,bW*0.10,bH*0.10,C.ve,'#0a1020',1);
     el(cx+bW*0.14,cy+bH*0.10,bW*0.10,bH*0.10,C.ve,'#0a1020',1);
-    lbl('Lat. Vent. (body)',cx,cy+bH*0.06,'#4fc3f7',9);
-    el(cx-bW*0.06,cy-bH*0.42,bW*0.06,bH*0.10,C.ci,'#9080c0',1.5);
-    el(cx+bW*0.06,cy-bH*0.42,bW*0.06,bH*0.10,C.ci,'#9080c0',1.5);
+    lbl('Lat. Vent.',cx,cy+bH*0.06,'#4fc3f7',9);
+    /* Cingulate */
+    el(cx-bW*0.055,cy-bH*0.42,bW*0.055,bH*0.10,C.ci,'#9080c0',1.5);
+    el(cx+bW*0.055,cy-bH*0.42,bW*0.055,bH*0.10,C.ci,'#9080c0',1.5);
     lbl('Cingulate',cx,cy-bH*0.50,'#9080c0',9);
-    if(level===14) {
-      el(cx,cy-bH*0.62,bW*0.60,bH*0.12,C.fr,'#5090e0',1.5);
+    if(level===14){
+      el(cx,cy-bH*0.62,bW*0.60,bH*0.12,'#486090','#5090e0',1.5);
       lbl('Prefrontal Cortex',cx,cy-bH*0.70,'#4A90D9',9);
-      el(cx-bW*0.56,cy+bH*0.30,bW*0.20,bH*0.12,C.tmp,'#785090',1.5);
-      el(cx+bW*0.56,cy+bH*0.30,bW*0.20,bH*0.12,C.tmp,'#785090',1.5);
-      lbl('Temporal lobe',cx-bW*0.70,cy+bH*0.36,'#785090',9);
     }
-    el(cx-bW*0.82,cy,bW*0.16,bH*0.26,C.gm,'#888',1);
-    el(cx+bW*0.82,cy,bW*0.16,bH*0.26,C.gm,'#888',1);
 
-  } else if (level <= 16) {
-    /* Levels 15-16 — Superior parasagittal */
-    el(cx,cy,bW*0.80,bH*0.80,C.wmDark,null);
-    ctx.save(); ctx.strokeStyle='rgba(5,5,15,0.7)'; ctx.lineWidth=4;
-    ctx.beginPath(); ctx.moveTo(cx,cy-bH-5); ctx.lineTo(cx,cy+bH+5);
+  } else if (level<=16) {
+    /* ── Levels 15-16  Superior parasagittal ── */
+    el(cx,cy,bW*0.80,bH*0.80,C.wm,null);
+    /* Interhemispheric fissure (very prominent at this level) */
+    ctx.save(); ctx.strokeStyle=C.csf; ctx.lineWidth=6;
+    ctx.beginPath(); ctx.moveTo(cx,cy-bH); ctx.lineTo(cx,cy+bH); ctx.stroke(); ctx.restore();
+    /* Central sulcus (separates motor from sensory) */
+    ctx.save(); ctx.strokeStyle=C.sulc; ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(cx-bW*0.18,cy-bH*0.38); ctx.quadraticCurveTo(cx-bW*0.04,cy-bH*0.36,cx+bW*0.18,cy-bH*0.38);
     ctx.stroke(); ctx.restore();
-    el(cx-bW*0.06,cy-bH*0.36,bW*0.06,bH*0.08,C.ci,'#9080c0',1.5);
-    el(cx+bW*0.06,cy-bH*0.36,bW*0.06,bH*0.08,C.ci,'#9080c0',1.5);
-    lbl('Cingulate',cx,cy-bH*0.44,'#9080c0',9);
-    el(cx,cy-bH*0.50,bW*0.62,bH*0.13,C.fr,'#5090e0',1.5);
+    lbl('Central sulcus',cx,cy-bH*0.42,'#555',8);
+    /* Cingulate sulcus */
+    el(cx-bW*0.055,cy-bH*0.36,bW*0.055,bH*0.08,C.ci,'#9080c0',1.5);
+    el(cx+bW*0.055,cy-bH*0.36,bW*0.055,bH*0.08,C.ci,'#9080c0',1.5);
+    lbl('Cingulate',cx,cy-bH*0.43,'#9080c0',9);
+    /* Precentral gyrus – primary motor */
+    el(cx,cy-bH*0.50,bW*0.62,bH*0.12,'#486090','#5090e0',1.5);
     lbl('Primary Motor (precentral)',cx,cy-bH*0.57,'#5090e0',9);
-    if(level===15) {
+    if(level===15){
       el(cx,cy-bH*0.62,bW*0.14,bH*0.08,'#1558A8','#3068c0',1.5);
       lbl('SMA',cx,cy-bH*0.68,'#3068c0',9);
     }
-    el(cx,cy-bH*0.34,bW*0.62,bH*0.12,C.pa,'#40c070',1.5);
-    lbl('Somatosensory (postcentral)',cx+bW*0.38,cy-bH*0.40,'#40c070',9);
-    el(cx,cy+bH*0.12,bW*0.60,bH*0.18,C.pa,'#30a050',1.5);
+    /* Postcentral gyrus – somatosensory */
+    el(cx,cy-bH*0.34,bW*0.62,bH*0.12,'#386060','#40c070',1.5);
+    lbl('Somatosensory (postcentral)',cx,cy-bH*0.40,'#40c070',9);
+    /* Superior parietal */
+    el(cx,cy+bH*0.12,bW*0.60,bH*0.18,'#306050','#30a050',1.5);
     lbl('Superior Parietal',cx,cy+bH*0.12,'#30a050',10);
-    if(level===15) {
-      el(cx-bW*0.12,cy+bH*0.20,bW*0.09,bH*0.07,C.ve,null);
-      el(cx+bW*0.12,cy+bH*0.20,bW*0.09,bH*0.07,C.ve,null);
+    if(level===15){
+      el(cx-bW*0.12,cy+bH*0.22,bW*0.09,bH*0.06,C.ve,null);
+      el(cx+bW*0.12,cy+bH*0.22,bW*0.09,bH*0.06,C.ve,null);
     }
 
   } else {
-    /* Level 17 — Vertex */
-    el(cx,cy,bW*0.72,bH*0.72,C.wmDark,null);
-    ctx.save(); ctx.strokeStyle='rgba(5,5,15,0.8)'; ctx.lineWidth=6;
-    ctx.beginPath(); ctx.moveTo(cx,cy-bH-5); ctx.lineTo(cx,cy+bH+5);
-    ctx.stroke(); ctx.restore();
+    /* ── Level 17  Vertex ── */
+    el(cx,cy,bW*0.72,bH*0.72,C.wm,null);
+    ctx.save(); ctx.strokeStyle=C.csf; ctx.lineWidth=7;
+    ctx.beginPath(); ctx.moveTo(cx,cy-bH); ctx.lineTo(cx,cy+bH); ctx.stroke(); ctx.restore();
     lbl('Interhemispheric fissure',cx+10,cy-bH*0.62,'#555',8);
-    el(cx-bW*0.12,cy-bH*0.10,bW*0.12,bH*0.24,C.fr,'#5090e0',2);
-    el(cx+bW*0.12,cy-bH*0.10,bW*0.12,bH*0.24,C.fr,'#5090e0',2);
+    el(cx-bW*0.12,cy-bH*0.10,bW*0.12,bH*0.24,'#486090','#5090e0',2);
+    el(cx+bW*0.12,cy-bH*0.10,bW*0.12,bH*0.24,'#486090','#5090e0',2);
     lbl('Motor cortex',cx-bW*0.28,cy-bH*0.18,'#5090e0',9);
-    el(cx-bW*0.12,cy+bH*0.20,bW*0.12,bH*0.18,C.pa,'#40c070',2);
-    el(cx+bW*0.12,cy+bH*0.20,bW*0.12,bH*0.18,C.pa,'#40c070',2);
+    el(cx-bW*0.12,cy+bH*0.20,bW*0.12,bH*0.18,'#306050','#40c070',2);
+    el(cx+bW*0.12,cy+bH*0.20,bW*0.12,bH*0.18,'#306050','#40c070',2);
     lbl('Somatosensory',cx+bW*0.28,cy+bH*0.20,'#40c070',9);
   }
 }
