@@ -8911,6 +8911,14 @@ function BrainAtlas({ onBack }) {
         </div>
 
       </div>
+
+      {/* Credit */}
+      <a href="http://brain-development.org/" target="_blank" rel="noopener noreferrer"
+         style={{ position:'fixed', bottom:8, right:12, fontSize:10,
+                  color:'rgba(255,255,255,0.25)', textDecoration:'none',
+                  letterSpacing:0.3, pointerEvents:'auto' }}>
+        brain-development.org
+      </a>
     </div>
   );
 }
@@ -8967,7 +8975,7 @@ function App() {
       />
     )}
     <div className="app">
-      <SearchWidget books={books} />
+      {specialMode?.type !== 'brain_atlas' && <SearchWidget books={books} />}
       {specialMode?.type === 'anatomy_slides'
         ? <AnatomyTest onBack={handleBack} />
         : specialMode?.type === 'czech_credit'
