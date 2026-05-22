@@ -938,6 +938,7 @@
 <script src="timeline-data.js"></script>
 <script src="dissection-questions.js"></script>
 <script src="brain-atlas-data.js"></script>
+<script src="brain-labels.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <!-- Firebase SDK (compat v9) — required for Google auth + user approval -->
@@ -946,7 +947,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
 <script type="text/babel">
-const { useState, useEffect, useRef } = React;
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
 // ─────────────────────────────────────────────────────────────
 // ANATOMY SLIDES
@@ -8832,10 +8833,103 @@ function BrainAtlas({ onBack }) {
   const [volIndex,   setVolIndex]  = useState(0);
   const [photoSlice, setPhotoSlice] = useState(80);
 
+  // Label / quiz state
+  const [labelMode,  setLabelMode]  = useState(false);   // show labels overlay
+  const [quizMode,   setQuizMode]   = useState(false);   // quiz active
+  const [quizSet,    setQuizSet]    = useState([]);      // [{label, options, correct}]
+  const [answers,    setAnswers]    = useState({});      // { labelId: chosenName }
+  const [submitted,  setSubmitted]  = useState(false);
+  const [activeQ,    setActiveQ]    = useState(null);    // label id user is focusing
+  const [hovered,    setHovered]    = useState(null);    // label id on hover
+  const [imgSize,    setImgSize]    = useState({ w: 0, h: 0 });
+  const imgRef = useRef(null);
+
   const volumes  = MRI_VIEWS[viewType];
   const vol      = volumes[volIndex] || volumes[0];
   const maxSlice = vol.total - 1;
   const defaultSlice = viewType === 'axial' ? 80 : Math.floor(vol.total / 2);
+
+  // Labels only work for axial view on the reference brain (volIndex 0)
+  const labelsAvailable = viewType === 'axial' && volIndex === 0;
+
+  const updateImgSize = useCallback(() => {
+    if (imgRef.current) {
+      const r = imgRef.current.getBoundingClientRect();
+      setImgSize({ w: r.width, h: r.height });
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('resize', updateImgSize);
+    return () => window.removeEventListener('resize', updateImgSize);
+  }, [updateImgSize]);
+
+  // Which labels are "visible" on the current slice (within tolerance)
+  const SLICE_TOLERANCE = 6;
+  const visibleLabels = useMemo(() => {
+    if (!labelsAvailable || (!labelMode && !quizMode)) return [];
+    const src = quizMode ? quizSet.map(q => q.label) : BRAIN_LABELS;
+    return src.filter(lb => Math.abs(lb.slice - photoSlice) <= SLICE_TOLERANCE);
+  }, [labelsAvailable, labelMode, quizMode, quizSet, photoSlice]);
+
+  function startQuiz() {
+    // Pick 10 random structures spread across different slices
+    const shuffled = [...BRAIN_LABELS].sort(() => Math.random() - 0.5);
+    // Deduplicate by slice proximity (keep one per 15-slice window)
+    const chosen = [];
+    const usedSlices = [];
+    for (const lb of shuffled) {
+      if (chosen.length >= 10) break;
+      if (usedSlices.every(s => Math.abs(s - lb.slice) > 12)) {
+        chosen.push(lb);
+        usedSlices.push(lb.slice);
+      }
+    }
+    // For each chosen structure, generate 4 choices (1 correct + 3 wrong)
+    const allNames = BRAIN_LABELS.map(l => l.name);
+    const set = chosen.map(lb => {
+      const wrong = allNames.filter(n => n !== lb.name)
+        .sort(() => Math.random() - 0.5).slice(0, 3);
+      const options = [lb.name, ...wrong].sort(() => Math.random() - 0.5);
+      return { label: lb, options, correct: lb.name };
+    });
+    setQuizSet(set);
+    setAnswers({});
+    setSubmitted(false);
+    setActiveQ(set[0]?.label.id || null);
+    setQuizMode(true);
+    setLabelMode(false);
+    // Navigate to first structure's slice
+    if (set[0]) setPhotoSlice(set[0].label.slice);
+  }
+
+  function focusQuestion(q) {
+    setActiveQ(q.label.id);
+    setPhotoSlice(q.label.slice);
+  }
+
+  function handleAnswer(labelId, choice) {
+    if (submitted) return;
+    setAnswers(prev => ({ ...prev, [labelId]: choice }));
+  }
+
+  function handleSubmit() {
+    setSubmitted(true);
+    setActiveQ(null);
+  }
+
+  const score = useMemo(() => {
+    if (!submitted) return 0;
+    return quizSet.filter(q => answers[q.label.id] === q.correct).length;
+  }, [submitted, quizSet, answers]);
+
+  function exitQuiz() {
+    setQuizMode(false);
+    setSubmitted(false);
+    setAnswers({});
+    setQuizSet([]);
+    setActiveQ(null);
+  }
 
   const modeBtn = active => ({
     background: active ? 'rgba(255,255,255,0.15)' : 'none',
@@ -8847,122 +8941,396 @@ function BrainAtlas({ onBack }) {
 
   const photoSrc = `${vol.folder}/axial_${String(photoSlice).padStart(3,'0')}.jpg`;
 
+  // Marker label color based on quiz state
+  function markerColor(lb) {
+    if (!submitted) return LABEL_CATEGORY_COLORS[lb.category] || '#4a9eff';
+    const q = quizSet.find(q => q.label.id === lb.id);
+    if (!q) return '#888';
+    const ans = answers[lb.id];
+    if (!ans) return '#888';
+    return ans === q.correct ? '#4caf50' : '#f44336';
+  }
+
   return (
     <div style={{ position:'fixed', inset:0, background:'#06060c',
                   display:'flex', flexDirection:'column', zIndex:100 }}>
 
       {/* Header */}
-      <div style={{ display:'flex', alignItems:'center', gap:14, padding:'10px 18px',
+      <div style={{ display:'flex', alignItems:'center', gap:12, padding:'8px 16px',
                     background:'rgba(255,255,255,0.04)',
-                    borderBottom:'1px solid rgba(255,255,255,0.07)', flexShrink:0 }}>
-        <button onClick={onBack}
+                    borderBottom:'1px solid rgba(255,255,255,0.07)', flexShrink:0, flexWrap:'wrap' }}>
+        <button onClick={quizMode ? exitQuiz : onBack}
           style={{ background:'none', border:'1px solid rgba(255,255,255,0.20)', borderRadius:8,
-                   color:'#aaa', padding:'6px 14px', cursor:'pointer', fontSize:14 }}>
-          Back
+                   color:'#aaa', padding:'5px 12px', cursor:'pointer', fontSize:13 }}>
+          {quizMode ? 'Exit Quiz' : 'Back'}
         </button>
-        <span style={{ color:'#fff', fontWeight:700, fontSize:17 }}>Brain MRI</span>
+        <span style={{ color:'#fff', fontWeight:700, fontSize:16 }}>Brain MRI Atlas</span>
 
         {/* View type tabs */}
-        <div style={{ display:'flex', gap:3, background:'rgba(255,255,255,0.06)', borderRadius:8, padding:3 }}>
-          {['axial','coronal','sagittal'].map(v => (
-            <button key={v} style={modeBtn(viewType===v)} onClick={() => {
-              setViewType(v); setVolIndex(0);
-              setPhotoSlice(v === 'axial' ? 80 : Math.floor(MRI_VIEWS[v][0].total / 2));
-            }}>
-              {v.charAt(0).toUpperCase() + v.slice(1)}
+        {!quizMode && (
+          <div style={{ display:'flex', gap:3, background:'rgba(255,255,255,0.06)', borderRadius:8, padding:3 }}>
+            {['axial','coronal','sagittal'].map(v => (
+              <button key={v} style={modeBtn(viewType===v)} onClick={() => {
+                setViewType(v); setVolIndex(0); setLabelMode(false);
+                setPhotoSlice(v === 'axial' ? 80 : Math.floor(MRI_VIEWS[v][0].total / 2));
+              }}>
+                {v.charAt(0).toUpperCase() + v.slice(1)}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Label / Quiz buttons */}
+        {labelsAvailable && !quizMode && (
+          <div style={{ display:'flex', gap:6, marginLeft:8 }}>
+            <button
+              onClick={() => setLabelMode(m => !m)}
+              style={{
+                background: labelMode ? 'rgba(79,195,247,0.2)' : 'rgba(255,255,255,0.06)',
+                border: `1px solid ${labelMode ? '#4fc3f7' : 'rgba(255,255,255,0.15)'}`,
+                borderRadius:8, color: labelMode ? '#4fc3f7' : '#888',
+                padding:'5px 13px', cursor:'pointer', fontSize:13, fontWeight: labelMode ? 600 : 400
+              }}>
+              {labelMode ? 'Labels On' : 'Labels Off'}
             </button>
-          ))}
-        </div>
+            <button
+              onClick={startQuiz}
+              style={{
+                background:'rgba(76,175,80,0.15)', border:'1px solid rgba(76,175,80,0.4)',
+                borderRadius:8, color:'#81c784', padding:'5px 13px',
+                cursor:'pointer', fontSize:13, fontWeight:600
+              }}>
+              Start Quiz
+            </button>
+          </div>
+        )}
 
-        {/* Brain switcher */}
-        <div style={{ display:'flex', alignItems:'center', gap:6, marginLeft:'auto' }}>
-          <button
-            onClick={() => { setVolIndex(i => Math.max(0, i-1)); setPhotoSlice(defaultSlice); }}
-            disabled={volIndex === 0}
-            style={{ background:'none', border:'1px solid rgba(255,255,255,0.15)', borderRadius:6,
-                     color: volIndex===0 ? '#333' : '#aaa', padding:'4px 10px',
-                     cursor: volIndex===0 ? 'default' : 'pointer', fontSize:14 }}>
-            &#8592;
-          </button>
-          <span style={{ color:'#4fc3f7', fontSize:12, fontWeight:600, minWidth:52, textAlign:'center' }}>
-            Brain {volIndex + 1} / {volumes.length}
-          </span>
-          <button
-            onClick={() => { setVolIndex(i => Math.min(volumes.length-1, i+1)); setPhotoSlice(defaultSlice); }}
-            disabled={volIndex === volumes.length-1}
-            style={{ background:'none', border:'1px solid rgba(255,255,255,0.15)', borderRadius:6,
-                     color: volIndex===volumes.length-1 ? '#333' : '#aaa', padding:'4px 10px',
-                     cursor: volIndex===volumes.length-1 ? 'default' : 'pointer', fontSize:14 }}>
-            &#8594;
-          </button>
-        </div>
+        {/* Quiz score display */}
+        {quizMode && submitted && (
+          <div style={{ marginLeft:8, color:'#4fc3f7', fontWeight:700, fontSize:14 }}>
+            Score: {score} / {quizSet.length}
+          </div>
+        )}
 
+        {/* Brain switcher — only in non-quiz mode */}
+        {!quizMode && (
+          <div style={{ display:'flex', alignItems:'center', gap:6, marginLeft:'auto' }}>
+            <button
+              onClick={() => { setVolIndex(i => Math.max(0, i-1)); setPhotoSlice(defaultSlice); setLabelMode(false); }}
+              disabled={volIndex === 0}
+              style={{ background:'none', border:'1px solid rgba(255,255,255,0.15)', borderRadius:6,
+                       color: volIndex===0 ? '#333' : '#aaa', padding:'4px 10px',
+                       cursor: volIndex===0 ? 'default' : 'pointer', fontSize:14 }}>
+              &#8592;
+            </button>
+            <span style={{ color:'#4fc3f7', fontSize:12, fontWeight:600, minWidth:52, textAlign:'center' }}>
+              Brain {volIndex + 1} / {volumes.length}
+            </span>
+            <button
+              onClick={() => { setVolIndex(i => Math.min(volumes.length-1, i+1)); setPhotoSlice(defaultSlice); setLabelMode(false); }}
+              disabled={volIndex === volumes.length-1}
+              style={{ background:'none', border:'1px solid rgba(255,255,255,0.15)', borderRadius:6,
+                       color: volIndex===volumes.length-1 ? '#333' : '#aaa', padding:'4px 10px',
+                       cursor: volIndex===volumes.length-1 ? 'default' : 'pointer', fontSize:14 }}>
+              &#8594;
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Body */}
       <div style={{ flex:1, display:'flex', overflow:'hidden' }}>
 
+        {/* Left: MRI image */}
         <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center',
                       justifyContent:'center', padding:'6px 6px 10px', background:'#06060c',
-                      overflow:'hidden' }}>
+                      overflow:'hidden', minWidth:0 }}>
 
-            {/* MRI image — fills all available space */}
-            <div style={{ position:'relative', flex:1, display:'flex',
-                          alignItems:'center', justifyContent:'center',
-                          width:'100%', minHeight:0 }}>
-              <img
-                key={photoSrc}
-                src={photoSrc}
-                alt={`Axial MRI slice ${photoSlice + 1}`}
+          {/* Image + SVG overlay wrapper */}
+          <div style={{ position:'relative', flex:1, display:'flex',
+                        alignItems:'center', justifyContent:'center',
+                        width:'100%', minHeight:0 }}>
+            <img
+              ref={imgRef}
+              key={photoSrc}
+              src={photoSrc}
+              alt={`Axial MRI slice ${photoSlice + 1}`}
+              onLoad={updateImgSize}
+              style={{
+                maxHeight: '100%',
+                maxWidth:  '100%',
+                height:    'calc(100vh - 110px)',
+                width:     'auto',
+                objectFit: 'contain',
+                display:   'block',
+                filter:    'brightness(1.08) contrast(1.1)',
+              }}
+            />
+
+            {/* SVG overlay for labels */}
+            {imgSize.w > 0 && visibleLabels.length > 0 && (
+              <svg
                 style={{
-                  maxHeight: '100%',
-                  maxWidth:  '100%',
-                  height:    'calc(100vh - 100px)',
-                  width:     'auto',
-                  objectFit: 'contain',
-                  display:   'block',
-                  filter:    'brightness(1.08) contrast(1.1)',
+                  position:'absolute',
+                  width: imgSize.w, height: imgSize.h,
+                  top: '50%', left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  pointerEvents: quizMode ? 'none' : 'all',
+                  overflow: 'visible'
                 }}
-              />
-              <div style={{ position:'absolute', bottom:6, right:8,
-                            background:'rgba(0,0,0,0.55)', borderRadius:4,
-                            color:'rgba(255,255,255,0.40)', fontSize:11,
-                            padding:'2px 7px', letterSpacing:0.5 }}>
-                {photoSlice + 1} / {vol.total}
-              </div>
-            </div>
+                viewBox={`0 0 ${imgSize.w} ${imgSize.h}`}
+              >
+                {visibleLabels.map((lb, i) => {
+                  const cx = (lb.xPx / 192) * imgSize.w;
+                  const cy = (lb.yPx / 256) * imgSize.h;
+                  const color = markerColor(lb);
+                  const isActive = lb.id === activeQ;
+                  const isHov = lb.id === hovered;
+                  const showName = labelMode && !quizMode;
+                  const qIdx = quizMode ? quizSet.findIndex(q => q.label.id === lb.id) : -1;
 
-            {/* Slider + buttons row */}
-            <div style={{ marginTop:8, display:'flex', alignItems:'center', gap:8,
-                          width:'100%', maxWidth:600, flexShrink:0 }}>
-              <button onClick={() => setPhotoSlice(s => Math.max(0, s - 1))}
-                style={{ background:'rgba(255,255,255,0.05)',
-                         border:'1px solid rgba(255,255,255,0.10)',
-                         borderRadius:6, color:'#888', padding:'5px 16px',
-                         cursor:'pointer', fontSize:18, lineHeight:1, flexShrink:0 }}>
-                &#8592;
-              </button>
-              <input type="range" min={0} max={maxSlice} value={photoSlice}
-                onChange={e => setPhotoSlice(Number(e.target.value))}
-                style={{ flex:1, accentColor:'#4fc3f7', cursor:'pointer', height:4 }} />
-              <button onClick={() => setPhotoSlice(s => Math.min(maxSlice, s + 1))}
-                style={{ background:'rgba(255,255,255,0.05)',
-                         border:'1px solid rgba(255,255,255,0.10)',
-                         borderRadius:6, color:'#888', padding:'5px 16px',
-                         cursor:'pointer', fontSize:18, lineHeight:1, flexShrink:0 }}>
-                &#8594;
-              </button>
+                  // Line from dot to label text
+                  const lineLen = 28;
+                  const lx = cx + (lb.xPx < 96 ? -lineLen : lineLen);
+                  const ly = cy - lineLen * 0.6;
+
+                  return (
+                    <g key={lb.id}
+                      onMouseEnter={() => !quizMode && setHovered(lb.id)}
+                      onMouseLeave={() => !quizMode && setHovered(null)}
+                      style={{ cursor: quizMode ? 'default' : 'pointer' }}>
+                      {/* Line */}
+                      <line x1={cx} y1={cy} x2={lx} y2={ly}
+                        stroke={color} strokeWidth={isActive || isHov ? 1.5 : 1}
+                        strokeOpacity={0.85} />
+                      {/* Dot */}
+                      <circle cx={cx} cy={cy} r={isActive || isHov ? 5 : 4}
+                        fill={color} fillOpacity={0.9}
+                        stroke="#000" strokeWidth={0.8} />
+                      {/* Quiz number badge */}
+                      {quizMode && qIdx >= 0 && (
+                        <text x={cx} y={cy - 8}
+                          fill={color} fontSize={11} fontWeight="bold"
+                          textAnchor="middle" stroke="#000" strokeWidth={2}
+                          paintOrder="stroke">{qIdx + 1}</text>
+                      )}
+                      {/* Label text in label mode */}
+                      {showName && (
+                        <text
+                          x={lx + (lb.xPx < 96 ? -4 : 4)}
+                          y={ly + 4}
+                          fill={color}
+                          fontSize={isHov ? 11 : 10}
+                          fontWeight={isHov ? 700 : 500}
+                          textAnchor={lb.xPx < 96 ? 'end' : 'start'}
+                          stroke="#000" strokeWidth={2} paintOrder="stroke"
+                          style={{ userSelect:'none' }}>
+                          {lb.name}
+                        </text>
+                      )}
+                      {/* Hover tooltip in label mode */}
+                      {isHov && !showName && (
+                        <text x={lx + (lb.xPx < 96 ? -4 : 4)} y={ly + 4}
+                          fill={color} fontSize={11} fontWeight={700}
+                          textAnchor={lb.xPx < 96 ? 'end' : 'start'}
+                          stroke="#000" strokeWidth={2.5} paintOrder="stroke"
+                          style={{ userSelect:'none' }}>{lb.name}</text>
+                      )}
+                    </g>
+                  );
+                })}
+              </svg>
+            )}
+
+            {/* Slice counter */}
+            <div style={{ position:'absolute', bottom:6, right:8,
+                          background:'rgba(0,0,0,0.55)', borderRadius:4,
+                          color:'rgba(255,255,255,0.40)', fontSize:11,
+                          padding:'2px 7px', letterSpacing:0.5, pointerEvents:'none' }}>
+              {photoSlice + 1} / {vol.total}
             </div>
+          </div>
+
+          {/* Slider + buttons row */}
+          <div style={{ marginTop:8, display:'flex', alignItems:'center', gap:8,
+                        width:'100%', maxWidth:700, flexShrink:0 }}>
+            <button onClick={() => setPhotoSlice(s => Math.max(0, s - 1))}
+              style={{ background:'rgba(255,255,255,0.05)',
+                       border:'1px solid rgba(255,255,255,0.10)',
+                       borderRadius:6, color:'#888', padding:'5px 14px',
+                       cursor:'pointer', fontSize:18, lineHeight:1, flexShrink:0 }}>
+              &#8592;
+            </button>
+            <input type="range" min={0} max={maxSlice} value={photoSlice}
+              onChange={e => setPhotoSlice(Number(e.target.value))}
+              style={{ flex:1, accentColor:'#4fc3f7', cursor:'pointer', height:4 }} />
+            <button onClick={() => setPhotoSlice(s => Math.min(maxSlice, s + 1))}
+              style={{ background:'rgba(255,255,255,0.05)',
+                       border:'1px solid rgba(255,255,255,0.10)',
+                       borderRadius:6, color:'#888', padding:'5px 14px',
+                       cursor:'pointer', fontSize:18, lineHeight:1, flexShrink:0 }}>
+              &#8594;
+            </button>
+          </div>
         </div>
 
+        {/* Right panel: quiz questions or label info */}
+        {(quizMode || (labelMode && labelsAvailable)) && (
+          <div style={{
+            width: 300, flexShrink:0,
+            background:'rgba(255,255,255,0.03)',
+            borderLeft:'1px solid rgba(255,255,255,0.08)',
+            display:'flex', flexDirection:'column',
+            overflow:'hidden'
+          }}>
+            {/* Panel header */}
+            <div style={{ padding:'10px 14px', borderBottom:'1px solid rgba(255,255,255,0.07)',
+                          display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
+              <span style={{ color:'#ccc', fontWeight:700, fontSize:14 }}>
+                {quizMode ? (submitted ? `Score: ${score} / ${quizSet.length}` : 'Identify the Structures') : 'Structures'}
+              </span>
+              {quizMode && !submitted && (
+                <button
+                  onClick={handleSubmit}
+                  disabled={Object.keys(answers).length === 0}
+                  style={{
+                    background: Object.keys(answers).length > 0 ? 'rgba(76,175,80,0.25)' : 'rgba(255,255,255,0.05)',
+                    border: `1px solid ${Object.keys(answers).length > 0 ? 'rgba(76,175,80,0.5)' : 'rgba(255,255,255,0.1)'}`,
+                    borderRadius:6, color: Object.keys(answers).length > 0 ? '#81c784' : '#555',
+                    padding:'4px 12px', cursor: Object.keys(answers).length > 0 ? 'pointer' : 'default',
+                    fontSize:12, fontWeight:600
+                  }}>
+                  Submit
+                </button>
+              )}
+              {quizMode && submitted && (
+                <button onClick={startQuiz}
+                  style={{ background:'rgba(79,195,247,0.15)', border:'1px solid rgba(79,195,247,0.4)',
+                           borderRadius:6, color:'#4fc3f7', padding:'4px 10px',
+                           cursor:'pointer', fontSize:12, fontWeight:600 }}>
+                  New Quiz
+                </button>
+              )}
+            </div>
+
+            {/* Quiz mode: questions list */}
+            {quizMode && (
+              <div style={{ flex:1, overflowY:'auto', padding:'8px 10px' }}>
+                {quizSet.map((q, idx) => {
+                  const ans = answers[q.label.id];
+                  const isActive = activeQ === q.label.id;
+                  const isCorrect = submitted && ans === q.correct;
+                  const isWrong = submitted && ans && ans !== q.correct;
+                  const bgColor = isCorrect ? 'rgba(76,175,80,0.15)'
+                    : isWrong ? 'rgba(244,67,54,0.15)'
+                    : isActive ? 'rgba(79,195,247,0.08)'
+                    : 'transparent';
+                  return (
+                    <div key={q.label.id}
+                      style={{
+                        marginBottom:10, padding:'8px 10px',
+                        background: bgColor,
+                        border: `1px solid ${isCorrect ? 'rgba(76,175,80,0.35)' : isWrong ? 'rgba(244,67,54,0.35)' : isActive ? 'rgba(79,195,247,0.25)' : 'rgba(255,255,255,0.06)'}`,
+                        borderRadius:8, cursor:'pointer'
+                      }}
+                      onClick={() => focusQuestion(q)}>
+                      <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:6 }}>
+                        <span style={{ color:'#4fc3f7', fontWeight:700, fontSize:12,
+                                       minWidth:18, textAlign:'center' }}>{idx + 1}</span>
+                        <span style={{ color:'#888', fontSize:11 }}>
+                          {submitted
+                            ? <span style={{ color: isCorrect ? '#81c784' : isWrong ? '#e57373' : '#888',
+                                             fontWeight: 600 }}>
+                                {isCorrect ? 'Correct' : isWrong ? 'Wrong' : 'Skipped'}
+                              </span>
+                            : 'Click image to navigate'
+                          }
+                        </span>
+                        {submitted && isWrong && (
+                          <span style={{ color:'#81c784', fontSize:10, marginLeft:'auto' }}>
+                            {q.correct}
+                          </span>
+                        )}
+                        {submitted && !ans && (
+                          <span style={{ color:'#888', fontSize:10, marginLeft:'auto' }}>
+                            {q.correct}
+                          </span>
+                        )}
+                      </div>
+                      {q.options.map(opt => {
+                        const chosen = ans === opt;
+                        const isRight = opt === q.correct;
+                        let optColor = '#aaa';
+                        let optBg = 'transparent';
+                        let optBorder = 'rgba(255,255,255,0.08)';
+                        if (submitted) {
+                          if (isRight) { optColor='#81c784'; optBg='rgba(76,175,80,0.1)'; optBorder='rgba(76,175,80,0.3)'; }
+                          else if (chosen) { optColor='#e57373'; optBg='rgba(244,67,54,0.1)'; optBorder='rgba(244,67,54,0.3)'; }
+                        } else if (chosen) {
+                          optColor='#4fc3f7'; optBg='rgba(79,195,247,0.12)'; optBorder='rgba(79,195,247,0.35)';
+                        }
+                        return (
+                          <button key={opt}
+                            disabled={submitted}
+                            onClick={e => { e.stopPropagation(); handleAnswer(q.label.id, opt); }}
+                            style={{
+                              display:'block', width:'100%', textAlign:'left',
+                              background:optBg, border:`1px solid ${optBorder}`,
+                              borderRadius:5, color:optColor, padding:'4px 8px',
+                              cursor: submitted ? 'default' : 'pointer',
+                              fontSize:11, marginBottom:3, lineHeight:1.4,
+                              transition:'all .15s'
+                            }}>
+                            {opt}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Label mode: info panel */}
+            {labelMode && !quizMode && (
+              <div style={{ flex:1, overflowY:'auto', padding:'8px 10px' }}>
+                <p style={{ color:'#555', fontSize:11, margin:'0 0 10px', lineHeight:1.5 }}>
+                  Hover over a label marker to see its name. Click for details.
+                  Scroll the slider to navigate through slices.
+                </p>
+                {BRAIN_LABELS.map(lb => {
+                  const isVis = Math.abs(lb.slice - photoSlice) <= SLICE_TOLERANCE;
+                  return (
+                    <div key={lb.id}
+                      onClick={() => setPhotoSlice(lb.slice)}
+                      style={{
+                        padding:'6px 8px', marginBottom:4,
+                        background: isVis ? 'rgba(79,195,247,0.08)' : 'transparent',
+                        border:`1px solid ${isVis ? 'rgba(79,195,247,0.2)' : 'rgba(255,255,255,0.04)'}`,
+                        borderRadius:6, cursor:'pointer',
+                        display:'flex', alignItems:'center', gap:6,
+                        opacity: isVis ? 1 : 0.5
+                      }}>
+                      <span style={{
+                        width:8, height:8, borderRadius:'50%', flexShrink:0,
+                        background: LABEL_CATEGORY_COLORS[lb.category] || '#4a9eff'
+                      }}/>
+                      <span style={{ color: isVis ? '#ddd' : '#666', fontSize:11 }}>{lb.name}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Credit */}
       <a href="http://brain-development.org/" target="_blank" rel="noopener noreferrer"
-         style={{ position:'fixed', bottom:12, right:16, fontSize:13,
-                  color:'rgba(255,255,255,0.55)', textDecoration:'none',
+         style={{ position:'fixed', bottom:12, right:16, fontSize:11,
+                  color:'rgba(255,255,255,0.35)', textDecoration:'none',
                   letterSpacing:0.4, pointerEvents:'auto',
-                  borderBottom:'1px solid rgba(255,255,255,0.25)',
+                  borderBottom:'1px solid rgba(255,255,255,0.20)',
                   paddingBottom:1 }}>
         brain-development.org
       </a>
