@@ -9210,7 +9210,7 @@ function BrainAtlas({ onBack }) {
                           display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <img
                 ref={sagRef}
-                src="brain-sagittal.jpg"
+                src="brain-sagittal.svg"
                 alt="Sagittal brain section"
                 onLoad={updateImgSize}
                 style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain',
@@ -9221,7 +9221,7 @@ function BrainAtlas({ onBack }) {
                 // Brain spans slice 52 (inferior, MNI z≈-70mm) to 214 (superior, MNI z≈+80mm)
                 // Corresponding image Y fractions: 0.87 (bottom) → 0.03 (top)
                 const SLICE_MIN = 52, SLICE_MAX = 214;
-                const Y_TOP = 0.03, Y_BOTTOM = 0.87;
+                const Y_TOP = 0.044, Y_BOTTOM = 0.83;
                 const t = Math.max(0, Math.min(1,
                   (SLICE_MAX - photoSlice) / (SLICE_MAX - SLICE_MIN)
                 ));

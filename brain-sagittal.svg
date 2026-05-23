@@ -1,0 +1,145 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+  <rect width="400" height="500" fill="#080808"/>
+
+  <!-- Outer cortex silhouette (sepia fill with gyri texture) -->
+  <!-- Brain outline: frontal left, parietal top, occipital right, temporal lower -->
+  <path d="
+    M 185,22
+    C 160,18 130,22 108,38
+    C 85,55 68,78 58,100
+    C 45,128 38,158 36,188
+    C 33,220 36,252 45,278
+    C 54,305 70,328 90,345
+    C 105,358 122,366 138,370
+    C 148,373 155,375 160,378
+    L 162,395
+    C 150,400 140,406 132,414
+    C 122,424 118,435 120,448
+    C 122,458 130,465 140,468
+    C 155,472 172,470 188,466
+    C 205,462 222,455 235,445
+    C 248,435 256,422 258,408
+    C 260,395 256,382 248,374
+    C 242,368 234,364 226,362
+    L 228,345
+    C 248,338 268,326 284,310
+    C 304,290 318,265 326,238
+    C 334,210 335,180 330,152
+    C 324,122 312,94 294,72
+    C 275,48 252,30 228,23
+    C 215,19 200,20 185,22 Z
+  " fill="#2a1a0e" stroke="#c8956a" stroke-width="1.5" opacity="0.9"/>
+
+  <!-- Gyri folds (surface texture) -->
+  <!-- Frontal gyri -->
+  <path d="M 80,120 Q 95,105 115,108 Q 130,110 138,125" fill="none" stroke="#c8956a" stroke-width="1" opacity="0.6"/>
+  <path d="M 65,155 Q 80,138 105,140 Q 125,142 135,158" fill="none" stroke="#c8956a" stroke-width="1" opacity="0.6"/>
+  <path d="M 55,190 Q 72,172 98,174 Q 120,176 132,192" fill="none" stroke="#c8956a" stroke-width="1" opacity="0.6"/>
+  <path d="M 52,225 Q 68,207 95,209 Q 118,211 130,228" fill="none" stroke="#c8956a" stroke-width="1" opacity="0.6"/>
+  <!-- Parietal gyri -->
+  <path d="M 130,48 Q 155,35 180,38 Q 205,40 220,55" fill="none" stroke="#c8956a" stroke-width="1" opacity="0.6"/>
+  <path d="M 145,68 Q 170,55 198,57 Q 222,59 238,74" fill="none" stroke="#c8956a" stroke-width="1" opacity="0.6"/>
+  <path d="M 158,90 Q 185,77 212,79 Q 238,81 254,96" fill="none" stroke="#c8956a" stroke-width="1" opacity="0.6"/>
+  <path d="M 175,112 Q 200,100 228,102 Q 252,104 266,118" fill="none" stroke="#c8956a" stroke-width="1" opacity="0.6"/>
+  <!-- Occipital gyri -->
+  <path d="M 270,140 Q 290,128 310,132 Q 325,136 330,152" fill="none" stroke="#c8956a" stroke-width="1" opacity="0.6"/>
+  <path d="M 280,165 Q 298,153 316,157 Q 328,161 332,178" fill="none" stroke="#c8956a" stroke-width="1" opacity="0.6"/>
+  <path d="M 284,195 Q 300,183 318,187 Q 328,191 330,208" fill="none" stroke="#c8956a" stroke-width="1" opacity="0.6"/>
+  <!-- Temporal gyri -->
+  <path d="M 72,272 Q 90,258 118,260 Q 140,262 152,276" fill="none" stroke="#c8956a" stroke-width="1" opacity="0.6"/>
+  <path d="M 78,302 Q 98,288 128,290 Q 152,292 164,306" fill="none" stroke="#c8956a" stroke-width="1" opacity="0.6"/>
+  <path d="M 88,330 Q 108,318 136,320 Q 158,322 170,335" fill="none" stroke="#c8956a" stroke-width="1" opacity="0.6"/>
+
+  <!-- Corpus callosum (C-shaped white matter band) -->
+  <path d="
+    M 118,190
+    C 120,175 128,162 140,154
+    C 155,145 175,142 198,143
+    C 222,144 245,150 260,162
+    C 272,172 278,185 276,198
+    C 274,210 265,220 252,225
+    C 238,230 220,232 200,232
+    C 178,232 158,228 144,220
+    C 132,213 122,204 118,190 Z
+  " fill="#3d2510" stroke="#d4a870" stroke-width="1.2" opacity="0.85"/>
+  <!-- CC inner (white matter) -->
+  <path d="
+    M 130,192
+    C 132,180 140,170 152,164
+    C 165,157 182,155 200,156
+    C 218,157 236,163 248,173
+    C 258,181 262,193 260,203
+    C 258,213 250,220 238,224
+    C 224,228 208,228 192,227
+    C 175,226 160,222 148,214
+    C 138,207 129,200 130,192 Z
+  " fill="#1a0d05" stroke="#b8845a" stroke-width="0.8" opacity="0.7"/>
+  <!-- Genu (frontal) -->
+  <path d="M 118,190 C 115,205 116,220 122,232 C 128,244 136,252 145,255" fill="none" stroke="#d4a870" stroke-width="1.5" opacity="0.8"/>
+  <!-- Splenium (posterior) -->
+  <path d="M 276,198 C 278,212 274,226 266,236 C 258,246 248,252 238,255" fill="none" stroke="#d4a870" stroke-width="1.5" opacity="0.8"/>
+
+  <!-- Thalamus (oval, central) -->
+  <ellipse cx="200" cy="270" rx="38" ry="24" fill="#3a2010" stroke="#c8956a" stroke-width="1.2" opacity="0.9"/>
+  <ellipse cx="200" cy="270" rx="28" ry="17" fill="#4a2a12" stroke="#b07840" stroke-width="0.8" opacity="0.7"/>
+
+  <!-- Hypothalamus (below thalamus) -->
+  <ellipse cx="185" cy="300" rx="18" ry="10" fill="#2e1808" stroke="#a06830" stroke-width="1" opacity="0.8"/>
+
+  <!-- Brainstem -->
+  <!-- Midbrain -->
+  <path d="M 168,320 C 165,315 162,308 164,300 C 166,292 172,286 180,283 L 210,283 C 218,286 224,292 226,300 C 228,308 225,315 222,320 Z"
+        fill="#2a1508" stroke="#b07840" stroke-width="1" opacity="0.85"/>
+  <!-- Pons -->
+  <path d="M 162,340 L 228,340 C 232,348 233,360 230,370 L 160,370 C 157,360 158,348 162,340 Z"
+        fill="#331a08" stroke="#b07840" stroke-width="1" opacity="0.85"/>
+  <!-- Medulla -->
+  <path d="M 165,370 L 225,370 L 220,420 L 170,420 Z"
+        fill="#2a1508" stroke="#a06830" stroke-width="1" opacity="0.8"/>
+  <!-- Spinal cord -->
+  <path d="M 175,420 L 215,420 L 210,470 L 180,470 Z"
+        fill="#221005" stroke="#8a5820" stroke-width="1" opacity="0.7"/>
+
+  <!-- Cerebellum (lower right) -->
+  <path d="
+    M 238,310
+    C 255,300 275,298 292,305
+    C 310,313 322,328 326,346
+    C 330,364 324,382 312,394
+    C 298,408 278,415 258,413
+    C 240,411 224,402 215,388
+    C 208,376 208,362 215,350
+    C 222,338 230,320 238,310 Z
+  " fill="#2a1508" stroke="#c8956a" stroke-width="1.2" opacity="0.85"/>
+  <!-- Cerebellum folia (arbor vitae pattern) -->
+  <path d="M 248,318 Q 270,315 288,328" fill="none" stroke="#b07840" stroke-width="0.8" opacity="0.7"/>
+  <path d="M 244,330 Q 268,326 290,340" fill="none" stroke="#b07840" stroke-width="0.8" opacity="0.7"/>
+  <path d="M 240,344 Q 265,340 288,355" fill="none" stroke="#b07840" stroke-width="0.8" opacity="0.7"/>
+  <path d="M 238,358 Q 262,355 284,370" fill="none" stroke="#b07840" stroke-width="0.8" opacity="0.7"/>
+  <path d="M 238,372 Q 260,370 278,384" fill="none" stroke="#b07840" stroke-width="0.8" opacity="0.7"/>
+  <path d="M 240,386 Q 258,385 272,396" fill="none" stroke="#b07840" stroke-width="0.8" opacity="0.7"/>
+  <path d="M 246,398 Q 262,398 272,406" fill="none" stroke="#b07840" stroke-width="0.8" opacity="0.7"/>
+
+  <!-- Cingulate gyrus (arch above corpus callosum) -->
+  <path d="M 112,185 C 110,165 118,145 134,132 C 152,118 175,112 200,112 C 225,112 250,118 268,132 C 284,145 290,162 288,182"
+        fill="none" stroke="#c8956a" stroke-width="1.3" opacity="0.65" stroke-dasharray="3,2"/>
+
+  <!-- Anterior commissure (small dot) -->
+  <circle cx="170" cy="295" r="4" fill="#5a3015" stroke="#c8956a" stroke-width="0.8" opacity="0.8"/>
+
+  <!-- Optic chiasm / hypothalamic area -->
+  <path d="M 155,308 L 175,298 L 195,308" fill="none" stroke="#a07040" stroke-width="1" opacity="0.7"/>
+
+  <!-- Subtle vignette overlay for depth -->
+  <radialGradient id="vignette" cx="50%" cy="40%" r="70%">
+    <stop offset="60%" stop-color="#000000" stop-opacity="0"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0.5"/>
+  </radialGradient>
+  <rect width="400" height="500" fill="url(#vignette)"/>
+
+  <!-- Orientation labels (subtle) -->
+  <text x="12" y="260" fill="#5a4030" font-size="9" font-family="serif" opacity="0.7">ANT</text>
+  <text x="358" y="260" fill="#5a4030" font-size="9" font-family="serif" opacity="0.7">POST</text>
+  <text x="188" y="16" fill="#5a4030" font-size="9" font-family="serif" opacity="0.7">SUP</text>
+  <text x="180" y="492" fill="#5a4030" font-size="9" font-family="serif" opacity="0.7">INF</text>
+</svg>
