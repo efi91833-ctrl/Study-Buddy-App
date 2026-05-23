@@ -8865,11 +8865,22 @@ function BrainAtlas({ onBack }) {
   }, [updateImgSize]);
 
   // Which labels are "visible" on the current slice (within tolerance)
-  const SLICE_TOLERANCE = 6;
+  // Per-structure sliceMin/sliceMax from NIfTI NCC analysis; opacity fades toward edges
   const visibleLabels = useMemo(() => {
     if (!labelsAvailable || (!labelMode && !quizMode)) return [];
     const src = quizMode ? quizSet.map(q => q.label) : BRAIN_LABELS;
-    return src.filter(lb => Math.abs(lb.slice - photoSlice) <= SLICE_TOLERANCE);
+    return src
+      .filter(lb => {
+        const lo = lb.sliceMin !== undefined ? lb.sliceMin : lb.slice - 6;
+        const hi = lb.sliceMax !== undefined ? lb.sliceMax : lb.slice + 6;
+        return photoSlice >= lo && photoSlice <= hi;
+      })
+      .map(lb => {
+        const dist  = Math.abs(photoSlice - lb.slice);
+        const range = lb.sliceMax !== undefined ? (lb.sliceMax - lb.sliceMin) / 2 : 6;
+        const opacity = dist === 0 ? 1 : Math.max(0.15, 1 - (dist / Math.max(1, range)) * 0.85);
+        return { ...lb, _opacity: opacity };
+      });
   }, [labelsAvailable, labelMode, quizMode, quizSet, photoSlice]);
 
   function startQuiz() {
@@ -9102,10 +9113,10 @@ function BrainAtlas({ onBack }) {
                       {/* Line */}
                       <line x1={cx} y1={cy} x2={lx} y2={ly}
                         stroke={color} strokeWidth={isActive || isHov ? 1.5 : 1}
-                        strokeOpacity={0.85} />
+                        strokeOpacity={(lb._opacity ?? 1) * 0.85} />
                       {/* Dot */}
                       <circle cx={cx} cy={cy} r={isActive || isHov ? 5 : 4}
-                        fill={color} fillOpacity={0.9}
+                        fill={color} fillOpacity={(lb._opacity ?? 1) * 0.9}
                         stroke="#000" strokeWidth={0.8} />
                       {/* Quiz number badge */}
                       {quizMode && qIdx >= 0 && (
@@ -9120,6 +9131,7 @@ function BrainAtlas({ onBack }) {
                           x={lx + (lb.xPx < 96 ? -4 : 4)}
                           y={ly + 4}
                           fill={color}
+                          fillOpacity={lb._opacity ?? 1}
                           fontSize={isHov ? 11 : 10}
                           fontWeight={isHov ? 700 : 500}
                           textAnchor={lb.xPx < 96 ? 'end' : 'start'}
@@ -9299,7 +9311,7 @@ function BrainAtlas({ onBack }) {
                   Scroll the slider to navigate through slices.
                 </p>
                 {BRAIN_LABELS.map(lb => {
-                  const isVis = Math.abs(lb.slice - photoSlice) <= SLICE_TOLERANCE;
+                  const isVis = photoSlice >= (lb.sliceMin ?? lb.slice - 6) && photoSlice <= (lb.sliceMax ?? lb.slice + 6);
                   return (
                     <div key={lb.id}
                       onClick={() => setPhotoSlice(lb.slice)}

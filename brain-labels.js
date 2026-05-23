@@ -12,7 +12,7 @@ const BRAIN_LABELS = [
   {
     id: "frontal_lobe",
     name: "Frontal Lobe",
-    slice: 182, xPx: 96, yPx: 92,   // MNI (0, 40, 50)
+    slice: 182, xPx: 96, yPx: 92, sliceMin: 167, sliceMax: 189,   // MNI (0, 40, 50)
     category: "cortex",
     lobe: "frontal",
     brief: "Largest lobe; controls movement, speech, and executive function.",
@@ -21,7 +21,7 @@ const BRAIN_LABELS = [
   {
     id: "prefrontal_cortex",
     name: "Prefrontal Cortex",
-    slice: 149, xPx: 96, yPx: 68,   // MNI (0, 58, 20)
+    slice: 149, xPx: 96, yPx: 68, sliceMin: 138, sliceMax: 164,   // MNI (0, 58, 20)
     category: "cortex",
     lobe: "frontal",
     brief: "Executive function, decision-making, and working memory.",
@@ -30,7 +30,7 @@ const BRAIN_LABELS = [
   {
     id: "motor_cortex",
     name: "Primary Motor Cortex",
-    slice: 197, xPx: 71, yPx: 154,  // MNI (-30, -16, 64)
+    slice: 197, xPx: 71, yPx: 154, sliceMin: 189, sliceMax: 203,  // MNI (-30, -16, 64)
     category: "cortex",
     lobe: "frontal",
     brief: "Controls voluntary movement; organized as a motor homunculus.",
@@ -39,7 +39,7 @@ const BRAIN_LABELS = [
   {
     id: "broca_area",
     name: "Broca Area",
-    slice: 139, xPx: 58, yPx: 108,  // MNI (-45, 20, 10)
+    slice: 139, xPx: 58, yPx: 108, sliceMin: 124, sliceMax: 148,  // MNI (-45, 20, 10)
     category: "cortex",
     lobe: "frontal",
     brief: "Speech production area in the left inferior frontal gyrus.",
@@ -48,7 +48,7 @@ const BRAIN_LABELS = [
   {
     id: "orbitofrontal_cortex",
     name: "Orbitofrontal Cortex",
-    slice: 111, xPx: 96, yPx: 85,   // MNI (0, 38, -16)
+    slice: 111, xPx: 96, yPx: 85, sliceMin: 105, sliceMax: 117,   // MNI (0, 38, -16)
     category: "cortex",
     lobe: "frontal",
     brief: "Reward, emotion regulation, and decision-making.",
@@ -59,7 +59,7 @@ const BRAIN_LABELS = [
   {
     id: "parietal_lobe",
     name: "Parietal Lobe",
-    slice: 192, xPx: 96, yPx: 190,  // MNI (0, -50, 60)
+    slice: 192, xPx: 96, yPx: 190, sliceMin: 186, sliceMax: 198,  // MNI (0, -50, 60)
     category: "cortex",
     lobe: "parietal",
     brief: "Processes sensory information and spatial awareness.",
@@ -68,7 +68,7 @@ const BRAIN_LABELS = [
   {
     id: "somatosensory_cortex",
     name: "Somatosensory Cortex",
-    slice: 197, xPx: 71, yPx: 167,  // MNI (-30, -28, 64)
+    slice: 197, xPx: 71, yPx: 167, sliceMin: 186, sliceMax: 203,  // MNI (-30, -28, 64)
     category: "cortex",
     lobe: "parietal",
     brief: "Processes touch, pain, and proprioception; organized as a sensory homunculus.",
@@ -79,7 +79,7 @@ const BRAIN_LABELS = [
   {
     id: "temporal_lobe",
     name: "Temporal Lobe",
-    slice: 112, xPx: 53, yPx: 137,  // MNI (-52, -10, -15)
+    slice: 112, xPx: 53, yPx: 137, sliceMin: 106, sliceMax: 120,  // MNI (-52, -10, -15)
     category: "cortex",
     lobe: "temporal",
     brief: "Hearing, memory, and language comprehension.",
@@ -88,7 +88,7 @@ const BRAIN_LABELS = [
   {
     id: "wernicke_area",
     name: "Wernicke Area",
-    slice: 145, xPx: 53, yPx: 175,  // MNI (-52, -42, 16)
+    slice: 145, xPx: 53, yPx: 175, sliceMin: 137, sliceMax: 152,  // MNI (-52, -42, 16)
     category: "cortex",
     lobe: "temporal",
     brief: "Language comprehension area in the left superior temporal gyrus.",
@@ -97,7 +97,7 @@ const BRAIN_LABELS = [
   {
     id: "auditory_cortex",
     name: "Primary Auditory Cortex",
-    slice: 139, xPx: 54, yPx: 153,  // MNI (-50, -22, 10)
+    slice: 139, xPx: 54, yPx: 153, sliceMin: 133, sliceMax: 145,  // MNI (-50, -22, 10)
     category: "cortex",
     lobe: "temporal",
     brief: "Processes sound; located in Heschl's gyri on the superior temporal plane.",
@@ -108,7 +108,7 @@ const BRAIN_LABELS = [
   {
     id: "occipital_lobe",
     name: "Occipital Lobe",
-    slice: 144, xPx: 96, yPx: 221,  // MNI (0, -85, 15)
+    slice: 144, xPx: 96, yPx: 221, sliceMin: 134, sliceMax: 150,  // MNI (0, -85, 15)
     category: "cortex",
     lobe: "occipital",
     brief: "Primary visual processing center.",
@@ -117,7 +117,7 @@ const BRAIN_LABELS = [
   {
     id: "visual_cortex",
     name: "Visual Cortex (V1)",
-    slice: 139, xPx: 96, yPx: 224,  // MNI (0, -88, 10)
+    slice: 139, xPx: 96, yPx: 224, sliceMin: 124, sliceMax: 154,  // MNI (0, -88, 10)
     category: "cortex",
     lobe: "occipital",
     brief: "V1 - processes basic visual features like edges and orientation.",
@@ -128,7 +128,7 @@ const BRAIN_LABELS = [
   {
     id: "cingulate_cortex",
     name: "Cingulate Cortex",
-    slice: 173, xPx: 96, yPx: 134,  // MNI (0, 0, 42)
+    slice: 173, xPx: 96, yPx: 134, sliceMin: 165, sliceMax: 179,  // MNI (0, 0, 42)
     category: "limbic",
     lobe: "limbic",
     brief: "Attention, emotion, and pain processing; part of the limbic system.",
@@ -137,7 +137,7 @@ const BRAIN_LABELS = [
   {
     id: "insula",
     name: "Insula",
-    slice: 133, xPx: 64, yPx: 129,  // MNI (-38, 0, 5)
+    slice: 133, xPx: 64, yPx: 129, sliceMin: 127, sliceMax: 147,  // MNI (-38, 0, 5)
     category: "limbic",
     lobe: "limbic",
     brief: "Visceral sensation, interoception, taste, and empathy.",
@@ -146,7 +146,7 @@ const BRAIN_LABELS = [
   {
     id: "left_hippocampus",
     name: "Left Hippocampus",
-    slice: 106, xPx: 73, yPx: 143,  // MNI (-28, -16, -20) HO atlas
+    slice: 106, xPx: 73, yPx: 143, sliceMin: 100, sliceMax: 109,  // MNI (-28, -16, -20) HO atlas
     category: "limbic",
     lobe: "temporal",
     brief: "Critical for forming new explicit memories; part of the limbic system.",
@@ -155,7 +155,7 @@ const BRAIN_LABELS = [
   {
     id: "right_hippocampus",
     name: "Right Hippocampus",
-    slice: 106, xPx: 119, yPx: 140, // MNI (28, -14, -20) HO atlas
+    slice: 106, xPx: 119, yPx: 140, sliceMin: 100, sliceMax: 111, // MNI (28, -14, -20) HO atlas
     category: "limbic",
     lobe: "temporal",
     brief: "Spatial navigation and memory consolidation.",
@@ -164,7 +164,7 @@ const BRAIN_LABELS = [
   {
     id: "left_amygdala",
     name: "Left Amygdala",
-    slice: 104, xPx: 76, yPx: 127,  // MNI (-24, -2, -22) HO atlas
+    slice: 104, xPx: 76, yPx: 127, sliceMin: 98, sliceMax: 111,  // MNI (-24, -2, -22) HO atlas
     category: "limbic",
     lobe: "temporal",
     brief: "Fear, emotion, and emotional memory; part of the limbic system.",
@@ -173,7 +173,7 @@ const BRAIN_LABELS = [
   {
     id: "right_amygdala",
     name: "Right Amygdala",
-    slice: 104, xPx: 118, yPx: 125, // MNI (26, 0, -22) HO atlas
+    slice: 104, xPx: 118, yPx: 125, sliceMin: 99, sliceMax: 109, // MNI (26, 0, -22) HO atlas
     category: "limbic",
     lobe: "temporal",
     brief: "Fear processing and emotional response.",
@@ -184,7 +184,7 @@ const BRAIN_LABELS = [
   {
     id: "left_thalamus",
     name: "Left Thalamus",
-    slice: 134, xPx: 88, yPx: 153,  // MNI (-10, -22, 6) HO atlas
+    slice: 134, xPx: 88, yPx: 153, sliceMin: 128, sliceMax: 147,  // MNI (-10, -22, 6) HO atlas
     category: "subcortical",
     lobe: "diencephalon",
     brief: "Relay station for sensory and motor signals to the cortex.",
@@ -193,7 +193,7 @@ const BRAIN_LABELS = [
   {
     id: "right_thalamus",
     name: "Right Thalamus",
-    slice: 134, xPx: 108, yPx: 155, // MNI (14, -24, 6) HO atlas
+    slice: 134, xPx: 108, yPx: 155, sliceMin: 127, sliceMax: 144, // MNI (14, -24, 6) HO atlas
     category: "subcortical",
     lobe: "diencephalon",
     brief: "Relay station for sensory and motor signals to the cortex.",
@@ -202,7 +202,7 @@ const BRAIN_LABELS = [
   {
     id: "left_caudate",
     name: "Left Caudate Nucleus",
-    slice: 137, xPx: 86, yPx: 114,  // MNI (-12, 14, 8) HO atlas
+    slice: 137, xPx: 86, yPx: 114, sliceMin: 128, sliceMax: 143,  // MNI (-12, 14, 8) HO atlas
     category: "subcortical",
     lobe: "basal_ganglia",
     brief: "Part of the striatum; involved in learning and voluntary movement.",
@@ -211,7 +211,7 @@ const BRAIN_LABELS = [
   {
     id: "right_caudate",
     name: "Right Caudate Nucleus",
-    slice: 141, xPx: 108, yPx: 117, // MNI (14, 12, 12) HO atlas
+    slice: 141, xPx: 108, yPx: 117, sliceMin: 135, sliceMax: 147, // MNI (14, 12, 12) HO atlas
     category: "subcortical",
     lobe: "basal_ganglia",
     brief: "Part of the striatum; involved in learning and voluntary movement.",
@@ -220,7 +220,7 @@ const BRAIN_LABELS = [
   {
     id: "left_putamen",
     name: "Left Putamen",
-    slice: 124, xPx: 78, yPx: 119,  // MNI (-22, 8, -4) HO atlas
+    slice: 124, xPx: 78, yPx: 119, sliceMin: 109, sliceMax: 130,  // MNI (-22, 8, -4) HO atlas
     category: "subcortical",
     lobe: "basal_ganglia",
     brief: "Basal ganglia structure; regulates movement and reward.",
@@ -229,7 +229,7 @@ const BRAIN_LABELS = [
   {
     id: "right_putamen",
     name: "Right Putamen",
-    slice: 124, xPx: 114, yPx: 117, // MNI (22, 10, -4) HO atlas
+    slice: 124, xPx: 114, yPx: 117, sliceMin: 109, sliceMax: 133, // MNI (22, 10, -4) HO atlas
     category: "subcortical",
     lobe: "basal_ganglia",
     brief: "Basal ganglia structure; regulates movement and reward.",
@@ -238,7 +238,7 @@ const BRAIN_LABELS = [
   {
     id: "hypothalamus",
     name: "Hypothalamus",
-    slice: 113, xPx: 96, yPx: 128,  // MNI (0, -2, -14)
+    slice: 113, xPx: 96, yPx: 128, sliceMin: 110, sliceMax: 116,  // MNI (0, -2, -14)
     category: "subcortical",
     lobe: "diencephalon",
     brief: "Master regulator of autonomic function, hormones, and homeostasis.",
@@ -249,7 +249,7 @@ const BRAIN_LABELS = [
   {
     id: "brainstem",
     name: "Brainstem",
-    slice: 94, xPx: 98, yPx: 152,   // MNI (2, -26, -32) HO atlas
+    slice: 94, xPx: 98, yPx: 152, sliceMin: 88, sliceMax: 100,   // MNI (2, -26, -32) HO atlas
     category: "brainstem",
     lobe: "brainstem",
     brief: "Controls vital functions: breathing, heart rate, and consciousness.",
@@ -258,7 +258,7 @@ const BRAIN_LABELS = [
   {
     id: "midbrain",
     name: "Midbrain",
-    slice: 111, xPx: 96, yPx: 150,  // MNI (0, -22, -16)
+    slice: 111, xPx: 96, yPx: 150, sliceMin: 105, sliceMax: 117,  // MNI (0, -22, -16)
     category: "brainstem",
     lobe: "brainstem",
     brief: "Contains superior and inferior colliculi; cranial nerves III and IV.",
@@ -267,7 +267,7 @@ const BRAIN_LABELS = [
   {
     id: "pons",
     name: "Pons",
-    slice: 96, xPx: 96, yPx: 154,   // MNI (0, -28, -30)
+    slice: 96, xPx: 96, yPx: 154, sliceMin: 90, sliceMax: 111,   // MNI (0, -28, -30)
     category: "brainstem",
     lobe: "brainstem",
     brief: "Connects cerebellum to brainstem; contains cranial nerves V-VIII.",
@@ -276,7 +276,7 @@ const BRAIN_LABELS = [
   {
     id: "medulla_oblongata",
     name: "Medulla Oblongata",
-    slice: 74, xPx: 96, yPx: 159,   // MNI (0, -35, -50)
+    slice: 74, xPx: 96, yPx: 159, sliceMin: 59, sliceMax: 83,   // MNI (0, -35, -50)
     category: "brainstem",
     lobe: "brainstem",
     brief: "Vital center for breathing, heart rate, and swallowing.",
@@ -287,7 +287,7 @@ const BRAIN_LABELS = [
   {
     id: "cerebellum",
     name: "Cerebellum",
-    slice: 96, xPx: 96, yPx: 183,   // MNI (0, -55, -30)
+    slice: 96, xPx: 96, yPx: 183, sliceMin: 90, sliceMax: 102,   // MNI (0, -55, -30)
     category: "cerebellum",
     lobe: "cerebellum",
     brief: "Coordinates movement, balance, and motor learning.",
@@ -296,7 +296,7 @@ const BRAIN_LABELS = [
   {
     id: "vermis",
     name: "Cerebellar Vermis",
-    slice: 104, xPx: 96, yPx: 187,  // MNI (0, -58, -22)
+    slice: 104, xPx: 96, yPx: 187, sliceMin: 98, sliceMax: 110,  // MNI (0, -58, -22)
     category: "cerebellum",
     lobe: "cerebellum",
     brief: "Midline cerebellum; controls axial and trunk movements.",
@@ -307,7 +307,7 @@ const BRAIN_LABELS = [
   {
     id: "corpus_callosum",
     name: "Corpus Callosum",
-    slice: 152, xPx: 96, yPx: 131,  // MNI (0, 0, 22)
+    slice: 152, xPx: 96, yPx: 131, sliceMin: 143, sliceMax: 158,  // MNI (0, 0, 22)
     category: "white_matter",
     lobe: "white_matter",
     brief: "Largest white matter tract; connects the two cerebral hemispheres.",
@@ -316,7 +316,7 @@ const BRAIN_LABELS = [
   {
     id: "internal_capsule",
     name: "Internal Capsule",
-    slice: 143, xPx: 83, yPx: 136,  // MNI (-16, -6, 14)
+    slice: 143, xPx: 83, yPx: 136, sliceMin: 131, sliceMax: 149,  // MNI (-16, -6, 14)
     category: "white_matter",
     lobe: "white_matter",
     brief: "Major white matter tract carrying motor and sensory fibers between cortex and spinal cord.",
@@ -325,7 +325,7 @@ const BRAIN_LABELS = [
   {
     id: "corona_radiata",
     name: "Corona Radiata",
-    slice: 160, xPx: 81, yPx: 145,  // MNI (-18, -12, 30)
+    slice: 160, xPx: 81, yPx: 145, sliceMin: 154, sliceMax: 166,  // MNI (-18, -12, 30)
     category: "white_matter",
     lobe: "white_matter",
     brief: "Radiating fan of white matter connecting cortex to internal capsule.",
@@ -334,7 +334,7 @@ const BRAIN_LABELS = [
   {
     id: "anterior_commissure",
     name: "Anterior Commissure",
-    slice: 124, xPx: 96, yPx: 125,  // MNI (0, 2, -4)
+    slice: 124, xPx: 96, yPx: 125, sliceMin: 121, sliceMax: 127,  // MNI (0, 2, -4)
     category: "white_matter",
     lobe: "white_matter",
     brief: "White matter bundle connecting the two temporal lobes.",
@@ -345,7 +345,7 @@ const BRAIN_LABELS = [
   {
     id: "lateral_ventricle",
     name: "Lateral Ventricle",
-    slice: 137, xPx: 106, yPx: 127, // MNI (12, 2, 8) - right side body
+    slice: 137, xPx: 106, yPx: 127, sliceMin: 127, sliceMax: 145, // MNI (12, 2, 8) - right side body
     category: "ventricles",
     lobe: "ventricles",
     brief: "Largest cerebrospinal fluid cavity; lies within each cerebral hemisphere.",
@@ -354,7 +354,7 @@ const BRAIN_LABELS = [
   {
     id: "third_ventricle",
     name: "Third Ventricle",
-    slice: 137, xPx: 96, yPx: 131,  // MNI (0, -2, 8) - validated CSF signal
+    slice: 137, xPx: 96, yPx: 131, sliceMin: 130, sliceMax: 143,  // MNI (0, -2, 8) - validated CSF signal
     category: "ventricles",
     lobe: "ventricles",
     brief: "Midline ventricle between the two thalami.",
@@ -363,7 +363,7 @@ const BRAIN_LABELS = [
   {
     id: "fourth_ventricle",
     name: "Fourth Ventricle",
-    slice: 98, xPx: 96, yPx: 168,   // MNI (0, -41, -28) - validated low signal
+    slice: 98, xPx: 96, yPx: 168, sliceMin: 94, sliceMax: 108,   // MNI (0, -41, -28) - validated low signal
     category: "ventricles",
     lobe: "ventricles",
     brief: "Diamond-shaped ventricle between cerebellum and brainstem.",
