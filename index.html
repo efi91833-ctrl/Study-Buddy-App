@@ -9557,7 +9557,7 @@ function LoginScreen() {
     try {
       const provider = new firebase.auth.GoogleAuthProvider();
       /* Use redirect (not popup) — works reliably on all browsers & deployed sites */
-      await fbAuth.signInWithRedirect(provider);
+      await fbAuth.signInWithPopup(provider);
     } catch (e) {
       setErr('Sign-in failed. Please try again.');
       setBusy(false);
