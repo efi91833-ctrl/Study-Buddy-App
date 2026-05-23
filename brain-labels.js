@@ -1,397 +1,307 @@
-// Brain MRI Labels - validated pixel coordinates for IXI002 reference brain
-// Coordinate system: axial JPEG slices (axial_NNN.jpg), 192x256px
-// Each label: { id, name, slice, xPx, yPx, category, brief, full }
-// Slice range: 0-220 (0=inferior, 220=superior)
-// xPx range: 0-191 (21-170 = brain content, 21px black padding each side)
-// yPx range: 0-255 (0=superior of image, 255=inferior of image)
-// MNI coordinates used for derivation documented in comments
+// brain-labels.js
+// Coordinates validated against IXI002-Guys-0828-T1.nii.gz using:
+//   - Intensity-guided voxel centroid refinement (NIfTI raw values)
+//   - NCC patch similarity for sliceMin/sliceMax, capped at anatomical maxima
+// Coordinate space: axial JPEG slices (axial_NNN.jpg)
+//   slice  = NIfTI j-axis index (inferior=0, superior=255)
+//   xPx    = horizontal pixel in 192x256 JPEG (21px left padding + brain content)
+//   yPx    = vertical pixel in 192x256 JPEG (0=top/anterior, 255=bottom/posterior)
 
 const BRAIN_LABELS = [
 
-  // ===== FRONTAL LOBE =====
+  // -- Subcortical / Deep grey matter ------------------------------------
   {
-    id: "frontal_lobe",
-    name: "Frontal Lobe",
-    slice: 182, xPx: 96, yPx: 92, sliceMin: 167, sliceMax: 189,   // MNI (0, 40, 50)
-    category: "cortex",
-    lobe: "frontal",
-    brief: "Largest lobe; controls movement, speech, and executive function.",
-    full: "The frontal lobe occupies the anterior portion of the cerebrum. It contains the primary motor cortex (precentral gyrus), premotor area, Broca's area (speech production), and prefrontal cortex responsible for planning, judgment, and personality."
+    id: "left_thalamus", name: "Left Thalamus",
+    slice: 133, xPx: 87, yPx: 153, sliceMin: 115, sliceMax: 151,
+    category: "subcortical", lobe: "diencephalon",
+    brief: "Sensory relay hub",
+    full: "The thalamus relays nearly all sensory and motor signals to the cerebral cortex and is essential for consciousness and alertness. The left thalamus primarily serves the right side of the body."
   },
   {
-    id: "prefrontal_cortex",
-    name: "Prefrontal Cortex",
-    slice: 149, xPx: 96, yPx: 68, sliceMin: 138, sliceMax: 164,   // MNI (0, 58, 20)
-    category: "cortex",
-    lobe: "frontal",
-    brief: "Executive function, decision-making, and working memory.",
-    full: "The prefrontal cortex (PFC) is the anterior part of the frontal lobe. It coordinates executive functions including decision-making, working memory, attention, and social behavior. Damage produces personality changes (Phineas Gage) and difficulty with planning."
+    id: "right_thalamus", name: "Right Thalamus",
+    slice: 131, xPx: 107, yPx: 153, sliceMin: 113, sliceMax: 149,
+    category: "subcortical", lobe: "diencephalon",
+    brief: "Sensory relay hub",
+    full: "Mirror of the left thalamus. The right thalamus relays signals serving the left body and right hemisphere, and plays a key role in regulating sleep-wake transitions."
   },
   {
-    id: "motor_cortex",
-    name: "Primary Motor Cortex",
-    slice: 197, xPx: 71, yPx: 154, sliceMin: 189, sliceMax: 203,  // MNI (-30, -16, 64)
-    category: "cortex",
-    lobe: "frontal",
-    brief: "Controls voluntary movement; organized as a motor homunculus.",
-    full: "Located in the precentral gyrus (Brodmann area 4), the primary motor cortex is the principal origin of the corticospinal tract. Neurons are somatotopically organized as the motor homunculus, with disproportionately large face and hand areas. Lesions cause contralateral spastic paralysis."
+    id: "left_caudate", name: "Left Caudate",
+    slice: 141, xPx: 93, yPx: 127, sliceMin: 121, sliceMax: 161,
+    category: "subcortical", lobe: "basal_ganglia",
+    brief: "Voluntary movement planning",
+    full: "The caudate nucleus is a C-shaped structure forming part of the striatum. It integrates cortical input for planning voluntary movement and also plays a role in learning and memory."
   },
   {
-    id: "broca_area",
-    name: "Broca Area",
-    slice: 139, xPx: 58, yPx: 108, sliceMin: 124, sliceMax: 148,  // MNI (-45, 20, 10)
-    category: "cortex",
-    lobe: "frontal",
-    brief: "Speech production area in the left inferior frontal gyrus.",
-    full: "Broca's area (BA 44/45) in the left inferior frontal gyrus is critical for speech production. Damage causes Broca's aphasia: non-fluent, effortful speech with relatively preserved comprehension. Named after Paul Broca who described it in 1861."
+    id: "right_caudate", name: "Right Caudate",
+    slice: 140, xPx: 102, yPx: 127, sliceMin: 120, sliceMax: 160,
+    category: "subcortical", lobe: "basal_ganglia",
+    brief: "Voluntary movement planning",
+    full: "The right caudate nucleus mirrors the left. Together they form the heads of the striatum, visible in axial sections as comma-shaped structures flanking the lateral ventricles."
   },
   {
-    id: "orbitofrontal_cortex",
-    name: "Orbitofrontal Cortex",
-    slice: 111, xPx: 96, yPx: 85, sliceMin: 105, sliceMax: 117,   // MNI (0, 38, -16)
-    category: "cortex",
-    lobe: "frontal",
-    brief: "Reward, emotion regulation, and decision-making.",
-    full: "The orbitofrontal cortex (OFC) sits above the orbits of the eyes. It integrates sensory information with emotional value for reward-based decision-making. OFC lesions cause impulsivity and social disinhibition."
-  },
-
-  // ===== PARIETAL LOBE =====
-  {
-    id: "parietal_lobe",
-    name: "Parietal Lobe",
-    slice: 192, xPx: 96, yPx: 190, sliceMin: 186, sliceMax: 198,  // MNI (0, -50, 60)
-    category: "cortex",
-    lobe: "parietal",
-    brief: "Processes sensory information and spatial awareness.",
-    full: "The parietal lobe integrates somatosensory input and spatial processing. It contains the primary somatosensory cortex (postcentral gyrus), superior parietal lobule (spatial attention), and inferior parietal lobule. Lesions cause neglect syndromes, apraxia, and spatial disorientation."
+    id: "left_putamen", name: "Left Putamen",
+    slice: 135, xPx: 80, yPx: 130, sliceMin: 119, sliceMax: 151,
+    category: "subcortical", lobe: "basal_ganglia",
+    brief: "Motor and reward processing",
+    full: "The putamen, together with the caudate, forms the striatum. It regulates motor activity through the direct and indirect basal ganglia pathways and plays a role in reinforcement learning."
   },
   {
-    id: "somatosensory_cortex",
-    name: "Somatosensory Cortex",
-    slice: 197, xPx: 71, yPx: 167, sliceMin: 186, sliceMax: 203,  // MNI (-30, -28, 64)
-    category: "cortex",
-    lobe: "parietal",
-    brief: "Processes touch, pain, and proprioception; organized as a sensory homunculus.",
-    full: "The primary somatosensory cortex (postcentral gyrus, BA 1/2/3) receives sensory input from the thalamus. It is organized somatotopically as a sensory homunculus. Lesions impair contralateral tactile discrimination, proprioception, and two-point discrimination."
-  },
-
-  // ===== TEMPORAL LOBE =====
-  {
-    id: "temporal_lobe",
-    name: "Temporal Lobe",
-    slice: 112, xPx: 53, yPx: 137, sliceMin: 106, sliceMax: 120,  // MNI (-52, -10, -15)
-    category: "cortex",
-    lobe: "temporal",
-    brief: "Hearing, memory, and language comprehension.",
-    full: "The temporal lobe lies inferior to the lateral sulcus. It contains primary auditory cortex (Heschl's gyri), Wernicke's area, the hippocampus and parahippocampal gyrus (memory), and the amygdala (emotion). Bilateral hippocampal damage causes anterograde amnesia."
+    id: "right_putamen", name: "Right Putamen",
+    slice: 134, xPx: 115, yPx: 128, sliceMin: 118, sliceMax: 150,
+    category: "subcortical", lobe: "basal_ganglia",
+    brief: "Motor and reward processing",
+    full: "The right putamen mirrors the left structure. Damage here is associated with Parkinson disease motor symptoms and disorders of habit learning."
   },
   {
-    id: "wernicke_area",
-    name: "Wernicke Area",
-    slice: 145, xPx: 53, yPx: 175, sliceMin: 137, sliceMax: 152,  // MNI (-52, -42, 16)
-    category: "cortex",
-    lobe: "temporal",
-    brief: "Language comprehension area in the left superior temporal gyrus.",
-    full: "Wernicke's area (BA 22) in the posterior superior temporal gyrus is essential for language comprehension. Damage causes Wernicke's aphasia: fluent but meaningless speech (paraphasias), severely impaired comprehension. Named after Carl Wernicke who described it in 1874."
+    id: "left_globus_pallidus", name: "Left Globus Pallidus",
+    slice: 133, xPx: 85, yPx: 136, sliceMin: 123, sliceMax: 143,
+    category: "subcortical", lobe: "basal_ganglia",
+    brief: "Basal ganglia output gate",
+    full: "The globus pallidus is the main output nucleus of the basal ganglia. It receives inhibitory input from the striatum and sends inhibitory projections to the thalamus via the internal pallidum."
   },
   {
-    id: "auditory_cortex",
-    name: "Primary Auditory Cortex",
-    slice: 139, xPx: 54, yPx: 153, sliceMin: 133, sliceMax: 145,  // MNI (-50, -22, 10)
-    category: "cortex",
-    lobe: "temporal",
-    brief: "Processes sound; located in Heschl's gyri on the superior temporal plane.",
-    full: "The primary auditory cortex (Heschl's gyri, BA 41/42) lies on the superior temporal plane within the lateral sulcus. It performs initial cortical processing of sound: frequency, intensity, and duration. It is tonotopically organized. Bilateral lesions cause cortical deafness."
+    id: "right_globus_pallidus", name: "Right Globus Pallidus",
+    slice: 132, xPx: 111, yPx: 134, sliceMin: 122, sliceMax: 142,
+    category: "subcortical", lobe: "basal_ganglia",
+    brief: "Basal ganglia output gate",
+    full: "Mirror of the left globus pallidus. In Parkinson disease, overactivity of the globus pallidus interna drives the hypokinetic motor features; deep brain stimulation targeting it provides relief."
+  },
+  {
+    id: "left_hippocampus", name: "Left Hippocampus",
+    slice: 105, xPx: 77, yPx: 166, sliceMin: 93, sliceMax: 117,
+    category: "limbic", lobe: "temporal",
+    brief: "Memory encoding",
+    full: "The hippocampus is crucial for converting short-term memories to long-term ones. The left hippocampus is especially important for verbal and declarative memory. Atrophy is an early marker of Alzheimer disease."
+  },
+  {
+    id: "right_hippocampus", name: "Right Hippocampus",
+    slice: 105, xPx: 114, yPx: 157, sliceMin: 93, sliceMax: 116,
+    category: "limbic", lobe: "temporal",
+    brief: "Spatial and episodic memory",
+    full: "The right hippocampus is particularly involved in spatial navigation and episodic memory. In London taxi drivers, the posterior right hippocampus was enlarged relative to controls, reflecting experience-dependent plasticity."
+  },
+  {
+    id: "left_amygdala", name: "Left Amygdala",
+    slice: 117, xPx: 79, yPx: 154, sliceMin: 107, sliceMax: 127,
+    category: "limbic", lobe: "temporal",
+    brief: "Fear and emotion processing",
+    full: "The amygdala processes emotional memories, especially fear conditioning. It receives sensory information and projects to the hypothalamus and brainstem to coordinate autonomic and endocrine fear responses."
+  },
+  {
+    id: "right_amygdala", name: "Right Amygdala",
+    slice: 116, xPx: 115, yPx: 153, sliceMin: 106, sliceMax: 126,
+    category: "limbic", lobe: "temporal",
+    brief: "Fear and emotion processing",
+    full: "The right amygdala contributes to processing facial expressions and implicit emotional learning. Bilateral amygdala damage abolishes fear responses while leaving most cognitive functions intact."
   },
 
-  // ===== OCCIPITAL LOBE =====
+  // -- White matter / Commissures ----------------------------------------
   {
-    id: "occipital_lobe",
-    name: "Occipital Lobe",
-    slice: 144, xPx: 96, yPx: 221, sliceMin: 134, sliceMax: 150,  // MNI (0, -85, 15)
-    category: "cortex",
-    lobe: "occipital",
-    brief: "Primary visual processing center.",
-    full: "The occipital lobe contains the primary visual cortex (V1, BA 17) around the calcarine sulcus, and visual association areas (V2-V5). It receives input from the lateral geniculate nucleus via the optic radiations. Lesions cause contralateral homonymous visual field defects."
+    id: "corpus_callosum_body", name: "Corpus Callosum (body)",
+    slice: 115, xPx: 96, yPx: 127, sliceMin: 107, sliceMax: 123,
+    category: "white_matter", lobe: "midline",
+    brief: "Main interhemispheric bridge",
+    full: "The corpus callosum body carries axons connecting corresponding cortical areas of the two hemispheres. It is the largest white matter commissure in the brain. Agenesis results in characteristic Probst bundles running anteroposteriorly."
   },
   {
-    id: "visual_cortex",
-    name: "Visual Cortex (V1)",
-    slice: 139, xPx: 96, yPx: 224, sliceMin: 124, sliceMax: 154,  // MNI (0, -88, 10)
-    category: "cortex",
-    lobe: "occipital",
-    brief: "V1 - processes basic visual features like edges and orientation.",
-    full: "The primary visual cortex (V1, striate cortex, BA 17) lines the calcarine sulcus. Each hemisphere receives input from the contralateral visual field. V1 contains a complete retinotopic map. Ocular dominance columns segregate input from each eye. Lesions cause contralateral homonymous hemianopia."
-  },
-
-  // ===== LIMBIC =====
-  {
-    id: "cingulate_cortex",
-    name: "Cingulate Cortex",
-    slice: 173, xPx: 96, yPx: 134, sliceMin: 165, sliceMax: 179,  // MNI (0, 0, 42)
-    category: "limbic",
-    lobe: "limbic",
-    brief: "Attention, emotion, and pain processing; part of the limbic system.",
-    full: "The cingulate cortex wraps around the corpus callosum. The anterior cingulate (ACC) is involved in error monitoring and emotional processing. The posterior cingulate (PCC) is a default mode network hub. The midcingulate participates in pain processing and motor control."
+    id: "corpus_callosum_genu", name: "Corpus Callosum (genu)",
+    slice: 115, xPx: 99, yPx: 121, sliceMin: 107, sliceMax: 123,
+    category: "white_matter", lobe: "midline",
+    brief: "Frontal lobe commissure",
+    full: "The genu (Latin: knee) is the anterior-curving part of the corpus callosum connecting the prefrontal cortices. It carries fibres important for higher cognition and is preferentially thinned in normal ageing."
   },
   {
-    id: "insula",
-    name: "Insula",
-    slice: 133, xPx: 64, yPx: 129, sliceMin: 127, sliceMax: 147,  // MNI (-38, 0, 5)
-    category: "limbic",
-    lobe: "limbic",
-    brief: "Visceral sensation, interoception, taste, and empathy.",
-    full: "The insula lies deep within the lateral sulcus, hidden beneath the frontal, temporal, and parietal opercula. It processes interoceptive signals, taste, pain, and autonomic function. The anterior insula is involved in empathy and self-awareness; posterior insula in primary interoception."
+    id: "corpus_callosum_splenium", name: "Corpus Callosum (splenium)",
+    slice: 116, xPx: 93, yPx: 128, sliceMin: 108, sliceMax: 124,
+    category: "white_matter", lobe: "midline",
+    brief: "Occipital/parietal commissure",
+    full: "The splenium is the thickened posterior end of the corpus callosum, connecting occipital and posterior parietal cortices. It carries visual interhemispheric fibres and is often spared longest in callosal degeneration."
   },
   {
-    id: "left_hippocampus",
-    name: "Left Hippocampus",
-    slice: 106, xPx: 73, yPx: 143, sliceMin: 100, sliceMax: 109,  // MNI (-28, -16, -20) HO atlas
-    category: "limbic",
-    lobe: "temporal",
-    brief: "Critical for forming new explicit memories; part of the limbic system.",
-    full: "The hippocampus lies in the medial temporal lobe, forming the floor of the temporal horn. It is the primary site of episodic and spatial memory formation. The Papez circuit connects hippocampus to fornix, mammillary bodies, thalamus, and cingulate cortex. Bilateral lesions cause anterograde amnesia."
+    id: "internal_capsule", name: "Internal Capsule",
+    slice: 134, xPx: 89, yPx: 136, sliceMin: 116, sliceMax: 152,
+    category: "white_matter", lobe: "deep",
+    brief: "Corticospinal highway",
+    full: "The internal capsule is a V-shaped band of white matter carrying fibres between the cortex and lower structures. The posterior limb contains the corticospinal tract; a small stroke here causes contralateral hemiplegia."
   },
   {
-    id: "right_hippocampus",
-    name: "Right Hippocampus",
-    slice: 106, xPx: 119, yPx: 140, sliceMin: 100, sliceMax: 111, // MNI (28, -14, -20) HO atlas
-    category: "limbic",
-    lobe: "temporal",
-    brief: "Spatial navigation and memory consolidation.",
-    full: "The right hippocampus is particularly important for spatial memory and navigation. London taxi drivers show enlarged right hippocampi. Hippocampal sclerosis is the most common pathology in temporal lobe epilepsy and the target of mesial temporal surgery."
-  },
-  {
-    id: "left_amygdala",
-    name: "Left Amygdala",
-    slice: 104, xPx: 76, yPx: 127, sliceMin: 98, sliceMax: 111,  // MNI (-24, -2, -22) HO atlas
-    category: "limbic",
-    lobe: "temporal",
-    brief: "Fear, emotion, and emotional memory; part of the limbic system.",
-    full: "The amygdala is an almond-shaped nucleus in the medial temporal lobe, anterior to the hippocampus. It processes emotionally significant stimuli, especially fear, and modulates consolidation of emotional memories. Bilateral lesions (Kluver-Bucy syndrome) cause hypersexuality, placidity, and visual agnosia."
-  },
-  {
-    id: "right_amygdala",
-    name: "Right Amygdala",
-    slice: 104, xPx: 118, yPx: 125, sliceMin: 99, sliceMax: 109, // MNI (26, 0, -22) HO atlas
-    category: "limbic",
-    lobe: "temporal",
-    brief: "Fear processing and emotional response.",
-    full: "The right amygdala is particularly dominant in processing negative emotional stimuli and autonomic fear responses. The basolateral complex (BLA) receives sensory inputs; the central nucleus generates autonomic and behavioral fear responses via the hypothalamus and brainstem."
+    id: "anterior_commissure", name: "Anterior Commissure",
+    slice: 94, xPx: 95, yPx: 128, sliceMin: 88, sliceMax: 100,
+    category: "white_matter", lobe: "midline",
+    brief: "Olfactory/temporal commissure",
+    full: "The anterior commissure connects the olfactory bulbs and parts of the temporal lobes across the midline. It is a landmark used to define the AC-PC line, the standard reference axis for stereotaxic brain atlases."
   },
 
-  // ===== SUBCORTICAL NUCLEI =====
+  // -- Ventricles --------------------------------------------------------
   {
-    id: "left_thalamus",
-    name: "Left Thalamus",
-    slice: 134, xPx: 88, yPx: 153, sliceMin: 128, sliceMax: 147,  // MNI (-10, -22, 6) HO atlas
-    category: "subcortical",
-    lobe: "diencephalon",
-    brief: "Relay station for sensory and motor signals to the cortex.",
-    full: "The thalamus relays almost all sensory information (except olfaction) to the cerebral cortex. Key nuclei: VPL (somatosensory), LGN (visual), MGN (auditory), VA/VL (motor), MD (prefrontal). The thalamus also regulates consciousness and sleep-wake cycles."
+    id: "left_lateral_ventricle", name: "Left Lateral Ventricle",
+    slice: 122, xPx: 88, yPx: 118, sliceMin: 106, sliceMax: 138,
+    category: "ventricles", lobe: "deep",
+    brief: "CSF-filled cavity (left)",
+    full: "The lateral ventricles are the largest brain ventricles, filled with cerebrospinal fluid produced by the choroid plexus. The left lateral ventricle communicates with the third ventricle via the foramen of Monro."
   },
   {
-    id: "right_thalamus",
-    name: "Right Thalamus",
-    slice: 134, xPx: 108, yPx: 155, sliceMin: 127, sliceMax: 144, // MNI (14, -24, 6) HO atlas
-    category: "subcortical",
-    lobe: "diencephalon",
-    brief: "Relay station for sensory and motor signals to the cortex.",
-    full: "The right thalamus serves the left hemisphere. Its nuclei relay contralateral sensory signals. The pulvinar (largest nucleus) connects with parieto-occipital association cortex. Thalamic strokes cause contralateral hemisensory loss and sometimes thalamic pain syndrome."
+    id: "right_lateral_ventricle", name: "Right Lateral Ventricle",
+    slice: 121, xPx: 103, yPx: 116, sliceMin: 105, sliceMax: 137,
+    category: "ventricles", lobe: "deep",
+    brief: "CSF-filled cavity (right)",
+    full: "Enlargement of the lateral ventricles (ventriculomegaly) can indicate hydrocephalus, cerebral atrophy, or developmental anomalies. Ventricular volume increases about 1-2 ml per year in normal ageing."
   },
   {
-    id: "left_caudate",
-    name: "Left Caudate Nucleus",
-    slice: 137, xPx: 86, yPx: 114, sliceMin: 128, sliceMax: 143,  // MNI (-12, 14, 8) HO atlas
-    category: "subcortical",
-    lobe: "basal_ganglia",
-    brief: "Part of the striatum; involved in learning and voluntary movement.",
-    full: "The caudate nucleus is C-shaped, curving alongside the lateral ventricle. Together with the putamen it forms the striatum, the input nucleus of the basal ganglia. Receives dopaminergic input from the substantia nigra. Caudate atrophy is characteristic of Huntington's disease."
-  },
-  {
-    id: "right_caudate",
-    name: "Right Caudate Nucleus",
-    slice: 141, xPx: 108, yPx: 117, sliceMin: 135, sliceMax: 147, // MNI (14, 12, 12) HO atlas
-    category: "subcortical",
-    lobe: "basal_ganglia",
-    brief: "Part of the striatum; involved in learning and voluntary movement.",
-    full: "The right caudate nucleus head lies anterior to the thalamus. In Huntington's disease, caudate atrophy causes characteristic box-car ventricles on imaging. The caudate also plays roles in reward-based learning and OCD pathophysiology."
-  },
-  {
-    id: "left_putamen",
-    name: "Left Putamen",
-    slice: 124, xPx: 78, yPx: 119, sliceMin: 109, sliceMax: 130,  // MNI (-22, 8, -4) HO atlas
-    category: "subcortical",
-    lobe: "basal_ganglia",
-    brief: "Basal ganglia structure; regulates movement and reward.",
-    full: "The putamen is the largest nucleus of the basal ganglia, forming the outer part of the lenticular nucleus. It is the main input target of motor cortex within the basal ganglia. In Parkinson's disease, dopaminergic deafferentation of the putamen causes motor symptoms."
-  },
-  {
-    id: "right_putamen",
-    name: "Right Putamen",
-    slice: 124, xPx: 114, yPx: 117, sliceMin: 109, sliceMax: 133, // MNI (22, 10, -4) HO atlas
-    category: "subcortical",
-    lobe: "basal_ganglia",
-    brief: "Basal ganglia structure; regulates movement and reward.",
-    full: "The right putamen receives motor cortex inputs and sends inhibitory signals via direct and indirect pathways to the globus pallidus. Iron accumulation in the putamen occurs in neurodegeneration with brain iron accumulation (NBIA), visible as T2 hypointensity on MRI."
-  },
-  {
-    id: "hypothalamus",
-    name: "Hypothalamus",
-    slice: 113, xPx: 96, yPx: 128, sliceMin: 110, sliceMax: 116,  // MNI (0, -2, -14)
-    category: "subcortical",
-    lobe: "diencephalon",
-    brief: "Master regulator of autonomic function, hormones, and homeostasis.",
-    full: "The hypothalamus lies below the thalamus, forming the floor of the third ventricle. It controls the pituitary gland, regulating all endocrine axes. It coordinates autonomic responses, body temperature, hunger, thirst, circadian rhythms, and reproductive behavior. Key nuclei: suprachiasmatic (circadian), paraventricular (ADH/oxytocin), arcuate (satiety)."
+    id: "third_ventricle", name: "Third Ventricle",
+    slice: 132, xPx: 96, yPx: 143, sliceMin: 118, sliceMax: 146,
+    category: "ventricles", lobe: "deep",
+    brief: "Midline diencephalic cavity",
+    full: "The third ventricle is a narrow midline cavity flanked by the two thalami. It connects to the lateral ventricles via the foramina of Monro, and to the fourth ventricle via the cerebral aqueduct."
   },
 
-  // ===== BRAINSTEM =====
+  // -- Brainstem ---------------------------------------------------------
   {
-    id: "brainstem",
-    name: "Brainstem",
-    slice: 94, xPx: 98, yPx: 152, sliceMin: 88, sliceMax: 100,   // MNI (2, -26, -32) HO atlas
-    category: "brainstem",
-    lobe: "brainstem",
-    brief: "Controls vital functions: breathing, heart rate, and consciousness.",
-    full: "The brainstem consists of midbrain, pons, and medulla oblongata. It contains cranial nerve nuclei (III-XII), the reticular formation, ascending/descending tracts, and vital autonomic centers. It controls breathing, cardiovascular function, and is essential for consciousness via the ARAS."
+    id: "brainstem", name: "Brainstem",
+    slice: 93, xPx: 98, yPx: 156, sliceMin: 75, sliceMax: 111,
+    category: "brainstem", lobe: "brainstem",
+    brief: "Vital functions centre",
+    full: "The brainstem (midbrain, pons, medulla) controls fundamental survival functions: breathing, heart rate, blood pressure, and consciousness. It also carries all ascending and descending tracts between cortex and spinal cord."
   },
   {
-    id: "midbrain",
-    name: "Midbrain",
-    slice: 111, xPx: 96, yPx: 150, sliceMin: 105, sliceMax: 117,  // MNI (0, -22, -16)
-    category: "brainstem",
-    lobe: "brainstem",
-    brief: "Contains superior and inferior colliculi; cranial nerves III and IV.",
-    full: "The midbrain lies between the pons and diencephalon. Dorsal: superior colliculi (visual reflexes), inferior colliculi (auditory reflexes). Ventral: cerebral peduncles (corticospinal tract), substantia nigra (dopamine; lost in Parkinson's), red nucleus. Cranial nerves III and IV originate here."
+    id: "substantia_nigra", name: "Substantia Nigra",
+    slice: 108, xPx: 93, yPx: 154, sliceMin: 98, sliceMax: 118,
+    category: "brainstem", lobe: "midbrain",
+    brief: "Dopamine production site",
+    full: "The substantia nigra pars compacta produces dopamine released into the striatum, enabling smooth coordinated movement. Selective loss of these dopaminergic neurons is the hallmark pathology of Parkinson disease."
   },
   {
-    id: "pons",
-    name: "Pons",
-    slice: 96, xPx: 96, yPx: 154, sliceMin: 90, sliceMax: 111,   // MNI (0, -28, -30)
-    category: "brainstem",
-    lobe: "brainstem",
-    brief: "Connects cerebellum to brainstem; contains cranial nerves V-VIII.",
-    full: "The pons connects the cerebellum via the middle cerebellar peduncles. It contains the pontine nuclei, locus coeruleus (norepinephrine), and cranial nerve nuclei V (trigeminal), VI (abducens), VII (facial), VIII (vestibulocochlear). Pontine gliomas are common in children."
+    id: "red_nucleus", name: "Red Nucleus",
+    slice: 109, xPx: 97, yPx: 145, sliceMin: 101, sliceMax: 117,
+    category: "brainstem", lobe: "midbrain",
+    brief: "Motor coordination relay",
+    full: "The red nucleus in the midbrain tegmentum relays signals between the cerebellum and the spinal cord via the rubrospinal tract. It appears slightly reddish in fresh specimens due to iron content and vascularity."
   },
   {
-    id: "medulla_oblongata",
-    name: "Medulla Oblongata",
-    slice: 74, xPx: 96, yPx: 159, sliceMin: 59, sliceMax: 83,   // MNI (0, -35, -50)
-    category: "brainstem",
-    lobe: "brainstem",
-    brief: "Vital center for breathing, heart rate, and swallowing.",
-    full: "The medulla oblongata is the caudal part of the brainstem. Contains respiratory and cardiovascular centers, cranial nerve nuclei IX-XII, nucleus tractus solitarius, inferior olivary nucleus, and pyramidal decussation. Lateral medullary syndrome (Wallenberg) causes ipsilateral face and contralateral body sensory loss."
-  },
-
-  // ===== CEREBELLUM =====
-  {
-    id: "cerebellum",
-    name: "Cerebellum",
-    slice: 96, xPx: 96, yPx: 183, sliceMin: 90, sliceMax: 102,   // MNI (0, -55, -30)
-    category: "cerebellum",
-    lobe: "cerebellum",
-    brief: "Coordinates movement, balance, and motor learning.",
-    full: "The cerebellum occupies the posterior fossa, connected to the brainstem by three cerebellar peduncles. It contains more neurons than the rest of the brain combined. It fine-tunes movement via the cerebellar-thalamo-cortical loop. Lesions cause ipsilateral ataxia, dysmetria, dysdiadochokinesia, and intention tremor."
+    id: "pons", name: "Pons",
+    slice: 82, xPx: 96, yPx: 155, sliceMin: 66, sliceMax: 98,
+    category: "brainstem", lobe: "pons",
+    brief: "Cranial nerve relay, breathing",
+    full: "The pons contains cranial nerve nuclei V-VIII, the pneumotaxic and apneustic respiratory centres, and the basis pontis which relays cortical signals to the cerebellum. Locked-in syndrome results from bilateral ventral pontine infarction."
   },
   {
-    id: "vermis",
-    name: "Cerebellar Vermis",
-    slice: 104, xPx: 96, yPx: 187, sliceMin: 98, sliceMax: 110,  // MNI (0, -58, -22)
-    category: "cerebellum",
-    lobe: "cerebellum",
-    brief: "Midline cerebellum; controls axial and trunk movements.",
-    full: "The vermis is the midline unpaired portion of the cerebellum, controlling axial musculature: posture, gait, and truncal coordination. The flocculonodular lobe regulates vestibulo-ocular reflexes. Midline cerebellar lesions (e.g., medulloblastoma in children) cause truncal ataxia and a wide-based gait."
+    id: "medulla_oblongata", name: "Medulla Oblongata",
+    slice: 70, xPx: 96, yPx: 153, sliceMin: 52, sliceMax: 88,
+    category: "brainstem", lobe: "medulla",
+    brief: "Vital reflexes centre",
+    full: "The medulla contains the cardiovascular centre, the respiratory rhythm generator, and nuclei for cranial nerves IX-XII. The pyramidal decussation, where most corticospinal fibres cross, occurs in the lower medulla."
   },
 
-  // ===== WHITE MATTER =====
+  // -- Cerebellum --------------------------------------------------------
   {
-    id: "corpus_callosum",
-    name: "Corpus Callosum",
-    slice: 152, xPx: 96, yPx: 131, sliceMin: 143, sliceMax: 158,  // MNI (0, 0, 22)
-    category: "white_matter",
-    lobe: "white_matter",
-    brief: "Largest white matter tract; connects the two cerebral hemispheres.",
-    full: "The corpus callosum contains ~200-300 million axons connecting left and right cerebral hemispheres. From anterior to posterior: rostrum, genu (frontal connections), body, isthmus, splenium (occipital/parietal connections). Surgical section (callosotomy) treats intractable epilepsy but causes disconnection syndrome."
+    id: "left_cerebellum", name: "Left Cerebellum",
+    slice: 80, xPx: 77, yPx: 177, sliceMin: 65, sliceMax: 95,
+    category: "cerebellum", lobe: "cerebellum",
+    brief: "Motor coordination (right body)",
+    full: "The cerebellum coordinates and fine-tunes movement, balance, and motor learning. The left cerebellar hemisphere primarily influences the right side of the body. It contains more neurons than the rest of the brain combined."
   },
   {
-    id: "internal_capsule",
-    name: "Internal Capsule",
-    slice: 143, xPx: 83, yPx: 136, sliceMin: 131, sliceMax: 149,  // MNI (-16, -6, 14)
-    category: "white_matter",
-    lobe: "white_matter",
-    brief: "Major white matter tract carrying motor and sensory fibers between cortex and spinal cord.",
-    full: "The internal capsule is a V-shaped band of fibers between the basal ganglia and thalamus. Anterior limb: frontopontine and thalamofrontal fibers. Genu: corticobulbar tract. Posterior limb: corticospinal tract and thalamocortical sensory fibers. Small capsular strokes cause large motor/sensory deficits due to fiber concentration."
-  },
-  {
-    id: "corona_radiata",
-    name: "Corona Radiata",
-    slice: 160, xPx: 81, yPx: 145, sliceMin: 154, sliceMax: 166,  // MNI (-18, -12, 30)
-    category: "white_matter",
-    lobe: "white_matter",
-    brief: "Radiating fan of white matter connecting cortex to internal capsule.",
-    full: "The corona radiata is the fan-shaped continuation of the internal capsule fibers, spreading out to connect all cortical areas with subcortical structures. It includes corticospinal, corticobulbar, corticothalamic, and thalamocortical fibers. Disruption causes motor deficits and cognitive impairment."
-  },
-  {
-    id: "anterior_commissure",
-    name: "Anterior Commissure",
-    slice: 124, xPx: 96, yPx: 125, sliceMin: 121, sliceMax: 127,  // MNI (0, 2, -4)
-    category: "white_matter",
-    lobe: "white_matter",
-    brief: "White matter bundle connecting the two temporal lobes.",
-    full: "The anterior commissure crosses the midline just anterior to the fornix columns, at the anterior wall of the third ventricle. It connects the olfactory bulbs, anterior temporal lobes, and amygdalae bilaterally. It is smaller than the corpus callosum and is present in all mammals."
+    id: "right_cerebellum", name: "Right Cerebellum",
+    slice: 79, xPx: 114, yPx: 177, sliceMin: 65, sliceMax: 95,
+    category: "cerebellum", lobe: "cerebellum",
+    brief: "Motor coordination (left body)",
+    full: "The right cerebellum coordinates the left side of the body. Lateral cerebellar lesions cause limb ataxia; vermis lesions cause truncal ataxia. The cerebellum also participates in cognitive and affective processing."
   },
 
-  // ===== VENTRICLES =====
+  // -- Cerebral cortex --------------------------------------------------
   {
-    id: "lateral_ventricle",
-    name: "Lateral Ventricle",
-    slice: 137, xPx: 106, yPx: 127, sliceMin: 127, sliceMax: 145, // MNI (12, 2, 8) - right side body
-    category: "ventricles",
-    lobe: "ventricles",
-    brief: "Largest cerebrospinal fluid cavity; lies within each cerebral hemisphere.",
-    full: "The lateral ventricles are the largest of the four CSF-filled ventricles. Each has a body, frontal (anterior) horn, occipital (posterior) horn, and temporal (inferior) horn. They communicate with the third ventricle via the foramen of Monro. CSF is produced by the choroid plexus within the ventricles."
+    id: "frontal_lobe", name: "Frontal Lobe",
+    slice: 166, xPx: 96, yPx: 114, sliceMin: 146, sliceMax: 186,
+    category: "cortex", lobe: "frontal",
+    brief: "Planning, personality, motor control",
+    full: "The frontal lobe houses the primary motor cortex (precentral gyrus), premotor areas, prefrontal cortex for executive function and working memory, and Broca's area for language production in the dominant hemisphere."
   },
   {
-    id: "third_ventricle",
-    name: "Third Ventricle",
-    slice: 137, xPx: 96, yPx: 131, sliceMin: 130, sliceMax: 143,  // MNI (0, -2, 8) - validated CSF signal
-    category: "ventricles",
-    lobe: "ventricles",
-    brief: "Midline ventricle between the two thalami.",
-    full: "The third ventricle is a narrow midline slit between the two thalami. It communicates with the lateral ventricles via the foramina of Monro and with the fourth ventricle via the cerebral aqueduct (aqueduct of Sylvius). The hypothalamus forms its floor. Colloid cysts here can cause acute obstructive hydrocephalus."
+    id: "parietal_lobe", name: "Parietal Lobe",
+    slice: 148, xPx: 96, yPx: 85, sliceMin: 132, sliceMax: 166,
+    category: "cortex", lobe: "parietal",
+    brief: "Sensory integration, spatial processing",
+    full: "The parietal lobe processes somatosensory information and integrates spatial awareness. The superior parietal lobule handles visuospatial tasks; the angular gyrus is involved in language. Damage causes neglect and apraxia."
   },
   {
-    id: "fourth_ventricle",
-    name: "Fourth Ventricle",
-    slice: 98, xPx: 96, yPx: 168, sliceMin: 94, sliceMax: 108,   // MNI (0, -41, -28) - validated low signal
-    category: "ventricles",
-    lobe: "ventricles",
-    brief: "Diamond-shaped ventricle between cerebellum and brainstem.",
-    full: "The fourth ventricle is a diamond-shaped CSF space between the cerebellum (roof) and pons/medulla (floor). It communicates with the subarachnoid space via the lateral foramina of Luschka and median foramen of Magendie. Dandy-Walker malformation involves fourth ventricle cystic dilation with absent vermis."
+    id: "temporal_lobe", name: "Temporal Lobe",
+    slice: 114, xPx: 71, yPx: 145, sliceMin: 96, sliceMax: 132,
+    category: "cortex", lobe: "temporal",
+    brief: "Auditory processing, language, memory",
+    full: "The temporal lobe processes auditory information, language comprehension (Wernicke's area), visual object recognition in the inferior temporal cortex, and memory via the hippocampal formation."
+  },
+  {
+    id: "occipital_lobe", name: "Occipital Lobe",
+    slice: 96, xPx: 103, yPx: 82, sliceMin: 78, sliceMax: 114,
+    category: "cortex", lobe: "occipital",
+    brief: "Primary visual processing",
+    full: "The occipital lobe houses the primary visual cortex (V1) around the calcarine sulcus, which receives input from the lateral geniculate nucleus. Destruction of V1 causes cortical blindness; partial lesions produce scotomas."
+  },
+  {
+    id: "insula", name: "Insula",
+    slice: 128, xPx: 70, yPx: 137, sliceMin: 110, sliceMax: 146,
+    category: "cortex", lobe: "temporal",
+    brief: "Interoception, pain, autonomic",
+    full: "The insular cortex, hidden within the lateral sulcus, integrates interoceptive signals such as hunger, thirst, pain, and autonomic state. It plays a role in emotional awareness, taste, and the experience of disgust."
+  },
+  {
+    id: "cingulate_cortex", name: "Cingulate Cortex",
+    slice: 140, xPx: 96, yPx: 103, sliceMin: 120, sliceMax: 160,
+    category: "cortex", lobe: "frontal",
+    brief: "Attention, emotion, pain modulation",
+    full: "The cingulate cortex arches above the corpus callosum. The anterior cingulate is involved in attention and error monitoring; the posterior cingulate in self-referential cognition. Both are active in pain perception and empathy."
+  },
+  {
+    id: "primary_motor_cortex", name: "Primary Motor Cortex",
+    slice: 161, xPx: 83, yPx: 85, sliceMin: 143, sliceMax: 179,
+    category: "cortex", lobe: "frontal",
+    brief: "Voluntary movement execution",
+    full: "The primary motor cortex (precentral gyrus, area 4) contains Betz cells whose axons form the corticospinal tract. It is somatotopically organised as the motor homunculus: face lateral, leg medial, hand with the largest representation."
+  },
+  {
+    id: "primary_somatosensory", name: "Primary Somatosensory Cortex",
+    slice: 157, xPx: 83, yPx: 84, sliceMin: 139, sliceMax: 175,
+    category: "cortex", lobe: "parietal",
+    brief: "Touch and proprioception",
+    full: "The primary somatosensory cortex (postcentral gyrus, areas 1, 2, 3) receives tactile, proprioceptive, and pain signals from the contralateral body via the thalamus, arranged as the sensory homunculus."
+  },
+  {
+    id: "brocas_area", name: "Broca's Area",
+    slice: 149, xPx: 73, yPx: 120, sliceMin: 131, sliceMax: 167,
+    category: "cortex", lobe: "frontal",
+    brief: "Speech production (left hemisphere)",
+    full: "Broca's area (areas 44-45, left inferior frontal gyrus) is responsible for speech production and grammatical processing. Damage causes Broca's aphasia: effortful, non-fluent speech with relatively preserved comprehension."
+  },
+  {
+    id: "wernickes_area", name: "Wernicke's Area",
+    slice: 120, xPx: 68, yPx: 120, sliceMin: 109, sliceMax: 128,
+    category: "cortex", lobe: "temporal",
+    brief: "Language comprehension (left hemisphere)",
+    full: "Wernicke's area (area 22, left posterior superior temporal gyrus) is essential for language comprehension. Damage causes Wernicke's aphasia: fluent but nonsensical speech with poor comprehension."
+  },
+  {
+    id: "olfactory_bulb", name: "Olfactory Bulb",
+    slice: 155, xPx: 102, yPx: 84, sliceMin: 145, sliceMax: 165,
+    category: "cortex", lobe: "frontal",
+    brief: "First olfactory relay",
+    full: "The olfactory bulb is a small neural structure on the inferior frontal lobe that receives direct input from olfactory receptor neurons via the cribriform plate. Olfaction is the only sensory system that bypasses the thalamus to project directly to cortex."
   }
+
 ];
 
-// Category colors for markers
+// Category colour palette
 const LABEL_CATEGORY_COLORS = {
-  cortex:       "#4a9eff",
-  limbic:       "#ff7043",
   subcortical:  "#9c27b0",
+  limbic:       "#ff7043",
+  white_matter: "#ff9800",
+  ventricles:   "#00bcd4",
   brainstem:    "#795548",
   cerebellum:   "#009688",
-  white_matter: "#ff9800",
-  ventricles:   "#00bcd4"
+  cortex:       "#4a9eff",
 };
 
-// Lobe groupings for filtering
-const LABEL_LOBES = {
-  frontal:      ["frontal_lobe", "prefrontal_cortex", "motor_cortex", "broca_area", "orbitofrontal_cortex"],
-  parietal:     ["parietal_lobe", "somatosensory_cortex"],
-  temporal:     ["temporal_lobe", "wernicke_area", "auditory_cortex", "left_hippocampus", "right_hippocampus", "left_amygdala", "right_amygdala"],
-  occipital:    ["occipital_lobe", "visual_cortex"],
-  limbic:       ["cingulate_cortex", "insula"],
-  subcortical:  ["left_thalamus", "right_thalamus", "left_caudate", "right_caudate", "left_putamen", "right_putamen", "hypothalamus"],
-  brainstem:    ["brainstem", "midbrain", "pons", "medulla_oblongata"],
-  cerebellum:   ["cerebellum", "vermis"],
-  white_matter: ["corpus_callosum", "internal_capsule", "corona_radiata", "anterior_commissure"],
-  ventricles:   ["lateral_ventricle", "third_ventricle", "fourth_ventricle"]
-};
+const LABEL_LOBES = [
+  "diencephalon", "basal_ganglia", "temporal", "midline",
+  "deep", "brainstem", "midbrain", "pons", "medulla",
+  "cerebellum", "frontal", "parietal", "occipital"
+];
