@@ -8842,6 +8842,8 @@ function BrainAtlas({ onBack }) {
   const [activeQ,    setActiveQ]    = useState(null);    // label id user is focusing
   const [hovered,    setHovered]    = useState(null);    // label id on hover
   const [imgSize,    setImgSize]    = useState({ w: 0, h: 0 });
+  const [sagSize,    setSagSize]    = useState({ w: 0, h: 0 });
+  const sagRef = useRef(null);
   const imgRef = useRef(null);
 
   const volumes  = MRI_VIEWS[viewType];
@@ -8856,6 +8858,10 @@ function BrainAtlas({ onBack }) {
     if (imgRef.current) {
       const r = imgRef.current.getBoundingClientRect();
       setImgSize({ w: r.width, h: r.height });
+    }
+    if (sagRef.current) {
+      const r = sagRef.current.getBoundingClientRect();
+      setSagSize({ w: r.width, h: r.height });
     }
   }, []);
 
@@ -9186,7 +9192,78 @@ function BrainAtlas({ onBack }) {
           </div>
         </div>
 
-                {/* Right panel: quiz questions or label info */}
+                {/* Sagittal reference panel */}
+        {viewType === 'axial' && (
+          <div style={{
+            width: 180, flexShrink: 0,
+            background: '#000',
+            borderLeft: '1px solid rgba(255,255,255,0.07)',
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            overflow: 'hidden'
+          }}>
+            <div style={{ color:'#444', fontSize:9, letterSpacing:1,
+                          textTransform:'uppercase', marginBottom:3, userSelect:'none' }}>
+              Axial level
+            </div>
+            <div style={{ position:'relative', width:'100%', flex:1,
+                          display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <img
+                ref={sagRef}
+                src="brain-sagittal.png"
+                alt="Sagittal brain section"
+                onLoad={updateImgSize}
+                style={{ maxWidth:'100%', maxHeight:'100%', objectFit:'contain',
+                         display:'block', opacity:0.88 }}
+              />
+              {sagSize.w > 0 && (() => {
+                const SLICE_MIN = 52, SLICE_MAX = 214;
+                const Y_TOP = 0.04, Y_BOTTOM = 0.88;
+                const t = Math.max(0, Math.min(1,
+                  (SLICE_MAX - photoSlice) / (SLICE_MAX - SLICE_MIN)
+                ));
+                const yFrac = Y_TOP + t * (Y_BOTTOM - Y_TOP);
+                const yPx   = yFrac * sagSize.h;
+                const inBrain = photoSlice >= SLICE_MIN - 8 && photoSlice <= SLICE_MAX + 5;
+                return (
+                  <svg style={{
+                    position:'absolute',
+                    top:'50%', left:'50%',
+                    transform:'translate(-50%,-50%)',
+                    width: sagSize.w, height: sagSize.h,
+                    pointerEvents:'none', overflow:'visible'
+                  }}
+                  viewBox={`0 0 ${sagSize.w} ${sagSize.h}`}>
+                    {inBrain && (
+                      <line
+                        x1={sagSize.w * 0.01} y1={yPx}
+                        x2={sagSize.w * 0.99} y2={yPx}
+                        stroke="#4fc3f7"
+                        strokeWidth={1.5}
+                        strokeDasharray="5 3"
+                        strokeOpacity={0.9}
+                      />
+                    )}
+                    {inBrain && (
+                      <rect x={sagSize.w * 0.99 - 22} y={yPx - 9}
+                        width={22} height={11} rx={2}
+                        fill="rgba(0,0,0,0.6)" />
+                    )}
+                    {inBrain && (
+                      <text x={sagSize.w * 0.99 - 2} y={yPx - 1}
+                        fill="#4fc3f7" fontSize={8} textAnchor="end"
+                        fontWeight="bold">
+                        {photoSlice}
+                      </text>
+                    )}
+                  </svg>
+                );
+              })()}
+            </div>
+          </div>
+        )}
+
+        {/* Right panel: quiz questions or label info */}
         {(quizMode || (labelMode && labelsAvailable)) && (
           <div style={{
             width: 300, flexShrink:0,
