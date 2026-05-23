@@ -8842,8 +8842,6 @@ function BrainAtlas({ onBack }) {
   const [activeQ,    setActiveQ]    = useState(null);    // label id user is focusing
   const [hovered,    setHovered]    = useState(null);    // label id on hover
   const [imgSize,    setImgSize]    = useState({ w: 0, h: 0 });
-  const [sagSize,    setSagSize]    = useState({ w: 0, h: 0 });
-  const sagRef = useRef(null);
   const imgRef = useRef(null);
 
   const volumes  = MRI_VIEWS[viewType];
@@ -8858,10 +8856,6 @@ function BrainAtlas({ onBack }) {
     if (imgRef.current) {
       const r = imgRef.current.getBoundingClientRect();
       setImgSize({ w: r.width, h: r.height });
-    }
-    if (sagRef.current) {
-      const r = sagRef.current.getBoundingClientRect();
-      setSagSize({ w: r.width, h: r.height });
     }
   }, []);
 
@@ -9192,78 +9186,7 @@ function BrainAtlas({ onBack }) {
           </div>
         </div>
 
-        {/* Sagittal orientation panel */}
-        {viewType === 'axial' && (
-          <div style={{
-            width: 150, flexShrink: 0,
-            background: '#000',
-            borderLeft: '1px solid rgba(255,255,255,0.07)',
-            display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center',
-            overflow: 'hidden', position: 'relative'
-          }}>
-            <div style={{ color: '#444', fontSize: 10, letterSpacing: 1,
-                          textTransform: 'uppercase', marginBottom: 4, userSelect: 'none' }}>
-              Axial level
-            </div>
-            <div style={{ position: 'relative', width: '100%', flex: 1,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <img
-                ref={sagRef}
-                src="brain-sagittal.svg"
-                alt="Sagittal brain section"
-                onLoad={updateImgSize}
-                style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain',
-                         display: 'block', opacity: 0.85 }}
-              />
-              {sagSize.w > 0 && (() => {
-                // Map axial slice → Y position on sagittal image
-                // Brain spans slice 52 (inferior, MNI z≈-70mm) to 214 (superior, MNI z≈+80mm)
-                // Corresponding image Y fractions: 0.87 (bottom) → 0.03 (top)
-                const SLICE_MIN = 52, SLICE_MAX = 214;
-                const Y_TOP = 0.044, Y_BOTTOM = 0.83;
-                const t = Math.max(0, Math.min(1,
-                  (SLICE_MAX - photoSlice) / (SLICE_MAX - SLICE_MIN)
-                ));
-                const yFrac = Y_TOP + t * (Y_BOTTOM - Y_TOP);
-                const yPx   = yFrac * sagSize.h;
-                const imgLeft  = (sagSize.w > 0 ? 0 : 0);
-                const lineW    = sagSize.w;
-                const inBrain  = photoSlice >= SLICE_MIN - 10 && photoSlice <= SLICE_MAX + 5;
-                return (
-                  <svg style={{
-                    position: 'absolute',
-                    top: '50%', left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    width: sagSize.w, height: sagSize.h,
-                    pointerEvents: 'none', overflow: 'visible'
-                  }}
-                  viewBox={`0 0 ${sagSize.w} ${sagSize.h}`}>
-                    {inBrain && (
-                      <line
-                        x1={lineW * 0.02} y1={yPx}
-                        x2={lineW * 0.98} y2={yPx}
-                        stroke="#4fc3f7"
-                        strokeWidth={1.5}
-                        strokeDasharray="4 3"
-                        strokeOpacity={0.9}
-                      />
-                    )}
-                    {inBrain && (
-                      <text x={lineW * 0.99} y={yPx - 3}
-                        fill="#4fc3f7" fontSize={8} textAnchor="end"
-                        fontWeight="bold" opacity={0.8}>
-                        {photoSlice}
-                      </text>
-                    )}
-                  </svg>
-                );
-              })()}
-            </div>
-          </div>
-        )}
-
-        {/* Right panel: quiz questions or label info */}
+                {/* Right panel: quiz questions or label info */}
         {(quizMode || (labelMode && labelsAvailable)) && (
           <div style={{
             width: 300, flexShrink:0,
