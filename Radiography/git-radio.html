@@ -202,6 +202,17 @@
     }
     #back-btn:hover { color: #fff; background: #2a2a2a; }
     #slide-title { font-size: 11px; color: #555; text-align: center; padding: 2px 0; }
+
+    #reveal-btn {
+      background: #333;
+      border: 1px solid #666;
+      color: #ccc;
+      padding: 8px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    #reveal-btn:hover { background: #444; color: #fff; }
   </style>
 </head>
 <body>
@@ -229,6 +240,7 @@
       <span id="answer-prompt">Click a purple label box to select it</span>
       <input id="answer-input" type="text" placeholder="Type the anatomical term..." disabled autocomplete="off" autocorrect="off" spellcheck="false" />
       <button id="hint-btn" disabled title="Show first letters as hint">Hint</button>
+      <button id="reveal-btn">Reveal All</button>
       <button id="check-btn" disabled>Check</button>
       <span id="feedback"></span>
     </div>
