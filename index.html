@@ -854,6 +854,7 @@
     .cz-mcq-opt:hover{border-color:#555;background:#f5f5f5;}
     .cz-mcq-opt.cz-active{border-color:#1a1a1a;background:#f0f0f0;font-weight:600;}
     .cz-tf-story{font-size:.87rem;font-style:italic;color:#555;margin-bottom:14px;padding:10px 13px;background:#f5f5f5;border-radius:9px;line-height:1.5;}
+    .cz-tf-passage{font-size:.87rem;color:#333;margin-bottom:16px;padding:14px 16px;background:#f9f9f9;border-left:3px solid #ccc;border-radius:0 9px 9px 0;line-height:1.7;white-space:pre-wrap;}
     .cz-tf-list{display:flex;flex-direction:column;gap:8px;}
     .cz-tf-row{display:flex;align-items:flex-start;gap:10px;}
     .cz-tf-idx{font-size:.75rem;font-weight:700;color:#bbb;min-width:20px;padding-top:9px;}
@@ -1846,12 +1847,19 @@ function CzWriteSection({ section, value = {}, onChange, submitted }) {
   return (
     <div className="cz-write-list">
       {section.prompts.map((p, i) => (
-        <div key={i} className="cz-write-row">
+        <div key={i} className="cz-write-row" style={submitted ? {flexWrap:'wrap',gap:6} : {}}>
           <span className="cz-write-num">{i+1}.</span>
           <span className="cz-write-prompt">{p}</span>
           {submitted
-            ? <div style={{flex:1.2,fontSize:'.9rem',padding:'6px 0',color: value[i] ? '#1a1a1a' : '#aaa',fontStyle: value[i] ? 'normal' : 'italic'}}>
-                {value[i] || '—'}
+            ? <div style={{flex:'1 1 100%',paddingLeft:24}}>
+                <div style={{fontSize:'.9rem',color: value[i] ? '#1a1a1a' : '#aaa',fontStyle: value[i] ? 'normal' : 'italic'}}>
+                  {value[i] || '—'}
+                </div>
+                {section.modelAnswers && section.modelAnswers[i] && (
+                  <div style={{fontSize:'.78rem',color:'#2a7a2a',marginTop:3,fontWeight:600}}>
+                    Answer: {section.modelAnswers[i]}
+                  </div>
+                )}
               </div>
             : <input className="cz-text-field cz-write-input" placeholder="Answer…"
                 value={value[i] || ''} onChange={e => onChange({...value, [i]: e.target.value})}/>
@@ -1916,24 +1924,29 @@ function CzTrueFalseSection({ section, value = {}, onChange, submitted }) {
     return (
       <div>
         {section.text && <p className="cz-tf-story">{section.text}</p>}
-        <div style={{display:'flex',flexDirection:'column',gap:6}}>
+        {section.passage && <div className="cz-tf-passage">{section.passage}</div>}
+        <div style={{display:'flex',flexDirection:'column',gap:10}}>
           {section.statements.map((stmt, i) => {
             const chosen = value[i];
             const correctAns = section.correct ? section.correct[i] : null;
             const isCorrect = correctAns ? chosen === correctAns : null;
+            const expl = section.explanations ? section.explanations[i] : null;
             return (
-              <div key={i} className="cz-fb-row">
-                <span className="cz-fb-q">{i+1}. {stmt}</span>
-                <span style={{flexShrink:0,whiteSpace:'nowrap'}}>
-                  {!chosen
-                    ? <span className="cz-fb-open">— {correctAns ? `correct: ${correctAns}` : ''}</span>
-                    : isCorrect === true
-                      ? <span className="cz-fb-right">{chosen} ✓</span>
-                      : isCorrect === false
-                        ? <><span className="cz-fb-wrong">{chosen}</span><span className="cz-fb-correct"> {correctAns}</span></>
-                        : <span className="cz-fb-right">{chosen}</span>
-                  }
-                </span>
+              <div key={i} style={{display:'flex',flexDirection:'column',gap:3}}>
+                <div className="cz-fb-row">
+                  <span className="cz-fb-q">{i+1}. {stmt}</span>
+                  <span style={{flexShrink:0,whiteSpace:'nowrap'}}>
+                    {!chosen
+                      ? <span className="cz-fb-open">— {correctAns ? `correct: ${correctAns}` : ''}</span>
+                      : isCorrect === true
+                        ? <span className="cz-fb-right">{chosen} ✓</span>
+                        : isCorrect === false
+                          ? <><span className="cz-fb-wrong">{chosen}</span><span className="cz-fb-correct"> {correctAns}</span></>
+                          : <span className="cz-fb-right">{chosen}</span>
+                    }
+                  </span>
+                </div>
+                {expl && <p style={{margin:'0 0 0 18px',fontSize:'.77rem',color:'#666',fontStyle:'italic',lineHeight:1.4}}>{expl}</p>}
               </div>
             );
           })}
@@ -1945,6 +1958,7 @@ function CzTrueFalseSection({ section, value = {}, onChange, submitted }) {
   return (
     <div>
       {section.text && <p className="cz-tf-story">{section.text}</p>}
+      {section.passage && <div className="cz-tf-passage">{section.passage}</div>}
       <div className="cz-tf-list">
         {section.statements.map((stmt, i) => (
           <div key={i} className="cz-tf-row">
@@ -1971,7 +1985,7 @@ function CzChooseFormSection({ section, value = {}, onChange, submitted }) {
   if (submitted) {
     // Render inline with correct/wrong indicator per choice
     let fi = 0;
-    return (
+    const renderedText = (
       <div className="cz-choose-wrap">
         {parts.map((part, pi) => {
           if (part.type === 'text') return <span key={pi}>{part.value}</span>;
@@ -1990,6 +2004,24 @@ function CzChooseFormSection({ section, value = {}, onChange, submitted }) {
             </span>
           );
         })}
+      </div>
+    );
+    if (!section.explanations) return renderedText;
+    return (
+      <div>
+        {renderedText}
+        <div style={{marginTop:14,display:'flex',flexDirection:'column',gap:5}}>
+          {section.explanations.map((expl, ei) => {
+            const sel = value[ei] !== undefined ? value[ei] : 0;
+            const correctIdx = section.correct ? section.correct[ei] : null;
+            const isOk = correctIdx === null || sel === correctIdx;
+            return (
+              <div key={ei} style={{fontSize:'.78rem',color: isOk ? '#666' : '#b44',fontStyle:'italic',lineHeight:1.4}}>
+                <strong style={{fontStyle:'normal'}}>{ei+1}.</strong> {expl}
+              </div>
+            );
+          })}
+        </div>
       </div>
     );
   }

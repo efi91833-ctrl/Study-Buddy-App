@@ -64,7 +64,8 @@
             "_____ se jmenuje tvůj bratr? Alex.",
             "_____ je hodin? 16:30.",
             "_____ to je? To je můj profesor anatomie."
-          ]
+          ],
+          modelAnswers: ["Kdy", "Co", "Odkud", "Jak", "Kolik", "Kdo"]
         },
         {
           type: "write",
@@ -75,6 +76,13 @@
             "bydlet – vaše – kde – sestra? (PRESENT)",
             "v – restaurace – jíst – Martin. (PAST)",
             "syn – jak – jmenovat se. (PRESENT)"
+          ],
+          modelAnswers: [
+            "Pacientka nemá dobrou imunitu.",
+            "Studoval/a jsem novou lekci.",
+            "Kde bydlí vaše sestra?",
+            "Martin jedl v restauraci.",
+            "Jak se jmenuje (váš/tvůj) syn?"
           ]
         },
         {
@@ -85,7 +93,8 @@
             "sedmnáctého dubna dva tisíce osmnáct",
             "devátého října devatenáct set devatenáct",
             "dvacátého prvního prosince devatenáct set devadesát"
-          ]
+          ],
+          modelAnswers: ["1. 2. 1958", "17. 4. 2018", "9. 10. 1919", "21. 12. 1990"]
         },
         {
           type: "write",
@@ -97,19 +106,34 @@
             "starý profesor × _____ profesor",
             "zdravé jídlo × _____ jídlo",
             "dlouhá cesta × _____ cesta"
-          ]
+          ],
+          modelAnswers: ["nový", "špatná", "nemocná", "mladý", "nezdravé", "krátká"]
         },
         {
           type: "chooseForm",
           title: "General Part 6 — Choose the correct form",
           text: "Jmenuju se Anna Novotná. Je mi/ti 63 let. Jsem/jsme z Prahy, pracuju jako doktor/doktorka. Můj/moje manžel se jmenuje Jiří a je fotograf/fotografka. Máme dva/dvě syny a jednu/jedna dceru. Starší syn se jmenuje Pavel, je mu/jí 36 let. Mladší syn se jmenuje Petr a je svobodný/svobodná. Pavel je ženatý/vdaný a má malá/malou dceru Moniku. Monika je můj/moje vnučka.",
-          correct: [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1]
-          // mi, Jsem, doktorka, Můj, fotograf, dva, jednu, mu, svobodný, ženatý, malou, moje
+          correct: [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+          explanations: [
+            "Je MI — 1st person: 'je mi X let' = I am X years old. Ti = you (2nd person).",
+            "JSEM z Prahy — 1st person singular. Jsme = we are (plural).",
+            "Anna is female → DOKTORKA. Doktor is the male form.",
+            "Manžel is masculine → MŮJ. Moje is for feminine/neuter nouns.",
+            "Jiří (husband) is male → FOTOGRAF. Fotografka is the female form.",
+            "Syny is masculine animate plural → DVA. Dvě is for feminine/neuter nouns.",
+            "Dceru is accusative feminine → JEDNU. Jedna is nominative (wrong case here).",
+            "Pavel is male → JE MU 36 let. Jí is feminine (her).",
+            "Petr is male → SVOBODNÝ (masculine adjective). Svobodná is feminine.",
+            "Pavel is male → ŽENATÝ (married man). Vdaný doesn't exist; vdaná is for married women.",
+            "Dceru is accusative → MALOU (accusative adj). Malá is nominative.",
+            "Vnučka is feminine → MOJE. Můj is masculine."
+          ]
         },
         {
           type: "trueFalse",
           title: "General Part 7 — Reading comprehension",
           text: "Studenti a jejich zdravotní problémy",
+          passage: "Od 25. 9. jsou v Praze dva studenti z Izraele – Tomer a Ben. Studují medicínu na první lékařské fakultě. Jejich kamarád je řecký student Alexandros. Alexandros je v Praze od 20. 8. Všichni tři studenti bydlí v domě v Praze 2, Žitná ulice číslo 108.\n\nTomer, Ben a Alexandros měli zdravotní problémy.\n\nAlexandros měl v neděli v noci vysokou teplotu 39 stupňů Celsia. V pondělí ráno musel navštívit lékaře. Lékař mu diagnostikoval angínu (tonsilitis). Alexandros musí brát antibiotika a musí ležet v posteli. Musí pít neperlivou vodu a jíst ovoce, protože potřebuje vitamín C. Za dva týdny musí navštívit pana doktora ještě jednou.\n\nBen měl akutní problém – v pátek ráno ho začal bolet zub a navštívil stomatologa.\n\nTomer měl také akutní problém. Bolel ho žaludek a břicho. Navštívil lékaře v nemocnici a potom šel do lékárny pro tablety.",
           statements: [
             "Studenti z Izraele jsou tady od října.",
             "Alexandros je tady od srpna.",
@@ -122,7 +146,19 @@
             "Lékař pracuje v nemocnici.",
             "Tomer musel zůstat v nemocnici."
           ],
-          correct: ["Ne","Ano","Ano","Ano","Ne","Ne","Ano","Ano","Ne","Ne"]
+          correct: ["Ne","Ano","Ano","Ne","Ne","Ano","Ne","Ne","Ano","Ne"],
+          explanations: [
+            "Ne — They arrived on 25. 9. (September), not October.",
+            "Ano — 'Alexandros je v Praze od 20. 8.' = from August 20.",
+            "Ano — All three live at Žitná ulice číslo 108, Praha 2.",
+            "Ne — He visited the doctor Monday MORNING ('V pondělí ráno'), not in the evening.",
+            "Ne — He must eat ovoce (fruit) for vitamin C, not zelenina (vegetables).",
+            "Ano — 'v pátek ráno ho začal bolet zub a navštívil stomatologa.'",
+            "Ne — It is Alexandros who must revisit the doctor in two weeks, not Ben.",
+            "Ne — It was Alexandros who had 39°C. Tomer had stomach and abdomen pain.",
+            "Ano — 'Navštívil lékaře v nemocnici' — Tomer's doctor was at the hospital.",
+            "Ne — Tomer only went to the pharmacy for tablets; he did not stay in hospital."
+          ]
         }
       ]
     },
@@ -190,7 +226,8 @@
             "_____ je ten film? Hezký.",
             "_____ to stojí? 100 korun.",
             "_____ to je? To je můj profesor anatomie."
-          ]
+          ],
+          modelAnswers: ["Jak", "Kde", "Jaké", "Jaký", "Kolik", "Kdo"]
         },
         {
           type: "write",
@@ -201,6 +238,13 @@
             "mít – kamarádka – v – syn – nemocnice. (PAST)",
             "pivo – já – nepít – černé. (PRESENT)",
             "ty – muset – na – jít – fakulta? (PRESENT)"
+          ],
+          modelAnswers: [
+            "Pacient měl špatnou imunitu.",
+            "Hledáš dobrou restauraci?",
+            "Kamarádka měla syna v nemocnici.",
+            "Nepiju černé pivo.",
+            "Musíš jít na fakultu?"
           ]
         },
         {
@@ -211,7 +255,8 @@
             "sedmnáctého listopadu devatenáct set osmdesát devět",
             "devatenáctého dubna devatenáct set padesát tři",
             "prvního března devatenáct set čtyřicet pět"
-          ]
+          ],
+          modelAnswers: ["5. 5. 2001", "17. 11. 1989", "19. 4. 1953", "1. 3. 1945"]
         },
         {
           type: "write",
@@ -223,19 +268,34 @@
             "malý problém × _____ problém",
             "vysoký tlak × _____ tlak",
             "dlouhá cesta × _____ cesta"
-          ]
+          ],
+          modelAnswers: ["zdravý", "špatné", "pravá", "velký", "nízký", "krátká"]
         },
         {
           type: "chooseForm",
           title: "General Part 6 — Choose the correct form",
           text: "Jmenuji se Milan Nosek. Je jí/mi 50 let. Jsem/jste z Brna, pracuju jako učitel/učitelka. Můj/moje manželka se jmenuje Petra. Máme dvě/dva dcery a jeden/jednoho syna. Starší dcera se jmenuje Petra a je jí/mu 25 let. Petra je ženatá/vdaná. Ona a její manžel mají malá/malou dceru Dominiku, je to moje/jeho vnučka. Mladší dcera je svobodná/ženatá. Syn má přítelkyni/přítel.",
-          correct: [1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0]
-          // mi, Jsem, učitel, moje, dvě, jednoho, jí, vdaná, malou, moje, svobodná, přítelkyni
+          correct: [1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0],
+          explanations: [
+            "Je MI — 1st person: 'je mi X let' = I am X years old. Jí = her (3rd person feminine).",
+            "JSEM z Brna — 1st person singular. Jste = you are (2nd person plural).",
+            "Milan is male → UČITEL. Učitelka is the female form.",
+            "Manželka is feminine → MOJE. Můj is for masculine nouns.",
+            "Dcery is feminine plural → DVĚ. Dva is for masculine animate/inanimate nouns.",
+            "Syna is accusative animate → JEDNOHO. Jeden is nominative (wrong case).",
+            "Petra (daughter) is female → JÍ 25 let. Mu is masculine.",
+            "Petra is a woman → VDANÁ (married woman). Ženatý/ženatá are for men; the female form is vdaná.",
+            "Dceru is accusative feminine → MALOU. Malá is nominative.",
+            "Milan is speaking → MOJE vnučka (my granddaughter). Jeho = his (someone else's).",
+            "Younger daughter is not married → SVOBODNÁ. Ženatá doesn't exist; ženatý is for men.",
+            "Son has a girlfriend → PŘÍTELKYNI (accusative of přítelkyně = girlfriend). Přítel is a boyfriend (masculine)."
+          ]
         },
         {
           type: "trueFalse",
           title: "General Part 7 — Reading comprehension",
           text: "Studenti a jejich zdravotní problémy",
+          passage: "Od 25. 9. jsou v Praze dva studenti z Německa – Robert a Julius. Studují medicínu na první lékařské fakultě. Jejich kamarád je řecký student Stelios. Stelios je v Praze od 20. 8. Všichni tři studenti bydlí v domě v Praze 2, Žitná ulice číslo 108.\n\nRobert, Julius a Stelios měli zdravotní problémy.\n\nRobert měl v neděli v noci vysokou teplotu 39 stupňů Celsia. Ráno musel navštívit lékaře. Lékař mu diagnostikoval angínu (tonsilitis). Musí brát antibiotika a musí ležet v posteli. Musí pít neperlivou vodu a jíst ovoce, protože potřebuje vitamín C. Za dva týdny musí navštívit pana doktora ještě jednou.\n\nJulius měl akutní problém – v pátek ráno ho začal bolet zub a dopoledne navštívil stomatologa.\n\nStelios měl také akutní problém. Bolel ho žaludek a břicho. Šel na gastroenterologii do nemocnice. Potom šel do lékárny a koupil si tablety.",
           statements: [
             "Studenti z Německa jsou tady od září.",
             "Stelios je tady od října.",
@@ -248,7 +308,19 @@
             "Stelios navštívil gastroenterologii.",
             "Stelios tablety koupil v lékárně."
           ],
-          correct: ["Ano","Ne","Ano","Ano","Ne","Ne","Ano","Ano","Ano","Ano"]
+          correct: ["Ano","Ne","Ano","Ne","Ne","Ano","Ne","Ne","Ano","Ano"],
+          explanations: [
+            "Ano — They arrived on 25. 9. (September = září). Correct.",
+            "Ne — 'Stelios je v Praze od 20. 8.' = from August, not October.",
+            "Ano — All three live at Žitná ulice číslo 108, Praha 2.",
+            "Ne — Robert had the fever on Sunday NIGHT. He visited the doctor on Monday MORNING ('Ráno musel navštívit lékaře').",
+            "Ne — Robert must eat ovoce (fruit) for vitamin C, not zelenina (vegetables).",
+            "Ano — 'v pátek ráno ho začal bolet zub a dopoledne navštívil stomatologa.'",
+            "Ne — No follow-up visit is mentioned for Julius. It is Robert who must revisit the doctor in two weeks.",
+            "Ne — It was Robert who had 39°C fever, not Stelios.",
+            "Ano — 'Šel na gastroenterologii do nemocnice.'",
+            "Ano — 'Potom šel do lékárny a koupil si tablety.'"
+          ]
         }
       ]
     },
@@ -316,7 +388,8 @@
             "_____ je ten pacient? Starý.",
             "_____ máš auto? Nové.",
             "_____ to je? To je můj profesor anatomie."
-          ]
+          ],
+          modelAnswers: ["Kdy", "Kde", "Odkud", "Jaký", "Jaké", "Kdo"]
         },
         {
           type: "write",
@@ -327,6 +400,13 @@
             "my – jít – na – oběd – chtít. (PRESENT)",
             "kamarádka – dobrá – restaurace – hledat. (PRESENT)",
             "test – v – začínat – 15 hodin. (PRESENT)"
+          ],
+          modelAnswers: [
+            "Vařil/a jsem polévku a guláš.",
+            "Tancoval/a jsi včera v klubu?",
+            "Chceme jít na oběd.",
+            "Kamarádka hledá dobrou restauraci.",
+            "Test začíná v 15 hodin."
           ]
         },
         {
@@ -337,7 +417,8 @@
             "sedmého dubna dva tisíce pět",
             "třináctého října devatenáct set devatenáct",
             "dvacátého čtvrtého prosince devatenáct set devadesát"
-          ]
+          ],
+          modelAnswers: ["1. 3. 1965", "7. 4. 2005", "13. 10. 1919", "24. 12. 1990"]
         },
         {
           type: "write",
@@ -349,19 +430,34 @@
             "starý profesor × _____ profesor",
             "zdravé jídlo × _____ jídlo",
             "dlouhá cesta × _____ cesta"
-          ]
+          ],
+          modelAnswers: ["staré", "malá", "levé", "mladý", "nezdravé", "krátká"]
         },
         {
           type: "chooseForm",
           title: "General Part 6 — Choose the correct form",
           text: "Jmenuji se Petr Novotný. Je mu/mi 63 let. Jsem/jsme z Prahy, pracuju jako doktor/doktorka. Můj/moje manželka se jmenuje Anna. Máme dvě/dva dcery a jeden/jednoho syna. Naše starší dcera se jmenuje Pavla, je jí/mu 30 let. Mladší dcera se jmenuje Petra a je jí/mu 29 let. Pavla je ženatá/vdaná a má malý/malého syna, Dominika, je to můj/moje vnuk. Petra nemá rodinu, je svobodná, má přítele Alexe. Náš syn Honza je také svobodný, jeho/její přítelkyně se jmenuje Laura.",
-          correct: [1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0]
-          // mi, Jsem, doktor, moje, dvě, jednoho, jí(Pavla), jí(Petra), vdaná, malého, můj, jeho
+          correct: [1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0],
+          explanations: [
+            "Je MI — 1st person: 'je mi X let' = I am X years old. Mu = him (3rd person masculine).",
+            "JSEM z Prahy — 1st person singular. Jsme = we are (plural).",
+            "Petr is male → DOKTOR. Doktorka is the female form.",
+            "Manželka is feminine → MOJE. Můj is for masculine nouns.",
+            "Dcery is feminine plural → DVĚ. Dva is for masculine animate/inanimate nouns.",
+            "Syna is accusative animate → JEDNOHO. Jeden is nominative (wrong case).",
+            "Pavla is female → JÍ 30 let. Mu is masculine.",
+            "Petra is female → JÍ 29 let. Mu is masculine.",
+            "Pavla is a woman → VDANÁ (married woman). Ženatý/ženatá doesn't apply to women; use vdaná.",
+            "Syna is accusative animate → MALÉHO. Malý is nominative.",
+            "Vnuk is masculine → MŮJ. Moje is for feminine/neuter nouns.",
+            "Honza's girlfriend → JEHO (his). Její = her (would mean someone else's girlfriend)."
+          ]
         },
         {
           type: "trueFalse",
           title: "General Part 7 — Reading comprehension",
           text: "Studenti a jejich zdravotní problémy",
+          passage: "Od 20. 8. jsou v Praze dva studenti z Anglie – David a Jonathan. Studují medicínu na první lékařské fakultě. Jejich kamarád je řecký student Spyros. Spyros je v Praze od 25. 9. Všichni tři studenti bydlí v domě v Praze 2, Žitná ulice číslo 108.\n\nJonathan, David a Spyros měli zdravotní problémy.\n\nSpyros měl v neděli v noci vysokou teplotu 39 stupňů Celsia. Ráno musel navštívit lékaře. Lékař mu diagnostikoval angínu (tonsilitis). Spyros musí brát antibiotika a musí ležet v posteli. Musí pít neperlivou vodu a jíst ovoce, protože potřebuje vitamín C. Za dva týdny musí navštívit pana doktora ještě jednou.\n\nDavid měl akutní problém – v pátek ho začaly bolet dva zuby a navštívil stomatologa.\n\nJonathan měl také akutní problém. Bolela ho hlava. Šel do lékárny a koupil si tablety.",
           statements: [
             "Studenti z Anglie jsou tady od října.",
             "Spyros je tady od srpna.",
@@ -374,7 +470,19 @@
             "Jonathan navštívil doktora.",
             "Jonathan tablety koupil v lékárně."
           ],
-          correct: ["Ne","Ano","Ano","Ano","Ano","Ne","Ano","Ano","Ano","Ano"]
+          correct: ["Ne","Ne","Ano","Ne","Ano","Ano","Ne","Ne","Ne","Ano"],
+          explanations: [
+            "Ne — David and Jonathan arrived on 20. 8. (August), not October.",
+            "Ne — 'Spyros je v Praze od 25. 9.' = from September, not August.",
+            "Ano — All three live at Žitná ulice číslo 108, Praha 2.",
+            "Ne — Spyros visited the doctor in the MORNING ('Ráno musel navštívit lékaře'), not in the evening.",
+            "Ano — 'Za dva týdny musí navštívit pana doktora ještě jednou.'",
+            "Ano — 'v pátek ho začaly bolet dva zuby a navštívil stomatologa.'",
+            "Ne — There is no follow-up appointment mentioned for David. It is Spyros who must revisit in two weeks.",
+            "Ne — It was Spyros who had 39°C fever. Jonathan had a headache (bolela ho hlava).",
+            "Ne — Jonathan went to the PHARMACY ('šel do lékárny'), not to a doctor.",
+            "Ano — 'Šel do lékárny a koupil si tablety.'"
+          ]
         }
       ]
     }
