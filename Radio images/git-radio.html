@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Axial Skeleton - Label Quiz</title>
+  <title>GIT Radiology - Label Quiz</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: Arial, sans-serif;
       background: #111;
@@ -16,7 +15,6 @@
       flex-direction: column;
       overflow: hidden;
     }
-
     #header {
       padding: 10px 18px;
       background: #1a1a1a;
@@ -29,9 +27,7 @@
     #header .subtitle { font-size: 13px; color: #888; }
     #score-display { margin-left: auto; font-size: 13px; color: #aaa; }
     #score-display span { color: #4caf50; font-weight: bold; }
-
     #content { display: flex; flex: 1; overflow: hidden; }
-
     #sidebar {
       width: 160px;
       overflow-y: auto;
@@ -42,7 +38,6 @@
     }
     #sidebar::-webkit-scrollbar { width: 4px; }
     #sidebar::-webkit-scrollbar-thumb { background: #444; border-radius: 2px; }
-
     .slide-btn {
       display: flex;
       align-items: center;
@@ -60,13 +55,12 @@
       transition: background 0.15s;
     }
     .slide-btn:hover { background: #2a2a2a; color: #fff; }
-    .slide-btn.active { background: #1a3a2a; border-color: #2e7d52; color: #fff; }
+    .slide-btn.active { background: #2a1a3a; border-color: #7d3c98; color: #fff; }
     .slide-btn .dot { width: 8px; height: 8px; border-radius: 50%; background: #555; flex-shrink: 0; }
     .slide-btn.partial .dot { background: #f39c12; }
     .slide-btn.done .dot { background: #27ae60; }
     .slide-btn .lbl-count { margin-left: auto; font-size: 10px; color: #666; }
-    .slide-btn.active .lbl-count { color: #aaffcc; }
-
+    .slide-btn.active .lbl-count { color: #ddaaff; }
     #main {
       flex: 1;
       display: flex;
@@ -75,7 +69,6 @@
       padding: 10px;
       gap: 10px;
     }
-
     #slide-area {
       flex: 1;
       min-height: 0;
@@ -86,14 +79,12 @@
       border-radius: 6px;
       overflow: hidden;
     }
-
     #slide-container {
       position: relative;
       max-height: 100%;
       max-width: 100%;
-      aspect-ratio: 1500 / 1125;
+      aspect-ratio: 2001 / 1125;
     }
-
     #slide-img {
       display: block;
       width: 100%;
@@ -101,25 +92,23 @@
       object-fit: fill;
       border-radius: 4px;
     }
-
     #overlay-layer {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
       pointer-events: none;
     }
-
     .label-box {
       position: absolute;
       cursor: pointer;
       pointer-events: all;
-      background: rgba(39, 125, 80, 0.82);
-      border: 1.5px solid #2e7d52;
+      background: #777;
+      border: 1.5px solid #555;
       border-radius: 3px;
       transition: background 0.15s, border-color 0.15s;
     }
-    .label-box:hover { background: rgba(46, 160, 100, 0.6); }
+    .label-box:hover { background: #888; }
     .label-box.selected {
-      background: rgba(243, 156, 18, 0.92);
+      background: #777;
       border-color: #f39c12;
       box-shadow: 0 0 0 2px rgba(243,156,18,0.4);
     }
@@ -148,7 +137,6 @@
       80%  { transform: translateX(3px); }
       100% { transform: translateX(0); }
     }
-
     #answer-panel {
       background: #1a1a1a;
       border: 1px solid #333;
@@ -172,10 +160,10 @@
       font-size: 14px;
       outline: none;
     }
-    #answer-input:focus { border-color: #2e7d52; }
+    #answer-input:focus { border-color: #9b59b6; }
     #answer-input:disabled { opacity: 0.4; }
     #check-btn {
-      background: #1a4a2a;
+      background: #4a1a6a;
       border: none;
       color: #fff;
       padding: 8px 18px;
@@ -185,7 +173,7 @@
       font-weight: bold;
       white-space: nowrap;
     }
-    #check-btn:hover { background: #2e7d52; }
+    #check-btn:hover { background: #7d3c98; }
     #check-btn:disabled { opacity: 0.4; cursor: default; }
     #feedback { font-size: 13px; font-weight: bold; white-space: nowrap; min-width: 60px; }
     #feedback.ok { color: #27ae60; }
@@ -201,7 +189,6 @@
     }
     #hint-btn:hover { background: #3a3a3a; color: #eee; }
     #hint-btn:disabled { opacity: 0.3; cursor: default; }
-
     #back-btn {
       background: #222;
       border: 1px solid #444;
@@ -214,7 +201,6 @@
       display: inline-block;
     }
     #back-btn:hover { color: #fff; background: #2a2a2a; }
-
     #slide-title { font-size: 11px; color: #555; text-align: center; padding: 2px 0; }
   </style>
 </head>
@@ -222,26 +208,25 @@
 
 <div id="header">
   <div>
-    <div style="font-size:16px; font-weight:bold; color:#fff;">Axial Skeleton Radiology</div>
-    <div class="subtitle">Label Quiz — click a green box, type the answer</div>
+    <div style="font-size:16px; font-weight:bold; color:#fff;">GIT Radiology</div>
+    <div class="subtitle">Label Quiz — click a purple box, type the answer</div>
   </div>
-  <a href="index.html" id="back-btn">Back to Study Buddy</a>
+  <a href="../index.html" id="back-btn">Back to Study Buddy</a>
   <div id="score-display">Revealed: <span id="score">0</span> / <span id="total">0</span></div>
 </div>
 
 <div id="content">
   <div id="sidebar" role="navigation" aria-label="Slide list"></div>
-
   <div id="main">
     <div id="slide-area">
-      <div id="slide-container" style="aspect-ratio: 1500/1125;">
+      <div id="slide-container" style="aspect-ratio: 2001/1125;">
         <img id="slide-img" alt="Radiology slide" />
         <div id="overlay-layer"></div>
       </div>
     </div>
     <div id="slide-title">Select a slide from the left panel</div>
     <div id="answer-panel">
-      <span id="answer-prompt">Click a green label box to select it</span>
+      <span id="answer-prompt">Click a purple label box to select it</span>
       <input id="answer-input" type="text" placeholder="Type the anatomical term..." disabled autocomplete="off" autocorrect="off" spellcheck="false" />
       <button id="hint-btn" disabled title="Show first letters as hint">Hint</button>
       <button id="check-btn" disabled>Check</button>
@@ -250,21 +235,16 @@
   </div>
 </div>
 
-<script src="axial-skeleton-data.js"></script>
+<script src="git-radio-data.js"></script>
 <script>
-const IMG_W = 1500, IMG_H = 1125;
 const progress = {};
 let currentSlide = null;
 let selectedIdx = null;
 let hintCount = 0;
 
 function normalize(s) {
-  return s
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9\s/.]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .toLowerCase().replace(/[^a-z0-9\s/.]/g, '').replace(/\s+/g, ' ').trim();
 }
 
 function checkMatch(input, target) {
@@ -277,14 +257,14 @@ function checkMatch(input, target) {
 }
 
 function pad(n) { return String(n).padStart(2, '0'); }
-function imgPath(num) { return `AxialSkeleton/slide-${pad(num)}.png`; }
+function imgPath(num) { return `GITRadio/slide-${pad(num)}.png`; }
 
 function buildSidebar() {
   const sidebar = document.getElementById('sidebar');
   sidebar.innerHTML = '';
-  const nums = Object.keys(AXIAL_SLIDE_DATA).map(Number).sort((a,b)=>a-b).filter(n => n > 1);
+  const nums = Object.keys(GIT_SLIDE_DATA).map(Number).sort((a,b)=>a-b).filter(n => n > 1);
   nums.forEach(num => {
-    const labels = AXIAL_SLIDE_DATA[num];
+    const labels = GIT_SLIDE_DATA[num];
     if (!progress[num]) progress[num] = {};
     const revealed = Object.keys(progress[num]).length;
     const total = labels.length;
@@ -301,7 +281,7 @@ function updateSidebarBtn(num) {
   const btn = document.querySelector(`.slide-btn[data-slide="${num}"]`);
   if (!btn) return;
   const revealed = Object.keys(progress[num] || {}).length;
-  const total = AXIAL_SLIDE_DATA[num].length;
+  const total = GIT_SLIDE_DATA[num].length;
   btn.className = 'slide-btn' + (num === currentSlide ? ' active' : '') +
     (revealed === total && total > 0 ? ' done' : revealed > 0 ? ' partial' : '');
   btn.querySelector('.lbl-count').textContent = `${revealed}/${total}`;
@@ -309,9 +289,9 @@ function updateSidebarBtn(num) {
 
 function updateScore() {
   let revealed = 0, total = 0;
-  Object.keys(AXIAL_SLIDE_DATA).forEach(num => {
+  Object.keys(GIT_SLIDE_DATA).forEach(num => {
     if (Number(num) === 1) return;
-    total += AXIAL_SLIDE_DATA[num].length;
+    total += GIT_SLIDE_DATA[num].length;
     revealed += Object.keys(progress[num] || {}).length;
   });
   document.getElementById('score').textContent = revealed;
@@ -322,9 +302,8 @@ function loadSlide(num) {
   currentSlide = num;
   selectedIdx = null;
   hintCount = 0;
-  document.querySelectorAll('.slide-btn').forEach(b => {
-    b.classList.toggle('active', Number(b.dataset.slide) === num);
-  });
+  document.querySelectorAll('.slide-btn').forEach(b =>
+    b.classList.toggle('active', Number(b.dataset.slide) === num));
   document.getElementById('slide-img').src = imgPath(num);
   document.getElementById('slide-title').textContent = `Slide ${num}`;
   buildOverlay(num);
@@ -334,15 +313,15 @@ function loadSlide(num) {
 function buildOverlay(num) {
   const layer = document.getElementById('overlay-layer');
   layer.innerHTML = '';
-  const labels = AXIAL_SLIDE_DATA[num] || [];
+  const labels = GIT_SLIDE_DATA[num] || [];
   labels.forEach((lbl, idx) => {
     const box = document.createElement('div');
     box.className = 'label-box';
     box.dataset.idx = idx;
-    const leftPct   = Math.max(0, lbl.left / IMG_W * 100);
-    const topPct    = Math.max(0, lbl.top  / IMG_H * 100);
-    const widthPct  = Math.min(lbl.width  / IMG_W * 100, 100 - leftPct);
-    const heightPct = Math.min(lbl.height / IMG_H * 100, 100 - topPct);
+    const leftPct   = Math.max(0, lbl.left / GIT_IMG_W * 100);
+    const topPct    = Math.max(0, lbl.top  / GIT_IMG_H * 100);
+    const widthPct  = Math.min(lbl.width  / GIT_IMG_W * 100, 100 - leftPct);
+    const heightPct = Math.min(lbl.height / GIT_IMG_H * 100, 100 - topPct);
     box.style.left   = leftPct + '%';
     box.style.top    = topPct + '%';
     box.style.width  = widthPct + '%';
@@ -362,9 +341,8 @@ function selectLabel(idx) {
   if (progress[currentSlide] && progress[currentSlide][idx]) return;
   selectedIdx = idx;
   hintCount = 0;
-  document.querySelectorAll('.label-box').forEach(b => {
-    b.classList.toggle('selected', Number(b.dataset.idx) === idx);
-  });
+  document.querySelectorAll('.label-box').forEach(b =>
+    b.classList.toggle('selected', Number(b.dataset.idx) === idx));
   const prompt = document.getElementById('answer-prompt');
   prompt.textContent = 'What is labeled here?';
   prompt.className = 'selected';
@@ -383,7 +361,7 @@ function checkAnswer() {
   const input = document.getElementById('answer-input');
   const answer = input.value.trim();
   if (!answer) return;
-  const lbl = AXIAL_SLIDE_DATA[currentSlide][selectedIdx];
+  const lbl = GIT_SLIDE_DATA[currentSlide][selectedIdx];
   const fb = document.getElementById('feedback');
   if (checkMatch(answer, lbl.text)) {
     if (!progress[currentSlide]) progress[currentSlide] = {};
@@ -416,11 +394,10 @@ function checkAnswer() {
 
 function showHint() {
   if (selectedIdx === null || !currentSlide) return;
-  const lbl = AXIAL_SLIDE_DATA[currentSlide][selectedIdx];
+  const lbl = GIT_SLIDE_DATA[currentSlide][selectedIdx];
   hintCount++;
-  const input = document.getElementById('answer-input');
-  input.value = lbl.text.slice(0, hintCount * 2);
-  input.focus();
+  document.getElementById('answer-input').value = lbl.text.slice(0, hintCount * 2);
+  document.getElementById('answer-input').focus();
   document.getElementById('feedback').textContent = '';
   document.getElementById('feedback').className = '';
 }
@@ -432,7 +409,7 @@ function resetAnswerPanel(keepFeedback) {
   document.getElementById('check-btn').disabled = true;
   document.getElementById('hint-btn').disabled = true;
   const prompt = document.getElementById('answer-prompt');
-  prompt.textContent = currentSlide ? 'Click a green label box to select it' : 'Select a slide from the left panel';
+  prompt.textContent = currentSlide ? 'Click a purple label box to select it' : 'Select a slide from the left panel';
   prompt.className = '';
   document.querySelectorAll('.label-box').forEach(b => b.classList.remove('selected'));
   if (!keepFeedback) {
@@ -449,12 +426,12 @@ document.getElementById('answer-input').addEventListener('keydown', e => {
 });
 
 function init() {
-  Object.keys(AXIAL_SLIDE_DATA).forEach(num => {
+  Object.keys(GIT_SLIDE_DATA).forEach(num => {
     if (Number(num) > 1) progress[num] = {};
   });
   buildSidebar();
   updateScore();
-  const firstSlide = Object.keys(AXIAL_SLIDE_DATA).map(Number).filter(n => n > 1).sort((a,b)=>a-b)[0];
+  const firstSlide = Object.keys(GIT_SLIDE_DATA).map(Number).filter(n => n > 1).sort((a,b)=>a-b)[0];
   if (firstSlide) loadSlide(firstSlide);
 }
 
