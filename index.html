@@ -4521,13 +4521,13 @@ function getInnervationGroup(innervation) {
 function MuscleLab({ onBack }) {
   const bank = window.MUSCLE_BANK || [];
   const [labZoom, setLabZoom] = React.useState(1);
-  const [idx, setIdx] = React.useState(0);
-  const [imageFlipped, setImageFlipped] = React.useState(true);
+  const [idx, setIdx] = React.useState(null);
+  const [imageFlipped, setImageFlipped] = React.useState(false);
   const [byInnervation, setByInnervation] = React.useState(false);
-  const muscle = bank[idx];
+  const muscle = idx !== null ? bank[idx] : null;
 
-  /* Reset to show image whenever the selected muscle changes */
-  React.useEffect(() => { setImageFlipped(true); }, [idx]);
+  /* Reset to hide image whenever the selected muscle changes */
+  React.useEffect(() => { setImageFlipped(false); }, [idx]);
 
   /* Build two-level sidebar sorted head-to-toe: { regionName: { groupName: [muscleObj,...] } } */
   const regions = React.useMemo(() => {
@@ -4569,9 +4569,54 @@ function MuscleLab({ onBack }) {
 
   if (!muscle) {
     return (
-      <div className="content">
-        <button className="topbar-back" onClick={onBack}>← Anatomy</button>
-        <p style={{ marginTop: '1rem', color: '#666' }}>No muscles in the bank yet.</p>
+      <div style={{ display: 'flex', minHeight: '100vh', background: '#fff' }}>
+        <div style={{
+          width: 210, flexShrink: 0,
+          borderRight: '1px solid rgba(0,0,0,0.10)',
+          padding: '24px 0',
+          overflowY: 'auto',
+          background: 'rgba(248,247,245,0.95)',
+          display: 'flex', flexDirection: 'column',
+        }}>
+          <button className="topbar-back" onClick={onBack} style={{ margin: '0 16px 14px', display: 'block' }}>← Anatomy</button>
+          {Object.entries(regions).map(([regionName, groups]) => {
+            const isOpen = openRegions.has(regionName);
+            const toggleRegion = () => setOpenRegions(prev => {
+              const next = new Set(prev);
+              if (next.has(regionName)) next.delete(regionName); else next.add(regionName);
+              return next;
+            });
+            return (
+              <div key={regionName} style={{ marginBottom: '2px' }}>
+                <div onClick={toggleRegion} style={{
+                  padding: '8px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  fontSize: '0.75rem', fontWeight: 800, color: '#1a1a1a', textTransform: 'uppercase',
+                  letterSpacing: '0.07em', cursor: 'pointer',
+                  background: isOpen ? 'rgba(0,0,0,0.04)' : 'transparent',
+                  borderBottom: '1px solid rgba(0,0,0,0.07)', userSelect: 'none',
+                }}>
+                  <span>{regionName}</span>
+                  <span style={{ fontSize: '0.65rem', color: '#aaa' }}>{isOpen ? '▲' : '▼'}</span>
+                </div>
+                {isOpen && Object.entries(groups).map(([groupName, muscles]) => (
+                  <div key={groupName}>
+                    <div style={{ padding: '5px 16px 3px', fontSize: '0.62rem', fontWeight: 700, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{groupName}</div>
+                    {muscles.map(m => (
+                      <div key={m.id} onClick={() => setIdx(bank.indexOf(m))} style={{
+                        padding: '7px 16px 7px 20px', fontSize: '0.85rem', fontWeight: 400,
+                        color: '#444', background: 'transparent',
+                        borderLeft: '3px solid transparent', cursor: 'pointer',
+                      }}>{m.name}</div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <p style={{ color: '#bbb', fontSize: '1rem' }}>Select a muscle from the list</p>
+        </div>
       </div>
     );
   }
@@ -4817,7 +4862,7 @@ function MuscleLab({ onBack }) {
                   {muscle.name}
                 </h2>
                 <div style={{ marginTop: 18, fontSize: '0.75rem', color: '#bbb', letterSpacing: '0.04em' }}>
-                  tap to see name
+                  tap to see image
                 </div>
               </div>
 
