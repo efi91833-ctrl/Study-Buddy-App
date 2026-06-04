@@ -5957,10 +5957,12 @@ function VeinFormationGame({ onBack }) {
                 </div>
               )}
 
-              {/* Description */}
-              <p style={{ margin: '0 0 28px', fontSize: 14, lineHeight: 1.7, color: '#444' }}>
-                {vein.description}
-              </p>
+              {/* Description — shown only after checking */}
+              {isChecked && (
+                <p style={{ margin: '0 0 28px', fontSize: 14, lineHeight: 1.7, color: '#444', borderLeft: '3px solid #ccc', paddingLeft: 12 }}>
+                  {vein.description}
+                </p>
+              )}
 
               {/* ── Diagram ── */}
               <div style={{ border: '1px solid #ddd', borderRadius: 10, padding: '24px 20px', background: '#fafafa' }}>
