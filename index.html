@@ -941,6 +941,7 @@
 <script src="brain-atlas-data.js"></script>
 <script src="brain-labels.js"></script>
 <script src="brain-mri-quiz-data.js"></script>
+<script src="vein-formation-data.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <!-- Firebase SDK (compat v9) — required for Google auth + user approval -->
@@ -2236,6 +2237,16 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
             Artery Assembly
             <div style={{ fontSize: 11, fontWeight: 400, color: '#888', marginTop: 4 }}>
               Decision-tree · place vessels in correct position
+            </div>
+          </button>
+        )}
+        {/* Vein Formation */}
+        {subject === 'Anatomy' && (
+          <button onClick={() => onSelectExam({ type: 'vein_formation' })}
+            style={{ ...cardStyle, background: 'rgba(245,245,245,0.95)', fontSize: 15 }}>
+            Vein Formation
+            <div style={{ fontSize: 11, fontWeight: 400, color: '#888', marginTop: 4 }}>
+              {(window.VEIN_FORMATION_DATA || []).length} veins · fill in tributaries with search
             </div>
           </button>
         )}
@@ -5749,6 +5760,264 @@ function ArteryTreeNode({ node, byParent, placed, hasSelection, onSlotClick, sub
         )}
       </div>
 
+    </div>
+  );
+}
+
+/* ─── VeinFormationGame ─── */
+function VeinFormationGame({ onBack }) {
+  const veins    = window.VEIN_FORMATION_DATA || [];
+  const allNames = window.ALL_VEIN_NAMES || [];
+
+  const [answers, setAnswers] = React.useState(() => {
+    const init = {};
+    veins.forEach(v => { init[v.id] = v.tributaries.map(() => ''); });
+    return init;
+  });
+  const [checkedCards, setCheckedCards] = React.useState(new Set());
+  const [openDropdown, setOpenDropdown] = React.useState(null); // { veinId, slotIdx }
+  const [dropSearch,   setDropSearch]   = React.useState('');
+
+  const filteredNames = React.useMemo(() => {
+    const q = dropSearch.trim().toLowerCase();
+    return q ? allNames.filter(n => n.toLowerCase().includes(q)) : allNames;
+  }, [dropSearch, allNames]);
+
+  function getCardResults(veinId) {
+    const vein = veins.find(v => v.id === veinId);
+    if (!vein) return [];
+    const cardAnswers = answers[veinId] || [];
+    const remaining = [...vein.tributaries];
+    return cardAnswers.map(ans => {
+      if (!ans) return 'empty';
+      const idx = remaining.indexOf(ans);
+      if (idx !== -1) { remaining.splice(idx, 1); return 'correct'; }
+      return 'wrong';
+    });
+  }
+
+  function checkCard(veinId) {
+    setCheckedCards(s => new Set([...s, veinId]));
+    setOpenDropdown(null);
+  }
+
+  function resetCard(veinId) {
+    const vein = veins.find(v => v.id === veinId);
+    setAnswers(a => ({ ...a, [veinId]: vein.tributaries.map(() => '') }));
+    setCheckedCards(s => { const ns = new Set(s); ns.delete(veinId); return ns; });
+  }
+
+  function selectAnswer(veinId, slotIdx, name) {
+    setAnswers(a => {
+      const arr = [...(a[veinId] || [])];
+      arr[slotIdx] = name;
+      return { ...a, [veinId]: arr };
+    });
+    setOpenDropdown(null);
+    setDropSearch('');
+    setCheckedCards(s => { const ns = new Set(s); ns.delete(veinId); return ns; });
+  }
+
+  function openSlot(veinId, slotIdx) {
+    setOpenDropdown({ veinId, slotIdx });
+    setDropSearch('');
+  }
+
+  const SC = {
+    correct: { border: '#4caf50', bg: '#e8f5e9', color: '#2e7d32' },
+    wrong:   { border: '#f44336', bg: '#ffebee', color: '#c62828' },
+    empty:   { border: '#ff9800', bg: '#fff8e1', color: '#e65100' },
+    neutral: { border: '#ccc',    bg: '#fff',    color: '#555'    },
+    filled:  { border: '#1976d2', bg: '#e3f2fd', color: '#0d47a1' },
+  };
+
+  const sections = [...new Set(veins.map(v => v.section))];
+
+  return (
+    <div style={{ fontFamily: 'system-ui,sans-serif', padding: 16, maxWidth: 980, margin: '0 auto' }}>
+
+      {/* Overlay — closes dropdown when clicking outside */}
+      {openDropdown && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 50 }}
+          onClick={() => { setOpenDropdown(null); setDropSearch(''); }}
+        />
+      )}
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+        <button onClick={onBack} style={{
+          padding: '6px 14px', border: '1px solid #ccc', borderRadius: 6,
+          background: '#fff', cursor: 'pointer', fontSize: 14
+        }}>Back</button>
+        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Vein Formation</h2>
+        <span style={{ color: '#888', fontSize: 13 }}>Fill in the tributaries, then check each card</span>
+      </div>
+
+      {sections.map(section => (
+        <div key={section} style={{ marginBottom: 32 }}>
+          {/* Section header */}
+          <div style={{
+            fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase',
+            color: '#999', borderBottom: '1px solid #e8e8e8', paddingBottom: 5, marginBottom: 16
+          }}>{section}</div>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18 }}>
+            {veins.filter(v => v.section === section).map(vein => {
+              const isChecked  = checkedCards.has(vein.id);
+              const results    = isChecked ? getCardResults(vein.id) : null;
+              const cardAnswers = answers[vein.id] || [];
+              const correctCnt = results ? results.filter(r => r === 'correct').length : 0;
+              const total      = vein.tributaries.length;
+              const allCorrect = isChecked && correctCnt === total;
+
+              return (
+                <div key={vein.id} style={{
+                  flex: '1 1 240px',
+                  maxWidth: vein.tributaries.length > 5 ? 520 : 380,
+                  background: allCorrect ? '#f1f8e9' : '#fafafa',
+                  border: `1px solid ${allCorrect ? '#aed581' : '#e0e0e0'}`,
+                  borderRadius: 10,
+                  padding: 14,
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}>
+
+                  {/* Main vein box */}
+                  <div style={{
+                    background: '#1a237e', color: '#fff',
+                    borderRadius: 6, padding: '9px 14px',
+                    textAlign: 'center', fontWeight: 700, fontSize: 14,
+                    display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8
+                  }}>
+                    {vein.name}
+                    {isChecked && (
+                      <span style={{
+                        fontSize: 11, borderRadius: 10, padding: '1px 7px',
+                        background: allCorrect ? '#4caf50' : 'rgba(255,255,255,0.2)'
+                      }}>{correctCnt}/{total}</span>
+                    )}
+                  </div>
+
+                  {/* Arrow connectors (arrowheads point up = flow toward main vein) */}
+                  <div style={{
+                    display: 'flex', justifyContent: 'space-around',
+                    padding: '0 8px', paddingTop: 4, height: 22, alignItems: 'flex-end'
+                  }}>
+                    {vein.tributaries.map((_, i) => (
+                      <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <div style={{ width: 0, height: 0,
+                          borderLeft: '4px solid transparent',
+                          borderRight: '4px solid transparent',
+                          borderBottom: '7px solid #aaa' }}/>
+                        <div style={{ width: 1, height: 10, background: '#ccc' }}/>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Tributary slots */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, justifyContent: 'center', marginTop: 2 }}>
+                    {vein.tributaries.map((_, i) => {
+                      const answer = cardAnswers[i] || '';
+                      const status = isChecked ? (results[i] || 'neutral') : (answer ? 'filled' : 'neutral');
+                      const sc     = SC[status];
+                      const isOpen = openDropdown?.veinId === vein.id && openDropdown?.slotIdx === i;
+
+                      return (
+                        <div key={i} style={{ position: 'relative', flex: '1 1 auto', minWidth: 115 }}>
+                          <button
+                            onClick={() => isOpen
+                              ? (setOpenDropdown(null), setDropSearch(''))
+                              : openSlot(vein.id, i)
+                            }
+                            style={{
+                              width: '100%', padding: '5px 8px',
+                              border: `2px solid ${sc.border}`,
+                              borderRadius: 5,
+                              background: sc.bg, color: sc.color,
+                              cursor: 'pointer', fontSize: 12,
+                              textAlign: 'left', fontWeight: answer ? 600 : 400,
+                              minHeight: 32, lineHeight: 1.3
+                            }}
+                          >
+                            {answer || 'Select vein...'}
+                          </button>
+
+                          {/* Dropdown */}
+                          {isOpen && (
+                            <div style={{
+                              position: 'absolute', top: '100%', left: 0,
+                              zIndex: 51, background: '#fff',
+                              border: '1px solid #ddd', borderRadius: 7,
+                              boxShadow: '0 6px 20px rgba(0,0,0,0.13)',
+                              width: 260, maxHeight: 290,
+                              display: 'flex', flexDirection: 'column', overflow: 'hidden'
+                            }}>
+                              <input
+                                autoFocus
+                                value={dropSearch}
+                                onChange={e => setDropSearch(e.target.value)}
+                                onClick={e => e.stopPropagation()}
+                                placeholder="Search vein..."
+                                style={{
+                                  padding: '8px 10px', border: 'none',
+                                  borderBottom: '1px solid #eee',
+                                  outline: 'none', fontSize: 13, flexShrink: 0
+                                }}
+                              />
+                              <div style={{ overflowY: 'auto', maxHeight: 240 }}>
+                                {filteredNames.length === 0 && (
+                                  <div style={{ padding: 10, color: '#999', fontSize: 13 }}>No results</div>
+                                )}
+                                {filteredNames.map(name => {
+                                  const alreadyUsed = cardAnswers.includes(name);
+                                  return (
+                                    <div
+                                      key={name}
+                                      onMouseDown={e => { e.preventDefault(); selectAnswer(vein.id, i, name); }}
+                                      style={{
+                                        padding: '7px 10px', cursor: 'pointer',
+                                        fontSize: 12, borderBottom: '1px solid #f5f5f5',
+                                        background: alreadyUsed ? '#e8f5e9' : '#fff',
+                                        color: alreadyUsed ? '#388e3c' : '#222'
+                                      }}
+                                      onMouseEnter={e => e.currentTarget.style.background = '#f0f4ff'}
+                                      onMouseLeave={e => e.currentTarget.style.background = alreadyUsed ? '#e8f5e9' : '#fff'}
+                                    >
+                                      {name}
+                                      {alreadyUsed && <span style={{ marginLeft: 6, fontSize: 10, opacity: 0.7 }}>used</span>}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Card footer */}
+                  <div style={{ display: 'flex', gap: 6, marginTop: 10, justifyContent: 'flex-end' }}>
+                    {isChecked && (
+                      <button onClick={() => resetCard(vein.id)} style={{
+                        padding: '4px 10px', border: '1px solid #ddd', borderRadius: 4,
+                        background: '#fff', cursor: 'pointer', fontSize: 12, color: '#666'
+                      }}>Reset</button>
+                    )}
+                    <button onClick={() => checkCard(vein.id)} style={{
+                      padding: '4px 12px', border: 'none', borderRadius: 4,
+                      background: '#1a237e', color: '#fff', cursor: 'pointer',
+                      fontSize: 12, fontWeight: 700
+                    }}>Check</button>
+                  </div>
+
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -9998,6 +10267,8 @@ function App() {
             ? <VertebralRibGame onBack={handleBack} />
           : specialMode?.type === 'artery_assembly'
             ? <ArteryErrorBoundary><ArteryAssemblyGame onBack={handleBack} /></ArteryErrorBoundary>
+          : specialMode?.type === 'vein_formation'
+            ? <VeinFormationGame onBack={handleBack} />
           : specialMode?.type === 'timeline_game'
             ? <TimelineGame onBack={handleBack} />
           : specialMode?.type === 'dissection_bank'
