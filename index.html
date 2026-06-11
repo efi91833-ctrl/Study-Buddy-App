@@ -932,6 +932,7 @@
 <script src="anatomy-questions.js"></script>
 <script src="embryo-questions.js"></script>
 <script src="czech-questions.js"></script>
+<script src="medinfo-questions.js"></script>
 <script src="czechQuestionBanks.js"></script>
 <script src="muscle-bank.js"></script>
 <script src="artery-game.js"></script>
@@ -1376,6 +1377,17 @@ const QUESTION_BANK = {
       { name: 'Credit Test C',           type: 'czech_credit',  testKey: 'C',         questions: [] },
     ],
     get questions() { return []; },
+  },
+  'Medical Informatics': {
+    color: '#00796b',
+    icon: '',
+    description: 'B80364 — digital images, hardware, networks, statistics, EBM',
+    exams: [
+      ...(window.medinfoExams || []),
+    ],
+    get questions() {
+      return (window.medinfoExams || []).flatMap(e => e.questions);
+    },
   },
 };
 
