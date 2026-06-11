@@ -2479,6 +2479,24 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
         })()}
       </div>
 
+      {/* ── Medical Informatics: Full Test button ── */}
+      {subject === 'Medical Informatics' && (
+        <div style={{ marginTop: 20 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 8 }}>
+            Full Practice Test
+          </div>
+          <button
+            onClick={() => onSelectExam({ type: 'instant_feedback', examIndex: 'all' })}
+            style={{ ...cardStyle, background: '#e8f0fe', border: '2px solid #5c6bc0', width: '100%' }}
+          >
+            All Topics — Full Test (Instant Feedback)
+            <div style={{ fontSize: 12, fontWeight: 400, color: '#5c6bc0', marginTop: 4 }}>
+              111 questions · answer one at a time · see right/wrong immediately
+            </div>
+          </button>
+        </div>
+      )}
+
       {/* ── Recommended Histology Slides — shown only in Histology ── */}
       {subject === 'Histology' && (
         <div style={{
@@ -10294,10 +10312,188 @@ function BrainMriQuiz({ onBack }) {
 }
 
 
+// ─────────────────────────────────────────────────────────────
+// INSTANT FEEDBACK EXAM  (one question at a time)
+// ─────────────────────────────────────────────────────────────
+function InstantFeedbackExam({ subject, examIndex, onBack }) {
+  const allQuestions = React.useMemo(() => {
+    const meta = QUESTION_BANK[subject];
+    let pool;
+    if (examIndex === 'all') {
+      pool = (meta.exams || []).flatMap(e => e.questions);
+    } else {
+      pool = (examIndex != null && meta.exams) ? meta.exams[examIndex].questions : meta.questions;
+    }
+    // shuffle
+    const arr = [...pool];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }, [subject, examIndex]);
+
+  const [idx, setIdx]           = useState(0);
+  const [chosen, setChosen]     = useState(null);   // letter chosen for current question
+  const [revealed, setRevealed] = useState(false);  // feedback shown
+  const [score, setScore]       = useState({ correct: 0, answered: 0 });
+  const [done, setDone]         = useState(false);
+  const [weakAreas, setWeakAreas] = useState({});
+
+  const q = allQuestions[idx];
+  const total = allQuestions.length;
+  const isCorrect = chosen === q?.correct;
+
+  function handleChoose(letter) {
+    if (revealed) return;
+    setChosen(letter);
+    setRevealed(true);
+    const correct = letter === q.correct;
+    setScore(prev => ({ correct: prev.correct + (correct ? 1 : 0), answered: prev.answered + 1 }));
+    if (!correct) {
+      setWeakAreas(prev => {
+        const updated = { ...prev };
+        if (!updated[q.subtopic]) updated[q.subtopic] = 0;
+        updated[q.subtopic]++;
+        return updated;
+      });
+    } else {
+      // mark mastered
+      updateSubjectProgress(subject, { newMastered: [q.id], weakUpdates: {} });
+    }
+  }
+
+  function handleNext() {
+    if (idx + 1 >= total) {
+      setDone(true);
+    } else {
+      setIdx(i => i + 1);
+      setChosen(null);
+      setRevealed(false);
+      window.scrollTo(0, 0);
+    }
+  }
+
+  const pct = score.answered ? Math.round((score.correct / score.answered) * 100) : 0;
+  const ringClass = pct >= 80 ? 'score-great' : pct >= 50 ? 'score-ok' : 'score-poor';
+
+  if (done) {
+    const weakList = Object.keys(weakAreas).sort((a, b) => weakAreas[b] - weakAreas[a]);
+    return (
+      <div className="content">
+        <button className="topbar-back" style={{ marginBottom: 24 }} onClick={onBack}>← Back</button>
+        <div className="results-banner">
+          <div className={`score-ring ${ringClass}`}>
+            <span>{pct}%</span>
+            <span className="score-label">score</span>
+          </div>
+          <div className="results-detail">
+            <h2>{pct >= 80 ? 'Great work!' : pct >= 50 ? 'Keep it up!' : 'Keep studying!'}</h2>
+            <p>{score.correct} / {total} correct</p>
+          </div>
+        </div>
+        {weakList.length > 0 && (
+          <div className="weak-areas-box">
+            <h3>Weak areas</h3>
+            {weakList.map(sub => (
+              <span key={sub} className="weak-tag">{sub} ({weakAreas[sub]} wrong)</span>
+            ))}
+          </div>
+        )}
+        <div className="exam-actions" style={{ marginTop: 28 }}>
+          <button className="btn-primary" onClick={onBack}>Back to Exams</button>
+        </div>
+      </div>
+    );
+  }
+
+  const optBg = (letter) => {
+    if (!revealed) return chosen === letter ? '#e3e8ff' : '#fff';
+    if (letter === q.correct) return '#c8f7c5';
+    if (letter === chosen && letter !== q.correct) return '#ffd6d6';
+    return '#fff';
+  };
+  const optBorder = (letter) => {
+    if (!revealed) return chosen === letter ? '2px solid #5c6bc0' : '1.5px solid #ddd';
+    if (letter === q.correct) return '2px solid #4caf50';
+    if (letter === chosen && letter !== q.correct) return '2px solid #e53935';
+    return '1.5px solid #ddd';
+  };
+  const optColor = (letter) => {
+    if (!revealed) return '#1a1a1a';
+    if (letter === q.correct) return '#1b5e20';
+    if (letter === chosen && letter !== q.correct) return '#b71c1c';
+    return '#888';
+  };
+
+  return (
+    <div className="content">
+      <div className="exam-header">
+        <button className="topbar-back" style={{ marginBottom: 16 }} onClick={onBack}>← Back</button>
+        <div className="exam-subject-label"><span>{subject} — Full Test</span></div>
+        <p className="exam-meta">Question {idx + 1} of {total} · {score.correct} correct so far</p>
+        <div style={{ height: 4, background: '#eee', borderRadius: 2, marginTop: 8 }}>
+          <div style={{ height: '100%', background: '#5c6bc0', borderRadius: 2, width: `${((idx + 1) / total) * 100}%`, transition: 'width .3s' }} />
+        </div>
+      </div>
+
+      <div className="question-card" style={{ marginTop: 16 }}>
+        <div className="question-num">Question {idx + 1}</div>
+        <div className="question-topic-tag">{q.topic} › {q.subtopic}</div>
+        <p className="question-text">{q.question}</p>
+        <div className="options-grid">
+          {Object.entries(q.options).map(([letter, text]) => (
+            <button
+              key={letter}
+              onClick={() => handleChoose(letter)}
+              disabled={revealed}
+              style={{
+                display: 'flex', alignItems: 'flex-start', gap: 10,
+                padding: '12px 14px', borderRadius: 10, cursor: revealed ? 'default' : 'pointer',
+                background: optBg(letter), border: optBorder(letter),
+                color: optColor(letter), fontSize: 15, textAlign: 'left',
+                transition: 'all .15s', width: '100%',
+              }}
+            >
+              <span style={{ fontWeight: 700, minWidth: 22 }}>{letter}.</span>
+              <span>{text}</span>
+              {revealed && letter === q.correct && <span style={{ marginLeft: 'auto', fontWeight: 700 }}>✓</span>}
+              {revealed && letter === chosen && letter !== q.correct && <span style={{ marginLeft: 'auto', fontWeight: 700 }}>✗</span>}
+            </button>
+          ))}
+        </div>
+
+        {revealed && (
+          <div style={{ marginTop: 16 }}>
+            <div style={{
+              padding: '10px 14px', borderRadius: 8, marginBottom: 10,
+              background: isCorrect ? '#e8f5e9' : '#fff3e0',
+              border: isCorrect ? '1px solid #a5d6a7' : '1px solid #ffcc80',
+              fontWeight: 600, fontSize: 15,
+              color: isCorrect ? '#2e7d32' : '#e65100',
+            }}>
+              {isCorrect ? 'Correct!' : 'Wrong'}
+            </div>
+            {!isCorrect && (
+              <div className="explanation-box">
+                <strong>Explanation: </strong>{q.explanation}
+              </div>
+            )}
+            <button className="btn-primary" style={{ marginTop: 14, width: '100%' }} onClick={handleNext}>
+              {idx + 1 >= total ? 'See Results' : 'Next Question →'}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
 function App() {
   const [subject, setSubject]       = useState(null);
   const [examIndex, setExamIndex]   = useState(null);
-  const [specialMode, setSpecialMode] = useState(null); // {type:'anatomy_slides'} | {type:'czech_credit',testKey:'A'}
+  const [specialMode, setSpecialMode] = useState(null); // {type:'anatomy_slides'} | {type:'czech_credit',testKey:'A'} | {type:'instant_feedback',examIndex:'all'}
   const [books, setBooks]           = useState([]);
   const [openBook, setOpenBook]     = useState(null);
   const [pendingNav, setPendingNav] = useState(null); // { instr, action }
@@ -10370,6 +10566,8 @@ function App() {
             ? <BrainMriQuiz onBack={handleBack} />
           : specialMode?.type === 'brain_atlas'
             ? <BrainAtlas onBack={handleBack} />
+          : specialMode?.type === 'instant_feedback'
+            ? <InstantFeedbackExam subject={subject} examIndex={specialMode.examIndex} onBack={handleBack} />
           : !subject
             ? <HomeScreen
                 onSelectSubject={handleSelectSubject}
