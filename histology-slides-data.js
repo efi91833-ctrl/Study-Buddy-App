@@ -475,6 +475,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['gallbladder', 'žlučník', 'gall bladder'],
     pageTitle: 'Žlučník / Gallbladder - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/%C5%BDlu%C4%8Dn%C3%ADk_/_Gallbladder_-_HE',
+    idx: 20148,
   },
   {
     code: 'B21',
@@ -559,6 +560,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['ureter', 'močovod'],
     pageTitle: 'Ureter - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Ureter_-_HE',
+    idx: 20000,
   },
   {
     code: 'C4',
@@ -643,6 +645,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['ovary', 'ovarium', 'vaječník'],
     pageTitle: 'Ovarium - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Ovarium_-_HE',
+    idx: 20002,
   },
   {
     code: 'C12',
@@ -673,6 +676,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['uterus', 'uterus body', 'uterus fundus', 'děloha'],
     pageTitle: 'Uterus (fundus) - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Uterus_(fundus)_-_HE',
+    idx: 20069,
   },
   {
     code: 'C15',
@@ -693,6 +697,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['vagina', 'pochva'],
     pageTitle: 'Vagina - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Vagina_-_HE',
+    idx: 20003,
   },
 
   // ── SKIN (H slides) ───────────────────────────────────────────────────────
@@ -837,6 +842,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['peripheral nerve', 'nerve', 'periferní nerv'],
     pageTitle: 'Periferní nerv / Peripheral nerve - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Perifern%C3%AD_nerv_/_Peripheral_nerve_-_HE',
+    idx: 20004,
   },
   {
     code: 'L9',

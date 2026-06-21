@@ -10543,18 +10543,17 @@ function VirtualSlidesQuiz({ onBack }) {
   const [answer, setAnswer] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState(null); // 'correct' | 'incorrect'
-  const [imgUrl, setImgUrl] = useState(null);
-  const [imgLoading, setImgLoading] = useState(false);
+  const [iframeError, setIframeError] = useState(false);
   const [sessionStats, setSessionStats] = useState({ correct: 0, total: 0 });
 
-  const systems = ['All', ...Array.from(new Set(VIRTUAL_SLIDES.map(s => s.system)))];
+  // Only slides that have a virtual microscope idx mapped
+  const availableSlides = VIRTUAL_SLIDES.filter(s => s.idx != null);
+  const systems = ['All', ...Array.from(new Set(availableSlides.map(s => s.system)))];
 
   function buildQueue(pFilter, pProgress) {
-    let pool = VIRTUAL_SLIDES.filter(s => pFilter === 'All' || s.system === pFilter);
-    // Remove already mastered (correct and not in incorrect)
+    let pool = availableSlides.filter(s => pFilter === 'All' || s.system === pFilter);
     const mastered = pProgress.correct.filter(c => !pProgress.incorrect.includes(c));
     pool = pool.filter(s => !mastered.includes(s.code));
-    // Shuffle, weighting incorrect slides 3x
     const weighted = [];
     pool.forEach(s => {
       const times = pProgress.incorrect.includes(s.code) ? 3 : 1;
@@ -10564,50 +10563,19 @@ function VirtualSlidesQuiz({ onBack }) {
       const j = Math.floor(Math.random() * (i + 1));
       [weighted[i], weighted[j]] = [weighted[j], weighted[i]];
     }
-    // Deduplicate while preserving order
     const seen = new Set();
     return weighted.filter(s => seen.has(s.code) ? false : seen.add(s.code));
   }
 
-  async function fetchSlideImage(slide) {
-    if (!slide.pageTitle || !slide.wikiUrl) return null;
-    setImgLoading(true);
-    try {
-      const title = encodeURIComponent(slide.pageTitle);
-      const r1 = await fetch(
-        `https://www.wikiskripta.eu/api.php?action=query&prop=images&titles=${title}&format=json&origin=*&imlimit=10`
-      );
-      const d1 = await r1.json();
-      const pages = Object.values(d1.query?.pages || {});
-      if (!pages.length) return null;
-      const images = (pages[0].images || []).filter(img =>
-        img.title.match(/\.(jpe?g|png)/i) && !img.title.match(/Achtung|star_|OpenMoji/i)
-      );
-      if (!images.length) return null;
-      // Get URL of first image
-      const fileTitle = encodeURIComponent(images[0].title);
-      const r2 = await fetch(
-        `https://www.wikiskripta.eu/api.php?action=query&prop=imageinfo&iiprop=url&titles=${fileTitle}&format=json&origin=*`
-      );
-      const d2 = await r2.json();
-      const filePages = Object.values(d2.query?.pages || {});
-      const url = filePages[0]?.imageinfo?.[0]?.url;
-      return url || null;
-    } catch {
-      return null;
-    } finally {
-      setImgLoading(false);
-    }
-  }
-
   function startQuiz() {
     const q = buildQueue(filter, progress);
+    if (!q.length) return;
     setQueue(q);
     setQIdx(0);
     setAnswer('');
     setSubmitted(false);
     setResult(null);
-    setImgUrl(null);
+    setIframeError(false);
     setSessionStats({ correct: 0, total: 0 });
     setStarted(true);
   }
@@ -10615,10 +10583,12 @@ function VirtualSlidesQuiz({ onBack }) {
   const currentSlide = queue[qIdx];
 
   useEffect(() => {
-    if (!currentSlide) return;
-    setImgUrl(null);
-    fetchSlideImage(currentSlide).then(url => setImgUrl(url));
-  }, [qIdx, queue]);
+    if (!started) return;
+    setAnswer('');
+    setSubmitted(false);
+    setResult(null);
+    setIframeError(false);
+  }, [qIdx]);
 
   function checkAnswer() {
     if (!answer.trim() || !currentSlide) return;
@@ -10649,10 +10619,6 @@ function VirtualSlidesQuiz({ onBack }) {
       return;
     }
     setQIdx(i => i + 1);
-    setAnswer('');
-    setSubmitted(false);
-    setResult(null);
-    setImgUrl(null);
   }
 
   function resetProgress() {
@@ -10662,9 +10628,9 @@ function VirtualSlidesQuiz({ onBack }) {
   }
 
   const mastered = progress.correct.filter(c => !progress.incorrect.includes(c));
-  const total = VIRTUAL_SLIDES.length;
+  const total = availableSlides.length;
 
-  // ── Session summary screen ──
+  // ── Session summary ──
   if (started && qIdx >= queue.length) {
     return (
       <div style={{ maxWidth: 600, margin: '0 auto', padding: '30px 20px' }}>
@@ -10684,119 +10650,129 @@ function VirtualSlidesQuiz({ onBack }) {
     );
   }
 
-  // ── Active quiz screen ──
+  // ── Active quiz ──
   if (started && currentSlide) {
     const resultColor = result === 'correct' ? '#2e7d32' : result === 'incorrect' ? '#c62828' : '#555';
+    const microscopeUrl = 'https://mikroskop.wikiskripta.eu/?idx=' + currentSlide.idx;
     return (
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: '20px 16px', minHeight: '100vh' }}>
+      <div style={{ maxWidth: 860, margin: '0 auto', padding: '14px 16px', minHeight: '100vh', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
+
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
           <button onClick={() => setStarted(false)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#555', padding: 4 }}>←</button>
           <span style={{ fontSize: 13, color: '#888' }}>{qIdx + 1} / {queue.length}</span>
           <div style={{ flex: 1, height: 4, background: '#eee', borderRadius: 4 }}>
-            <div style={{ width: `${(qIdx / queue.length) * 100}%`, height: '100%', background: '#1976d2', borderRadius: 4, transition: 'width .3s' }} />
+            <div style={{ width: ((qIdx / queue.length) * 100) + '%', height: '100%', background: '#1976d2', borderRadius: 4, transition: 'width .3s' }} />
           </div>
           <span style={{ fontSize: 12, color: '#888' }}>{sessionStats.correct}/{sessionStats.total}</span>
+          <a href={microscopeUrl} target="_blank" rel="noopener noreferrer"
+            style={{ fontSize: 12, color: '#1976d2', textDecoration: 'none', padding: '3px 10px', border: '1px solid #90caf9', borderRadius: 6 }}>
+            Open in new tab
+          </a>
         </div>
 
-        {/* Slide card */}
-        <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,.1)', overflow: 'hidden', marginBottom: 16 }}>
-          {/* Image area */}
-          <div style={{ background: '#1a1a2e', minHeight: 280, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-            {imgLoading && (
-              <div style={{ color: '#888', fontSize: 14 }}>Loading slide image...</div>
-            )}
-            {!imgLoading && imgUrl && (
-              <img src={imgUrl} alt="Histology slide" style={{ maxWidth: '100%', maxHeight: 380, objectFit: 'contain' }} />
-            )}
-            {!imgLoading && !imgUrl && (
-              <div style={{ textAlign: 'center', color: '#666', padding: 20 }}>
-                <div style={{ fontSize: 40, marginBottom: 8 }}>&#128301;</div>
-                <div style={{ fontSize: 13 }}>View this slide on WikiSkripta</div>
-              </div>
-            )}
-            {/* View button overlay */}
-            {currentSlide.wikiUrl && (
-              <a href={currentSlide.wikiUrl} target="_blank" rel="noopener noreferrer"
-                style={{ position: 'absolute', bottom: 10, right: 10, background: 'rgba(255,255,255,.9)', padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#1976d2', textDecoration: 'none', boxShadow: '0 1px 4px rgba(0,0,0,.2)' }}>
-                View on WikiSkripta
+        {/* Slide badges */}
+        <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginBottom: 10 }}>
+          <span style={{ background: '#e3f2fd', color: '#1565c0', padding: '2px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600 }}>{currentSlide.code}</span>
+          <span style={{ background: '#f3e5f5', color: '#6a1b9a', padding: '2px 10px', borderRadius: 20, fontSize: 12 }}>{currentSlide.system}</span>
+          <span style={{ background: '#fff3e0', color: '#e65100', padding: '2px 10px', borderRadius: 20, fontSize: 12 }}>{currentSlide.stain}</span>
+          {currentSlide.subtitle && <span style={{ background: '#f5f5f5', color: '#555', padding: '2px 10px', borderRadius: 20, fontSize: 12 }}>{currentSlide.subtitle}</span>}
+        </div>
+
+        {/* Virtual microscope */}
+        <div style={{ flex: 1, background: '#111', borderRadius: 12, overflow: 'hidden', marginBottom: 12, minHeight: 430, position: 'relative' }}>
+          {!iframeError ? (
+            <iframe
+              key={currentSlide.idx}
+              src={microscopeUrl}
+              style={{ width: '100%', height: '100%', minHeight: 430, border: 'none', display: 'block' }}
+              title="Virtual microscope"
+              onError={() => setIframeError(true)}
+              allow="fullscreen"
+            />
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: 430, color: '#aaa', gap: 14 }}>
+              <div style={{ fontSize: 15 }}>This slide cannot be embedded — open it in a new tab to view it.</div>
+              <a href={microscopeUrl} target="_blank" rel="noopener noreferrer"
+                style={{ padding: '10px 24px', background: '#1976d2', color: '#fff', borderRadius: 10, textDecoration: 'none', fontWeight: 600 }}>
+                Open virtual slide
               </a>
-            )}
-          </div>
-
-          {/* Slide info */}
-          <div style={{ padding: '14px 18px' }}>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
-              <span style={{ background: '#e3f2fd', color: '#1565c0', padding: '2px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600 }}>{currentSlide.code}</span>
-              <span style={{ background: '#f3e5f5', color: '#6a1b9a', padding: '2px 10px', borderRadius: 20, fontSize: 12 }}>{currentSlide.system}</span>
-              <span style={{ background: '#fff3e0', color: '#e65100', padding: '2px 10px', borderRadius: 20, fontSize: 12 }}>{currentSlide.stain}</span>
-              {currentSlide.subtitle && <span style={{ background: '#f5f5f5', color: '#555', padding: '2px 10px', borderRadius: 20, fontSize: 12 }}>{currentSlide.subtitle}</span>}
             </div>
-
-            {/* Answer input */}
-            {!submitted ? (
-              <div style={{ display: 'flex', gap: 10 }}>
-                <input
-                  type="text"
-                  value={answer}
-                  onChange={e => setAnswer(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && checkAnswer()}
-                  placeholder="What organ/tissue is this?"
-                  style={{ flex: 1, padding: '10px 14px', borderRadius: 10, border: '1.5px solid #ddd', fontSize: 15, outline: 'none' }}
-                  autoFocus
-                />
-                <button onClick={checkAnswer} disabled={!answer.trim()}
-                  style={{ padding: '10px 20px', background: '#1976d2', color: '#fff', border: 'none', borderRadius: 10, cursor: 'pointer', fontWeight: 600, opacity: answer.trim() ? 1 : .5 }}>
-                  Submit
-                </button>
-              </div>
-            ) : (
-              <div>
-                <div style={{ padding: '10px 14px', borderRadius: 10, background: result === 'correct' ? '#e8f5e9' : '#ffebee', border: `1.5px solid ${resultColor}`, marginBottom: 10 }}>
-                  <span style={{ fontWeight: 700, color: resultColor }}>
-                    {result === 'correct' ? 'Correct!' : 'Incorrect'}
-                  </span>
-                  {result === 'incorrect' && (
-                    <span style={{ color: '#555', marginLeft: 8 }}>
-                      Answer: <strong>{currentSlide.nameEn}{currentSlide.subtitle ? ` (${currentSlide.subtitle})` : ''}</strong>
-                    </span>
-                  )}
-                </div>
-                <button onClick={nextSlide}
-                  style={{ width: '100%', padding: '11px', background: '#1976d2', color: '#fff', border: 'none', borderRadius: 10, cursor: 'pointer', fontWeight: 600, fontSize: 15 }}>
-                  {qIdx + 1 >= queue.length ? 'Finish' : 'Next slide'}
-                </button>
-              </div>
-            )}
-          </div>
+          )}
         </div>
 
-        {/* Attribution */}
+        {/* Answer */}
+        <div style={{ background: '#fff', borderRadius: 14, padding: '14px 18px', boxShadow: '0 1px 8px rgba(0,0,0,.1)' }}>
+          {!submitted ? (
+            <div style={{ display: 'flex', gap: 10 }}>
+              <input
+                type="text"
+                value={answer}
+                onChange={e => setAnswer(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && checkAnswer()}
+                placeholder="What organ / tissue is this?"
+                style={{ flex: 1, padding: '10px 14px', borderRadius: 10, border: '1.5px solid #ddd', fontSize: 15, outline: 'none' }}
+                autoFocus
+              />
+              <button onClick={checkAnswer} disabled={!answer.trim()}
+                style={{ padding: '10px 20px', background: '#1976d2', color: '#fff', border: 'none', borderRadius: 10, cursor: 'pointer', fontWeight: 600, opacity: answer.trim() ? 1 : .5 }}>
+                Submit
+              </button>
+            </div>
+          ) : (
+            <div>
+              <div style={{ padding: '10px 14px', borderRadius: 10, background: result === 'correct' ? '#e8f5e9' : '#ffebee', border: '1.5px solid ' + resultColor, marginBottom: 10 }}>
+                <span style={{ fontWeight: 700, color: resultColor }}>
+                  {result === 'correct' ? 'Correct!' : 'Incorrect'}
+                </span>
+                {result === 'incorrect' && (
+                  <span style={{ color: '#555', marginLeft: 8 }}>
+                    Answer: <strong>{currentSlide.nameEn}{currentSlide.subtitle ? ' (' + currentSlide.subtitle + ')' : ''}</strong>
+                  </span>
+                )}
+              </div>
+              <button onClick={nextSlide}
+                style={{ width: '100%', padding: '11px', background: '#1976d2', color: '#fff', border: 'none', borderRadius: 10, cursor: 'pointer', fontWeight: 600, fontSize: 15 }}>
+                {qIdx + 1 >= queue.length ? 'Finish' : 'Next slide'}
+              </button>
+            </div>
+          )}
+        </div>
+
         <div style={{ textAlign: 'center', fontSize: 11, color: '#aaa', marginTop: 8 }}>
-          Slide images: WikiSkripta, projekt Univerzity Karlovy (CC BY 4.0) — wikiskripta.eu
+          Virtual slides: WikiSkripta, projekt Univerzity Karlovy (CC BY 4.0) — wikiskripta.eu
         </div>
       </div>
     );
   }
 
-  // ── Start / menu screen ──
+  // ── Start / menu ──
+  const queueCount = buildQueue(filter, progress).length;
   return (
     <div style={{ maxWidth: 600, margin: '0 auto', padding: '24px 20px' }}>
       <button onClick={onBack} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#555', padding: 4, marginBottom: 8 }}>←</button>
       <h2 style={{ margin: '0 0 4px' }}>Virtual Slides Quiz</h2>
-      <p style={{ color: '#888', margin: '0 0 20px', fontSize: 14 }}>
-        Identify histological slides — type the answer after viewing each image.
+      <p style={{ color: '#555', margin: '0 0 4px', fontSize: 14 }}>
+        Zoom into a real virtual microscope slide, then type what you see.
+      </p>
+      <p style={{ color: '#aaa', margin: '0 0 20px', fontSize: 12 }}>
+        {total} slides available — more will be added as mappings are confirmed
       </p>
 
-      {/* Progress */}
+      {/* Progress bar */}
       <div style={{ background: '#fff', borderRadius: 14, padding: '14px 18px', boxShadow: '0 1px 6px rgba(0,0,0,.08)', marginBottom: 18 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <span style={{ fontSize: 13, fontWeight: 600 }}>Overall progress</span>
+          <span style={{ fontSize: 13, fontWeight: 600 }}>Progress</span>
           <span style={{ fontSize: 13, color: '#888' }}>{mastered.length} / {total} mastered</span>
         </div>
         <div style={{ height: 8, background: '#eee', borderRadius: 4 }}>
-          <div style={{ width: `${(mastered.length / total) * 100}%`, height: '100%', background: '#43a047', borderRadius: 4, transition: 'width .4s' }} />
+          <div style={{ width: (total ? (mastered.length / total) * 100 : 0) + '%', height: '100%', background: '#43a047', borderRadius: 4, transition: 'width .4s' }} />
         </div>
+        {progress.incorrect.filter(c => availableSlides.some(s => s.code === c)).length > 0 && (
+          <div style={{ marginTop: 8, fontSize: 12, color: '#e65100' }}>
+            Needs practice: {progress.incorrect.filter(c => availableSlides.some(s => s.code === c)).join(', ')}
+          </div>
+        )}
       </div>
 
       {/* System filter */}
@@ -10805,19 +10781,18 @@ function VirtualSlidesQuiz({ onBack }) {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {systems.map(sys => (
             <button key={sys} onClick={() => setFilter(sys)}
-              style={{ padding: '5px 14px', borderRadius: 20, border: `1.5px solid ${filter === sys ? '#1976d2' : '#ddd'}`, background: filter === sys ? '#e3f2fd' : '#fff', color: filter === sys ? '#1565c0' : '#555', fontWeight: filter === sys ? 700 : 400, cursor: 'pointer', fontSize: 13 }}>
+              style={{ padding: '5px 14px', borderRadius: 20, border: '1.5px solid ' + (filter === sys ? '#1976d2' : '#ddd'), background: filter === sys ? '#e3f2fd' : '#fff', color: filter === sys ? '#1565c0' : '#555', fontWeight: filter === sys ? 700 : 400, cursor: 'pointer', fontSize: 13 }}>
               {sys}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Start */}
-      <button onClick={startQuiz}
-        style={{ width: '100%', padding: '13px', background: '#1976d2', color: '#fff', border: 'none', borderRadius: 12, cursor: 'pointer', fontWeight: 700, fontSize: 16, marginBottom: 12 }}>
+      <button onClick={startQuiz} disabled={!queueCount}
+        style={{ width: '100%', padding: '13px', background: queueCount ? '#1976d2' : '#ccc', color: '#fff', border: 'none', borderRadius: 12, cursor: queueCount ? 'pointer' : 'not-allowed', fontWeight: 700, fontSize: 16, marginBottom: 12 }}>
         Start Quiz
         <span style={{ fontWeight: 400, fontSize: 13, marginLeft: 8, opacity: .85 }}>
-          ({buildQueue(filter, progress).length} slides remaining)
+          ({queueCount} slides to practice)
         </span>
       </button>
 
@@ -10829,7 +10804,7 @@ function VirtualSlidesQuiz({ onBack }) {
       )}
 
       <div style={{ marginTop: 20, fontSize: 11, color: '#bbb', textAlign: 'center' }}>
-        Slide images sourced from WikiSkripta (CC BY 4.0) — wikiskripta.eu
+        Virtual slides: WikiSkripta, projekt Univerzity Karlovy (CC BY 4.0) — wikiskripta.eu
       </div>
     </div>
   );
