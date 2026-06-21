@@ -3,6 +3,9 @@
    Images and descriptions are sourced from WikiSkripta (CC BY 4.0).
    Source: https://www.wikiskripta.eu — WikiSkripta, projekt Univerzity Karlovy, ISSN 1804-6517
    License: https://creativecommons.org/licenses/by/4.0/
+
+   idx values map to https://mikroskop.wikiskripta.eu/?idx=XXXXX
+   Catalog scraped 2026-06-21 from https://mikroskop.wikiskripta.eu/
 */
 
 var VIRTUAL_SLIDES = [
@@ -17,6 +20,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['tendon', 'dense regular connective tissue', 'dense connective tissue'],
     pageTitle: 'Šlacha / Tendon - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/%C5%A0lacha_/_Tendon_-_HE',
+    idx: 20026,
   },
   {
     code: 'A11',
@@ -27,16 +31,18 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['fibrocartilage', 'fibrous cartilage'],
     pageTitle: 'Chrupavka vazivová / Fibrocartilage - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Chrupavka_vazivov%C3%A1_/_Fibrocartilage_-_HE',
+    idx: 20032,
   },
   {
     code: 'A12',
     nameEn: 'Endochondral ossification',
     subtitle: '',
-    stain: 'Toluidine blue',
+    stain: 'HE',
     system: 'Connective Tissue',
     acceptedAnswers: ['endochondral ossification', 'ossificatio enchondralis', 'enchondral ossification'],
     pageTitle: 'Ossificatio enchondralis',
     wikiUrl: 'https://www.wikiskripta.eu/w/Ossificatio_enchondralis',
+    idx: 20033,
   },
   {
     code: 'A14',
@@ -47,6 +53,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['intramembranous ossification', 'ossificatio membranacea', 'membranous ossification'],
     pageTitle: 'Ossificatio membranacea - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Ossificatio_membranacea_-_HE',
+    idx: 20034,
   },
   {
     code: 'A15',
@@ -57,6 +64,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['compact bone', 'haversian bone', 'cortical bone', 'lamellar bone', 'os compactum'],
     pageTitle: 'Lamelosní kost / Lamellar bone - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Lamelosn%C3%AD_kost_/_Lamellar_bone_-_HE',
+    idx: 20035,
   },
   {
     code: 'A16',
@@ -67,6 +75,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['spongy bone', 'cancellous bone', 'trabecular bone', 'os spongiosum'],
     pageTitle: 'Lamelosní kost / Lamellar bone - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Lamelosn%C3%AD_kost_/_Lamellar_bone_-_HE',
+    idx: 20036,
   },
   {
     code: 'A17',
@@ -77,6 +86,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['smooth muscle', 'uterus', 'myometrium', 'hladký sval'],
     pageTitle: 'Hladký sval / Smooth muscle - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Hladk%C3%BD_sval_/_Smooth_muscle_-_HE',
+    idx: 20037,
   },
   {
     code: 'A18',
@@ -87,6 +97,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['skeletal muscle', 'striated muscle', 'kosterní sval'],
     pageTitle: 'Kosterní sval / Skeletal muscle - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Kostern%C3%AD_sval_/_Skeletal_muscle_-_HE',
+    idx: 20038,
   },
   {
     code: 'A19',
@@ -97,6 +108,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['skeletal muscle', 'striated muscle', 'kosterní sval'],
     pageTitle: 'Kosterní sval / Skeletal muscle - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Kostern%C3%AD_sval_/_Skeletal_muscle_-_HE',
+    idx: 20039,
   },
 
   // ── CIRCULATORY SYSTEM (F slides) ─────────────────────────────────────────
@@ -109,6 +121,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['heart', 'cardiac muscle', 'myocardium', 'srdeční sval', 'myokard'],
     pageTitle: 'Srdeční sval / Cardiac muscle - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Srde%C4%8Dn%C3%AD_sval_/_Cardiac_muscle_-_HE',
+    idx: 20041,
   },
   {
     code: 'F2',
@@ -119,6 +132,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['aorta', 'elastic artery', 'large elastic artery'],
     pageTitle: 'Elastická arterie / Elastic artery (aorta) - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Elastick%C3%A1_arterie_/_Elastic_artery_(aorta)_-_HE',
+    idx: 20081,
   },
   {
     code: 'F3',
@@ -129,6 +143,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['aorta', 'elastic artery', 'large elastic artery'],
     pageTitle: 'Aorta - RF',
     wikiUrl: 'https://www.wikiskripta.eu/w/Aorta_-_RF',
+    idx: 20082,
   },
   {
     code: 'F4',
@@ -139,6 +154,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['muscular artery', 'small muscular artery', 'arteriole', 'artery and vein'],
     pageTitle: 'Arterie svalová / Muscle artery - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Arterie_svalov%C3%A1_/_Muscle_artery_-_HE',
+    idx: 20143,
   },
   {
     code: 'F5',
@@ -149,6 +165,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['muscular artery', 'small muscular artery', 'arteriole'],
     pageTitle: 'Arterie svalová / Muscle artery - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Arterie_svalov%C3%A1_/_Muscle_artery_-_HE',
+    idx: 20142,
   },
   {
     code: 'F6',
@@ -171,6 +188,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['lymph node', 'lymfatická uzlina', 'lymph gland'],
     pageTitle: 'Lymfatická uzlina / Lymph node - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Lymfatick%C3%A1_uzlina_/_Lymph_node_-_HE',
+    idx: 20084,
   },
   {
     code: 'G2',
@@ -181,6 +199,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['spleen', 'slezina'],
     pageTitle: 'Slezina / Spleen - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Slezina_/_Spleen_-_HE',
+    idx: 20083,
   },
   {
     code: 'G3',
@@ -191,6 +210,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['spleen', 'slezina'],
     pageTitle: 'Slezina / Spleen - Ag',
     wikiUrl: 'https://www.wikiskripta.eu/w/Slezina_/_Spleen_-_Ag',
+    idx: 20146,
   },
   {
     code: 'G4',
@@ -201,6 +221,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['thymus', 'brzlík'],
     pageTitle: 'Brzlík / Thymus - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Brzl%C3%ADk_/_Thymus_-_HE',
+    idx: 20085,
   },
   {
     code: 'G5',
@@ -211,6 +232,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['thymus', 'brzlík', 'involuted thymus'],
     pageTitle: 'Brzlík / Thymus - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Brzl%C3%ADk_/_Thymus_-_HE',
+    idx: 20086,
   },
 
   // ── ENDOCRINE SYSTEM (E slides) ───────────────────────────────────────────
@@ -223,6 +245,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['pituitary', 'pituitary gland', 'hypophysis', 'hypofýza'],
     pageTitle: 'Hypofýza / Hypophysis - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Hypof%C3%BDza_/_Hypophysis_-_HE',
+    idx: 20076,
   },
   {
     code: 'E2',
@@ -233,6 +256,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['thyroid', 'thyroid gland', 'glandula thyroidea', 'štítná žláza'],
     pageTitle: 'Štítná žláza / Thyroid gland - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/%C5%A0t%C3%ADtn%C3%A1_%C5%BEl%C3%A1za_/_Thyroid_gland_-_HE',
+    idx: 20077,
   },
   {
     code: 'E3',
@@ -243,6 +267,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['parathyroid', 'parathyroid gland', 'glandula parathyroidea'],
     pageTitle: 'Glandula parathyroidea - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Glandula_parathyroidea_-_HE',
+    idx: 20078,
   },
   {
     code: 'E4',
@@ -263,6 +288,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['pancreas', 'pankreas'],
     pageTitle: 'Pancreas - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Pancreas_-_HE',
+    idx: 20141,
   },
   {
     code: 'E6',
@@ -285,6 +311,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['lip', 'labium', 'ret'],
     pageTitle: null,
     wikiUrl: null,
+    idx: 20042,
   },
   {
     code: 'B2',
@@ -295,6 +322,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['tooth', 'dens', 'zub'],
     pageTitle: null,
     wikiUrl: null,
+    idx: 20043,
   },
   {
     code: 'B3',
@@ -305,6 +333,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['tongue', 'jazyk', 'dorsum of tongue'],
     pageTitle: 'Jazyk - dorsum / Dorsum of tongue - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Jazyk_-_dorsum_/_Dorsum_of_tongue_-_HE',
+    idx: 20044,
   },
   {
     code: 'B4',
@@ -315,6 +344,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['tongue', 'root of tongue', 'radix linguae', 'jazyk'],
     pageTitle: 'Jazyk - radix / Root of tongue - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Jazyk_-_radix_/_Root_of_tongue_-_HE',
+    idx: 20045,
   },
   {
     code: 'B5',
@@ -325,6 +355,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['palatine tonsil', 'tonsilla palatina', 'tonsil'],
     pageTitle: 'Patrová krční mandle / Tonsila Pallatina - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Patrov%C3%A1_kr%C4%8Dn%C3%AD_mandle_/_Tonsila_Pallatina_-_HE',
+    idx: 20046,
   },
   {
     code: 'B6',
@@ -335,6 +366,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['parotid', 'parotid gland', 'glandula parotis'],
     pageTitle: 'Glandula parotis - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Glandula_parotis_-_HE',
+    idx: 20047,
   },
   {
     code: 'B7',
@@ -345,6 +377,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['submandibular gland', 'glandula submandibularis', 'submandibular'],
     pageTitle: 'Glandula submandibularis - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Glandula_submandibularis_-_HE',
+    idx: 20132,
   },
   {
     code: 'B8',
@@ -355,6 +388,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['sublingual gland', 'glandula sublingualis', 'sublingual'],
     pageTitle: 'Glandula sublingualis - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Glandula_sublingualis_-_HE',
+    idx: 20136,
   },
   {
     code: 'B9',
@@ -365,6 +399,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['pancreas', 'pankreas'],
     pageTitle: 'Pancreas - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Pancreas_-_HE',
+    idx: 20048,
   },
   {
     code: 'B10',
@@ -375,6 +410,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['esophagus', 'oesophagus', 'jícen'],
     pageTitle: 'Jícen / Esophagus - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/J%C3%ADcen_/_Esophagus_-_HE',
+    idx: 20099,
   },
   {
     code: 'B11',
@@ -385,6 +421,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['stomach cardia', 'cardia', 'cardiac stomach', 'stomach'],
     pageTitle: 'Kardie žaludku / Stomach cardia - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Kardie_%C5%BEaludku_/_Stomach_cardia_-_HE',
+    idx: 20050,
   },
   {
     code: 'B12',
@@ -395,6 +432,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['stomach fundus', 'fundus', 'gastric fundus', 'stomach'],
     pageTitle: 'Žaludek fundus / Stomach fundus - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/%C5%BDaludek_fundus_/_Stomach_fundus_-_HE',
+    idx: 20135,
   },
   {
     code: 'B13',
@@ -415,6 +453,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['duodenum'],
     pageTitle: 'Duodenum - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Duodenum_-_HE',
+    idx: 20052,
   },
   {
     code: 'B15',
@@ -425,6 +464,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['jejunum', 'small intestine', 'tenké střevo'],
     pageTitle: 'Tenké střevo / Small intestine – HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Tenk%C3%A9_st%C5%99evo_/_Small_intestine_%E2%80%93_HE',
+    idx: 20134,
   },
   {
     code: 'B16',
@@ -435,6 +475,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['large intestine', 'colon', 'tlusté střevo'],
     pageTitle: 'Tlusté střevo / Colon - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Tlust%C3%A9_st%C5%99evo_/_Colon_-_HE',
+    idx: 20051,
   },
   {
     code: 'B17',
@@ -445,6 +486,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['appendix', 'vermiform appendix'],
     pageTitle: 'Appendix - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Appendix_-_HE',
+    idx: 20053,
   },
   {
     code: 'B18',
@@ -455,6 +497,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['liver', 'játra', 'hepar'],
     pageTitle: 'Játra / Liver - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/J%C3%A1tra_/_Liver_-_HE',
+    idx: 20054,
   },
   {
     code: 'B19',
@@ -465,6 +508,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['liver', 'játra', 'hepar'],
     pageTitle: 'Játra / Liver - PAS',
     wikiUrl: 'https://www.wikiskripta.eu/w/J%C3%A1tra_/_Liver_-_PAS',
+    idx: 20055,
   },
   {
     code: 'B20',
@@ -486,6 +530,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['anus', 'anal canal'],
     pageTitle: null,
     wikiUrl: null,
+    idx: 20057,
   },
 
   // ── RESPIRATORY SYSTEM (D slides) ─────────────────────────────────────────
@@ -498,6 +543,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['epiglottis'],
     pageTitle: 'Epiglottis - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Epiglottis_-_HE',
+    idx: 20071,
   },
   {
     code: 'D2',
@@ -508,6 +554,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['larynx', 'hrtan'],
     pageTitle: 'Larynx - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Larynx_-_HE',
+    idx: 20072,
   },
   {
     code: 'D3',
@@ -518,6 +565,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['trachea', 'průdušnice', 'windpipe'],
     pageTitle: 'Trachea - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Trachea_-_HE',
+    idx: 20101,
   },
   {
     code: 'D4',
@@ -528,6 +576,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['lung', 'plíce', 'pulmo'],
     pageTitle: 'Plíce/Lung - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Pl%C3%ADce/Lung_-_HE',
+    idx: 20074,
   },
 
   // ── URINARY SYSTEM (C slides) ─────────────────────────────────────────────
@@ -540,6 +589,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['kidney', 'ledvina', 'ren'],
     pageTitle: 'Ledvina / Kidney - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Ledvina_/_Kidney_-_HE',
+    idx: 20107,
   },
   {
     code: 'C2',
@@ -550,6 +600,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['kidney', 'ledvina', 'ren'],
     pageTitle: 'Ledvina / Kidney - WvG',
     wikiUrl: 'https://www.wikiskripta.eu/w/Ledvina_/_Kidney_-_WvG',
+    idx: 20106,
   },
   {
     code: 'C3',
@@ -571,6 +622,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['urinary bladder', 'bladder', 'močový měchýř'],
     pageTitle: 'Močový měchýř / Urinary bladder – HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Mo%C4%8Dov%C3%BD_m%C4%9Bch%C3%BD%C5%99_/_Urinary_bladder_%E2%80%93_HE',
+    idx: 20060,
   },
   {
     code: 'C5',
@@ -578,9 +630,10 @@ var VIRTUAL_SLIDES = [
     subtitle: '',
     stain: 'HE',
     system: 'Urinary System',
-    acceptedAnswers: ['urethra', 'urethra', 'močová trubice'],
+    acceptedAnswers: ['urethra', 'močová trubice'],
     pageTitle: null,
     wikiUrl: null,
+    idx: 20061,
   },
 
   // ── MALE REPRODUCTIVE SYSTEM (C6–C10) ─────────────────────────────────────
@@ -593,6 +646,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['testis', 'testicle', 'varle'],
     pageTitle: 'Testis - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Testis_-_HE',
+    idx: 20062,
   },
   {
     code: 'C7',
@@ -603,6 +657,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['epididymis', 'epididymidis', 'nadvarlata'],
     pageTitle: 'Epididymidis - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Epididymidis_-_HE',
+    idx: 20128,
   },
   {
     code: 'C8',
@@ -613,6 +668,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['seminal vesicle', 'vesicula seminalis', 'semenný váček'],
     pageTitle: 'Vesicula seminalis - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Vesicula_seminalis_-_HE',
+    idx: 20063,
   },
   {
     code: 'C9',
@@ -623,6 +679,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['spermatic cord', 'funiculus spermaticus', 'chámovod'],
     pageTitle: 'Funiculus spermaticus - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Funiculus_spermaticus_-_HE',
+    idx: 20130,
   },
   {
     code: 'C10',
@@ -633,6 +690,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['prostate', 'prostata', 'prostate gland'],
     pageTitle: 'Prostata - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Prostata_-_HE',
+    idx: 20064,
   },
 
   // ── FEMALE REPRODUCTIVE SYSTEM (C11–C16) ──────────────────────────────────
@@ -656,6 +714,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['corpus luteum', 'ovary corpus luteum', 'ovary'],
     pageTitle: 'Corpus luteum - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Corpus_luteum_-_HE',
+    idx: 20065,
   },
   {
     code: 'C13',
@@ -666,6 +725,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['uterine tube', 'fallopian tube', 'tuba uterina', 'vejcovod'],
     pageTitle: 'Tuba uterina (isthmus) - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Tuba_uterina_(isthmus)_-_HE',
+    idx: 20066,
   },
   {
     code: 'C14',
@@ -676,7 +736,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['uterus', 'uterus body', 'uterus fundus', 'děloha'],
     pageTitle: 'Uterus (fundus) - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Uterus_(fundus)_-_HE',
-    idx: 20069,
+    idx: 20129,
   },
   {
     code: 'C15',
@@ -687,6 +747,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['uterus cervix', 'cervix', 'cervix uteri', 'děložní hrdlo'],
     pageTitle: 'Uterus (exocervix) - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Uterus_(exocervix)_-_HE',
+    idx: 20067,
   },
   {
     code: 'C16',
@@ -710,6 +771,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['thick skin', 'thick-skin', 'glabrous skin', 'kůže tlustého typu'],
     pageTitle: 'Kůže tlustého typu / Thick skin - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/K%C5%AF%C5%BEe_tlust%C3%A9ho_typu_/_Thick_skin_-_HE',
+    idx: 20087,
   },
   {
     code: 'H2',
@@ -720,6 +782,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['thin skin', 'hairy skin', 'skin with hair', 'kůže s vlasy'],
     pageTitle: 'Kůže s vlasy / Skin with hair of head - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/K%C5%AF%C5%BEe_s_vlasy_/_Skin_with_hair_of_head_-_HE',
+    idx: 20088,
   },
   {
     code: 'H3',
@@ -730,6 +793,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['axilla', 'axillary skin', 'skin of axilla'],
     pageTitle: 'Axilla - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Axilla_-_HE',
+    idx: 20089,
   },
   {
     code: 'H4',
@@ -750,6 +814,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['lactating mammary gland', 'mamma lactans', 'lactating breast', 'mammary gland'],
     pageTitle: 'Mamma lactans - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Mamma_lactans_-_HE',
+    idx: 20150,
   },
   {
     code: 'H6',
@@ -760,6 +825,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['nipple', 'papilla mammae', 'areola'],
     pageTitle: null,
     wikiUrl: null,
+    idx: 20090,
   },
 
   // ── NERVOUS SYSTEM (L slides) ─────────────────────────────────────────────
@@ -772,6 +838,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['brain', 'cerebrum', 'cerebral cortex', 'mozek'],
     pageTitle: 'Mozek / Cerebrum - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Mozek_/_Cerebrum_-_HE',
+    idx: 20092,
   },
   {
     code: 'L2',
@@ -782,6 +849,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['brain', 'cerebrum', 'cerebral cortex', 'mozek'],
     pageTitle: 'Mozek / Cerebrum - Myelin',
     wikiUrl: 'https://www.wikiskripta.eu/w/Mozek_/_Cerebrum_-_Myelin',
+    idx: 20093,
   },
   {
     code: 'L3',
@@ -792,6 +860,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['cerebellum', 'mozeček'],
     pageTitle: 'Mozeček / Cerebellum - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Moze%C4%8Dek_/_Cerebellum_-_HE',
+    idx: 20122,
   },
   {
     code: 'L4',
@@ -802,6 +871,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['cerebellum', 'mozeček'],
     pageTitle: 'Mozeček / Cerebellum - KV',
     wikiUrl: 'https://www.wikiskripta.eu/w/Moze%C4%8Dek_/_Cerebellum_-_KV',
+    idx: 20119,
   },
   {
     code: 'L5',
@@ -812,6 +882,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['spinal cord', 'mícha', 'medulla spinalis'],
     pageTitle: 'Mícha / Spinal cord - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/M%C3%ADcha_/_Spinal_cord_-_HE',
+    idx: 20124,
   },
   {
     code: 'L6',
@@ -832,6 +903,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['peripheral nerve', 'nerve', 'periferní nerv', 'míšní nerv'],
     pageTitle: 'Periferní nerv / Peripheral nerve - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Perifern%C3%AD_nerv_/_Peripheral_nerve_-_HE',
+    idx: 20004,
   },
   {
     code: 'L8',
@@ -842,7 +914,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['peripheral nerve', 'nerve', 'periferní nerv'],
     pageTitle: 'Periferní nerv / Peripheral nerve - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Perifern%C3%AD_nerv_/_Peripheral_nerve_-_HE',
-    idx: 20004,
+    idx: 20121,
   },
   {
     code: 'L9',
@@ -853,6 +925,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['sympathetic ganglion', 'autonomic ganglion', 'ganglion', 'autonomní ganglion'],
     pageTitle: 'Autonomní ganglion / Autonomic ganglion - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Autonomn%C3%AD_ganglion_/_Autonomic_ganglion_-_HE',
+    idx: 20123,
   },
   {
     code: 'L10',
@@ -863,6 +936,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['spinal ganglion', 'dorsal root ganglion', 'spinální ganglion', 'ganglion'],
     pageTitle: 'Spinální ganglion / Spinal ganglion - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Spin%C3%A1ln%C3%AD_ganglion_/_Spinal_ganglion_-_HE',
+    idx: 20094,
   },
 
   // ── SENSORY ORGANS (S slides) ─────────────────────────────────────────────
@@ -875,6 +949,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['eye', 'bulbus oculi', 'anterior segment', 'oko'],
     pageTitle: 'Bulbus oculi - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Bulbus_oculi_-_HE',
+    idx: 20137,
   },
   {
     code: 'S2',
@@ -885,6 +960,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['eye', 'retina', 'posterior segment', 'bulbus oculi', 'oko'],
     pageTitle: 'Bulbus oculi - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Bulbus_oculi_-_HE',
+    idx: 20139,
   },
   {
     code: 'S3',
@@ -895,6 +971,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['lacrimal gland', 'glandula lacrimalis', 'tear gland', 'slzná žláza'],
     pageTitle: null,
     wikiUrl: null,
+    idx: 20098,
   },
   {
     code: 'S4',
@@ -905,6 +982,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['eyelid', 'palpebra', 'víčko'],
     pageTitle: null,
     wikiUrl: null,
+    idx: 20095,
   },
   {
     code: 'S5',
@@ -915,6 +993,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['olfactory epithelium', 'nasal mucosa', 'olfactory mucosa', 'pars olfactoria'],
     pageTitle: 'Pars olfactoria mucosae nasi - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Pars_olfactoria_mucosae_nasi_-_HE',
+    idx: 20140,
   },
   {
     code: 'S6',
@@ -925,6 +1004,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['inner ear', 'cochlea', 'organum vestibulocochleare', 'vnitřní ucho'],
     pageTitle: 'Organum vestibulocochleare - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Organum_vestibulocochleare_-_HE',
+    idx: 20096,
   },
   {
     code: 'S7',
@@ -935,6 +1015,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['optic nerve', 'nervus opticus', 'zrakový nerv'],
     pageTitle: 'Nervus opticus - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Nervus_opticus_-_HE',
+    idx: 20138,
   },
 
   // ── EMBRYOLOGY (X slides) ─────────────────────────────────────────────────
@@ -947,6 +1028,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['decidua', 'decidua basalis', 'placental decidua'],
     pageTitle: null,
     wikiUrl: null,
+    idx: 20115,
   },
   {
     code: 'X2',
@@ -957,6 +1039,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['chorion', 'chorionic membrane', 'chorion frondosum'],
     pageTitle: 'Chorion frondosum - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Chorion_frondosum_-_HE',
+    idx: 20116,
   },
   {
     code: 'X3',
@@ -967,6 +1050,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['placenta'],
     pageTitle: 'Placenta - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Placenta_-_HE',
+    idx: 20117,
   },
   {
     code: 'X4',
@@ -977,6 +1061,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['umbilical cord', 'pupečník', 'funiculus umbilicalis'],
     pageTitle: 'Pupečník / Umbilical cord - HE',
     wikiUrl: 'https://www.wikiskripta.eu/w/Pupe%C4%8Dn%C3%ADk_/_Umbilical_cord_-_HE',
+    idx: 20118,
   },
   {
     code: 'X5',
@@ -987,6 +1072,7 @@ var VIRTUAL_SLIDES = [
     acceptedAnswers: ['tooth development', 'developing tooth', 'tooth', 'odontogenesis'],
     pageTitle: null,
     wikiUrl: null,
+    idx: 20145,
   },
 
 ];
