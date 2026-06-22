@@ -10847,589 +10847,576 @@ function VirtualSlidesQuiz({ onBack }) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   HEMATOPOIESIS BUILDING MAP
+   HEMATOPOIESIS BUILDING MAP  V2
+   SVG tree diagram — fill-in-the-blank — zones — mitosis plugs
    ───────────────────────────────────────────────────────────── */
 
 function HematopoiesisMap({ onBack }) {
-  const STORAGE_KEY = 'hema_map_v1';
+  const CELLS = window.HEMA_CELLS  || [];
+  const LINS  = window.HEMA_LINEAGES || {};
+  const K     = window.HEMA_CONSTS || { R:13, DW:870, DH:710, BLOOD_Y:490, TISSUE_Y:600 };
+  const { R, DW, DH, BLOOD_Y, TISSUE_Y } = K;
+  const STORE = 'hema_v2';
 
-  const ZONE_CFG = window.HEMA_ZONE_CONFIG;
-  const DATA     = window.HEMA_MAP_DATA;
-  const INIT_P   = window.HEMA_INITIAL_PROGRESS;
+  // id→cell lookup
+  const CMAP = {};
+  CELLS.forEach(c => { CMAP[c.id] = c; });
 
-  const LINEAGE_TABS = [
-    { key: 'erythropoiesis', label: 'Erythropoiesis' },
-    { key: 'thrombopoiesis', label: 'Thrombopoiesis' },
-    { key: 'granulopoiesis', label: 'Granulopoiesis' },
-    { key: 'monopoiesis',    label: 'Monopoiesis'    },
-    { key: 'lymphopoiesis',  label: 'Lymphopoiesis'  },
-  ];
+  // zone accent colors
+  const ZCOL = { bone_marrow:'#7b1fa2', blood:'#c62828', tissue:'#2e7d32' };
 
-  const [progress,       setProgress]       = useState(() => {
-    try { return { ...INIT_P, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') }; }
-    catch { return { ...INIT_P }; }
+  // ── State ──
+  const [phases,  setPhases]  = useState(() => {
+    try { return JSON.parse(localStorage.getItem(STORE)||'{}').ph||{}; } catch { return {}; }
   });
-  const [activeLineage,  setActiveLineage]  = useState('erythropoiesis');
-  const [activeZone,     setActiveZone]     = useState(null);
-  const [pendingQ,       setPendingQ]       = useState(null);
-  const [selectedAns,    setSelectedAns]    = useState(null);
-  const [showQExp,       setShowQExp]       = useState(false);
-  const [pendingSize,    setPendingSize]    = useState(null);
-  const [sizeInput,      setSizeInput]      = useState('');
-  const [sizeChecked,    setSizeChecked]    = useState(false);
-  const [sizeCorrect,    setSizeCorrect]    = useState(null);
+  const [mc,      setMc]      = useState(() => {
+    try { return JSON.parse(localStorage.getItem(STORE)||'{}').mc||{}; } catch { return {}; }
+  });
+  const [selId,   setSelId]   = useState(null);
+  const [popPos,  setPopPos]  = useState({x:0,y:0});
+  const [nameIn,  setNameIn]  = useState('');
+  const [nameFb,  setNameFb]  = useState(null);    // null | 'wrong'
+  const [qOpen,   setQOpen]   = useState(false);
+  const [qSel,    setQSel]    = useState(null);    // null | 0..3
+  const [qExp,    setQExp]    = useState(false);
+  const [sizeIn,  setSizeIn]  = useState('');
+  const [sizeFb,  setSizeFb]  = useState(null);    // null | 'ok' | 'no'
+  const [pDur,    setPDur]    = useState(null);    // lineage key
+  const [durIn,   setDurIn]   = useState('');
+  const [durFb,   setDurFb]   = useState(null);    // null | 'ok' | 'no'
+  const [dDurs,   setDDurs]   = useState({});      // completed duration quizzes
+  const svgRef  = useRef(null);
+  const nameRef = useRef(null);
 
-  function save(newProg) {
-    setProgress(newProg);
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(newProg)); } catch {}
+  // ── Persist ──
+  useEffect(() => {
+    try { localStorage.setItem(STORE, JSON.stringify({ph:phases,mc})); } catch {}
+  }, [phases, mc]);
+
+  // ── Helpers ──
+  function isDone(id) {
+    const c = CMAP[id]; if (!c) return false;
+    const p = phases[id]||'idle';
+    if (c.isTissue) return p==='done';
+    if (c.isFinal)  return p==='size_done';
+    return p==='done';
   }
 
-  function handlePlace(cell, progressKey) {
-    if (cell.question) {
-      setPendingQ({ question: cell.question, cell, progressKey });
-      setSelectedAns(null);
-      setShowQExp(false);
-      return;
+  function isActive(id) {
+    if (isDone(id)) return false;
+    const c = CMAP[id]; if (!c) return false;
+    return c.par.every(pid => isDone(pid));
+  }
+
+  function matchName(inp, id) {
+    const c = CMAP[id]; if (!c) return false;
+    const n = s => s.toLowerCase().replace(/[^a-z0-9]/g,'');
+    const u = n(inp);
+    if (u.length < 4) return false;
+    return c.kw.some(k => n(k).startsWith(u));
+  }
+
+  function numSize(inp, sz) {
+    const ns = s => (s.match(/[\d.]+/g)||[]).map(Number);
+    const u = ns(inp), r = ns(sz);
+    if (!u.length||!r.length) return false;
+    const lo = Math.min(...r), hi = Math.max(...r);
+    return u.some(n => n >= lo-0.5 && n <= hi+0.5);
+  }
+
+  function numDur(inp, lin) {
+    const n = (inp.match(/[\d.]+/g)||[]).map(Number);
+    if (!n.length) return false;
+    const [lo, hi] = lin.durRange;
+    return n.some(v => v >= lo && v <= hi);
+  }
+
+  function getStatus(id) {
+    if (isDone(id)) return 'done';
+    const p = phases[id]||'idle';
+    if (p !== 'idle') return 'named';
+    if (isActive(id)) return 'active';
+    return 'locked';
+  }
+
+  // ── Lineage completion check ──
+  useEffect(() => {
+    if (pDur) return;
+    const key = Object.keys(LINS).find(k => !dDurs[k] && LINS[k].terminals.every(id => isDone(id)));
+    if (key) { setPDur(key); setDurIn(''); setDurFb(null); }
+  }, [phases, mc]);
+
+  // ── Handlers ──
+  function openCell(id) {
+    if (!isActive(id)) return;
+    const svgEl = svgRef.current, cell = CMAP[id];
+    if (!svgEl||!cell) return;
+    const pt = svgEl.createSVGPoint();
+    pt.x = cell.x; pt.y = cell.y;
+    const sp = pt.matrixTransform(svgEl.getScreenCTM());
+    setSelId(id); setPopPos({x:sp.x, y:sp.y});
+    setNameIn(''); setNameFb(null);
+    setQOpen(false); setQSel(null); setQExp(false);
+    setSizeIn(''); setSizeFb(null);
+    setTimeout(() => nameRef.current && nameRef.current.focus(), 60);
+  }
+
+  function submitName() {
+    if (!selId) return;
+    const c = CMAP[selId];
+    if (matchName(nameIn, selId)) {
+      setNameFb(null);
+      if (c.isTissue) { setPhases(p => ({...p, [selId]:'done'})); setSelId(null); }
+      else { setPhases(p => ({...p, [selId]:'named'})); }
+    } else { setNameFb('wrong'); }
+  }
+
+  function chooseMitosis(choice) {
+    if (!selId) return;
+    const c = CMAP[selId];
+    setMc(m => ({...m, [selId]:choice}));
+    if (c.isFinal) {
+      setPhases(p => ({...p, [selId]:'size_pending'}));
+      setSizeIn(''); setSizeFb(null);
+    } else {
+      setPhases(p => ({...p, [selId]:'done'}));
+      setSelId(null);
     }
-    commitPlace(cell, progressKey);
   }
 
-  function commitPlace(cell, progressKey) {
-    const newProg = { ...progress, [progressKey]: (progress[progressKey] || 0) + 1 };
-    save(newProg);
-    setActiveZone(cell.zone);
-    if (cell.isFinal) {
-      setPendingSize({ name: cell.name, correctSize: cell.correctSize });
-      setSizeInput(''); setSizeChecked(false); setSizeCorrect(null);
-    }
+  function submitSize() {
+    if (!selId) return;
+    setSizeFb(numSize(sizeIn, CMAP[selId].size) ? 'ok' : 'no');
   }
 
-  function handleQContinue() {
-    const { cell, progressKey } = pendingQ;
-    commitPlace(cell, progressKey);
-    setPendingQ(null); setSelectedAns(null); setShowQExp(false);
+  function continueSize() {
+    setPhases(p => ({...p, [selId]:'size_done'}));
+    setSelId(null);
   }
 
-  function checkSize(input, correct) {
-    const ref  = correct.match(/[\d.]+/g)?.map(Number) || [];
-    const user = input.match(/[\d.,]+/g)?.map(s => parseFloat(s.replace(',', '.'))) || [];
-    if (!user.length || !ref.length) return false;
-    if (ref.length === 1) return user.some(n => Math.abs(n - ref[0]) <= 0.5);
-    const lo = Math.min(...ref), hi = Math.max(...ref);
-    return user.some(n => n >= lo - 1 && n <= hi + 1);
+  function submitDur() {
+    if (!pDur) return;
+    setDurFb(numDur(durIn, LINS[pDur]) ? 'ok' : 'no');
   }
 
-  function resetProgress() {
-    save({ ...INIT_P });
-    setActiveZone(null);
+  function continueDur() {
+    setDDurs(d => ({...d, [pDur]:true}));
+    setPDur(null);
   }
 
-  function lineageStats(key) {
-    if (key === 'granulopoiesis') {
-      const d = DATA.granulopoiesis;
-      const total = d.shared.length + Object.values(d.branches).reduce((s, b) => s + b.cells.length, 0);
-      const placed = (progress.granuloShared || 0) +
-        (progress.neutrophil || 0) + (progress.eosinophil || 0) + (progress.basophil || 0);
-      return { placed, total };
-    }
-    if (key === 'lymphopoiesis') {
-      const d = DATA.lymphopoiesis;
-      const total = Object.values(d.branches).reduce((s, b) => s + b.cells.length, 0);
-      return { placed: (progress.b_cell || 0) + (progress.t_cell || 0), total };
-    }
-    const d = DATA[key];
-    return { placed: progress[key] || 0, total: d.cells.length };
+  function doReset() {
+    if (!window.confirm('Reset all progress?')) return;
+    setPhases({}); setMc({}); setDDurs({}); setPDur(null); setSelId(null);
+    localStorage.removeItem(STORE);
   }
 
-  /* ── Cell card ─────────────────────────────────────────── */
-  function CellCardInner({ cell, placed, isCurrent, progressKey }) {
-    const zc = ZONE_CFG[cell.zone];
-    const locked = !placed && !isCurrent;
-    const borderStyle = cell.isCFU ? 'dashed' : 'solid';
+  // L-shaped SVG connector path
+  function lpath(px, py, cx, cy) {
+    const my = Math.round((py + cy) / 2);
+    return 'M ' + px + ' ' + (py+R) + ' L ' + px + ' ' + my + ' L ' + cx + ' ' + my + ' L ' + cx + ' ' + (cy-R);
+  }
+
+  // ── Render: cell node ──
+  function renderCell(id) {
+    const c = CMAP[id]; if (!c) return null;
+    const stat   = getStatus(id);
+    const done   = stat === 'done';
+    const named  = stat === 'named' || done;
+    const active = stat === 'active';
+    const locked = stat === 'locked';
+    const clr    = ZCOL[c.zone] || '#888';
+    const mval   = mc[id];
+
+    return (
+      React.createElement('g', {
+        key: id,
+        style: {cursor: active ? 'pointer' : 'default'},
+        onClick: function() { if (active) openCell(id); }
+      },
+        active && React.createElement('circle', {
+          cx: c.x, cy: c.y, r: R+5,
+          fill: 'none', stroke: clr, strokeWidth: 1.5
+        },
+          React.createElement('animate', {
+            attributeName: 'opacity', values: '.45;.1;.45',
+            dur: '2s', repeatCount: 'indefinite'
+          })
+        ),
+        React.createElement('circle', {
+          cx: c.x, cy: c.y, r: R,
+          fill: done ? clr : named ? clr+'25' : active ? '#ffffff' : '#e5e5e5',
+          stroke: (active||named) ? clr : '#bbb',
+          strokeWidth: active ? 2.5 : 1.5,
+          opacity: locked ? 0.28 : 1
+        }),
+        named && React.createElement('text', {
+          x: c.x, y: c.y + R + 9,
+          textAnchor: 'middle',
+          fontSize: 7, fontWeight: 600,
+          fill: done ? clr : '#444',
+          style: {pointerEvents:'none', userSelect:'none'}
+        }, c.short),
+        named && !c.isTissue && React.createElement('circle', {
+          cx: c.x + R - 2, cy: c.y - R + 2, r: 4.5,
+          fill: mval === undefined ? '#bbb' : mval === 'yes' ? '#4caf50' : '#f44336',
+          stroke: '#fff', strokeWidth: 1,
+          style: {pointerEvents:'none'}
+        })
+      )
+    );
+  }
+
+  // ── Render: floating popover ──
+  function renderPopover() {
+    if (!selId) return null;
+    const c = CMAP[selId]; if (!c) return null;
+    const p    = phases[selId]||'idle';
+    const clr  = ZCOL[c.zone]||'#555';
+    const lin  = c.lineage ? LINS[c.lineage] : null;
+    const named = p !== 'idle';
+    const mval  = mc[selId];
+    const qDone = p === 'q_done';
+    const showMito = named && (!c.q || qDone) && mval === undefined;
+    const showSize = p === 'size_pending';
+
+    const W = 272;
+    let left = popPos.x + 18, top = popPos.y - 55;
+    if (left + W > window.innerWidth  - 8) left = popPos.x - W - 18;
+    if (top < 8) top = 8;
+    if (top + 400 > window.innerHeight - 8) top = window.innerHeight - 410;
+
     return (
       <div style={{
-        background: placed ? '#f8f8f8' : locked ? '#f4f4f4' : '#fff',
-        border: `1.5px ${borderStyle} ${locked ? '#ddd' : zc.border}`,
-        borderRadius: 10, padding: '11px 13px', marginBottom: 7,
-        opacity: placed ? 0.62 : locked ? 0.40 : 1,
-        transition: 'opacity .15s',
+        position:'fixed', left, top, width:W,
+        background:'#fff', border:'2px solid '+clr,
+        borderRadius:10, padding:'12px 14px',
+        boxShadow:'0 4px 20px rgba(0,0,0,.18)',
+        zIndex:200, fontSize:12,
+        maxHeight: window.innerHeight - 20, overflowY:'auto',
       }}>
-        {/* Top row: zone tag + mitosis plug */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
-          <span style={{
-            fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em',
-            background: zc.bg, color: zc.color, border: `1px solid ${zc.border}`,
-            borderRadius: 4, padding: '2px 6px', flexShrink: 0,
-          }}>
-            {cell.zoneNote ? cell.zoneNote : zc.label}
+        {/* header */}
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+          <span style={{fontWeight:700,fontSize:10,textTransform:'uppercase',letterSpacing:'.07em',color:clr}}>
+            {c.zone.replace('_',' ')}
           </span>
-          {cell.isCFU && (
-            <span style={{ fontSize: 10, color: '#999', fontStyle: 'italic', flexShrink: 0 }}>Progenitor</span>
-          )}
-          {cell.isLastMitotic && !placed && isCurrent && (
-            <span style={{ fontSize: 10, color: '#e65100', fontWeight: 700, flexShrink: 0 }}>Last mitotic</span>
-          )}
-          <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-            <span style={{
-              width: 9, height: 9, borderRadius: '50%', flexShrink: 0,
-              background: cell.showAsSpecial ? '#ff9800' : cell.mitosis ? '#4caf50' : '#f44336',
-              display: 'inline-block',
-            }}/>
-            <span style={{ fontSize: 10, fontWeight: 600, color: cell.showAsSpecial ? '#e65100' : cell.mitosis ? '#2e7d32' : '#c62828' }}>
-              {cell.showAsSpecial ? 'Endomitosis' : cell.mitosis ? 'Can divide' : 'No mitosis'}
-            </span>
-          </span>
+          <button onClick={() => setSelId(null)}
+            style={{background:'none',border:'none',cursor:'pointer',fontSize:16,color:'#999',padding:0,lineHeight:1}}>
+            &#10005;
+          </button>
         </div>
 
-        {/* Name + size */}
-        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 1 }}>
-          {cell.name}
-          {cell.fullName && (
-            <span style={{ fontSize: 10, fontWeight: 400, color: '#777', marginLeft: 5 }}>
-              ({cell.fullName})
-            </span>
-          )}
-        </div>
-        <div style={{ fontSize: 12, color: '#555', marginBottom: 4 }}>
-          Size: <strong>{cell.size}</strong>
-        </div>
-
-        {/* Note */}
-        {cell.note && (
-          <div style={{ fontSize: 11, color: '#666', lineHeight: 1.45, marginBottom: 4 }}>{cell.note}</div>
+        {/* lineage info */}
+        {lin && (
+          <div style={{background:'#f7f7f7',borderRadius:6,padding:'5px 8px',marginBottom:8,fontSize:11}}>
+            <div><b>{lin.label}</b> &mdash; {lin.duration}</div>
+            <div style={{marginTop:2,color:'#666',lineHeight:1.45}}>{lin.stimulus}</div>
+          </div>
         )}
 
-        {/* Action row */}
-        {placed ? (
-          <div style={{ fontSize: 11, color: '#4caf50', fontWeight: 700, marginTop: 4 }}>Placed</div>
-        ) : isCurrent ? (
-          <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button
-              onClick={() => handlePlace(cell, progressKey)}
-              style={{
-                padding: '7px 18px', background: '#1a73e8', color: '#fff',
-                border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer',
-              }}
-            >
-              Place
-            </button>
-            {cell.question && (
-              <span style={{ fontSize: 10, color: '#e65100', fontWeight: 600 }}>Question required</span>
-            )}
-            {cell.isFinal && (
-              <span style={{ fontSize: 10, color: '#6a1b9a', fontWeight: 600 }}>Final stage — size check</span>
-            )}
-          </div>
-        ) : null}
-      </div>
-    );
-  }
+        {/* cell note */}
+        <div style={{color:'#555',lineHeight:1.5,marginBottom:9,fontSize:11}}>{c.note}</div>
 
-  /* ── Location sidebar ──────────────────────────────────── */
-  function LocationSidebar() {
-    return (
-      <div style={{
-        width: 110, flexShrink: 0, marginRight: 14,
-        display: 'flex', flexDirection: 'column',
-        border: '1px solid #ddd', borderRadius: 10, overflow: 'hidden', alignSelf: 'flex-start',
-        position: 'sticky', top: 0,
-      }}>
-        <div style={{ padding: '8px 6px', background: '#f0f0f0', borderBottom: '1px solid #ddd', textAlign: 'center' }}>
-          <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: '#888' }}>Location</span>
-        </div>
-        {Object.entries(ZONE_CFG).map(([key, conf]) => {
-          const active = activeZone === key;
-          return (
-            <div key={key} style={{
-              padding: '18px 8px',
-              background: active ? conf.bg : '#fafafa',
-              borderBottom: '1px solid #eee',
-              textAlign: 'center',
-              transition: 'background .25s',
-              minHeight: 60,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <span style={{
-                fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em',
-                color: active ? conf.color : '#ccc',
-                lineHeight: 1.3, transition: 'color .25s',
-              }}>
-                {conf.label}
-              </span>
+        {/* A) name input */}
+        {!named && (
+          <div>
+            <div style={{fontWeight:600,marginBottom:5,fontSize:12,color:'#333'}}>What is this cell?</div>
+            <div style={{display:'flex',gap:6}}>
+              <input ref={nameRef} value={nameIn}
+                onChange={e => { setNameIn(e.target.value); setNameFb(null); }}
+                onKeyDown={e => { if (e.key === 'Enter') submitName(); }}
+                placeholder="Type cell name..."
+                style={{
+                  flex:1, padding:'5px 8px', fontSize:12, outline:'none',
+                  border:'1.5px solid ' + (nameFb === 'wrong' ? '#f44336' : '#ccc'),
+                  borderRadius:6,
+                }}
+              />
+              <button onClick={submitName} style={{
+                padding:'5px 10px', background:clr, color:'#fff',
+                border:'none', borderRadius:6, cursor:'pointer', fontWeight:700, fontSize:12,
+              }}>OK</button>
             </div>
-          );
-        })}
-      </div>
-    );
-  }
+            {nameFb === 'wrong' && (
+              <div style={{color:'#f44336',fontSize:11,marginTop:3}}>Try again</div>
+            )}
+          </div>
+        )}
 
-  /* ── Question modal ────────────────────────────────────── */
-  function QuestionModal() {
-    if (!pendingQ) return null;
-    const { question } = pendingQ;
-    return (
-      <div style={{
-        position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 1000, padding: 20,
-      }}>
-        <div style={{
-          background: '#fff', borderRadius: 14, padding: 28,
-          maxWidth: 520, width: '100%', boxShadow: '0 8px 32px rgba(0,0,0,.2)',
-          maxHeight: '90vh', overflowY: 'auto',
-        }}>
-          <div style={{ fontSize: 10, color: '#999', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 10 }}>
-            Notable Change — Answer before placing
-          </div>
-          <div style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.5, marginBottom: 18, color: '#1a1a1a' }}>
-            {question.text}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
-            {question.options.map((opt, i) => {
-              const sel = selectedAns === i;
-              const correct = i === question.correct;
-              let bg = '#f7f7f7', border = '1.5px solid #ddd', color = '#1a1a1a';
-              if (showQExp) {
-                if (correct)     { bg = '#e8f5e9'; border = '2px solid #4caf50'; color = '#1b5e20'; }
-                else if (sel)    { bg = '#ffebee'; border = '2px solid #f44336'; color = '#b71c1c'; }
-              } else if (sel)    { bg = '#e8f0fe'; border = '2px solid #1a73e8'; }
-              return (
-                <button key={i}
-                  onClick={() => !showQExp && setSelectedAns(i)}
-                  style={{
-                    background: bg, border, borderRadius: 8, padding: '10px 14px',
-                    textAlign: 'left', cursor: showQExp ? 'default' : 'pointer',
-                    fontSize: 13, lineHeight: 1.4, color, transition: 'all .1s',
-                  }}
-                >
-                  <strong style={{ marginRight: 6 }}>{String.fromCharCode(65 + i)}.</strong>
-                  {opt}
-                </button>
-              );
-            })}
-          </div>
-          {showQExp && (
+        {/* B-D) named state */}
+        {named && (
+          <div>
+            {/* name revealed */}
             <div style={{
-              background: '#f0f7ff', border: '1px solid #90caf9', borderRadius: 8,
-              padding: '10px 14px', marginBottom: 14, fontSize: 13, lineHeight: 1.5, color: '#1a3f8f',
-            }}>
-              {question.explanation}
-            </div>
-          )}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-            {!showQExp ? (
-              <button
-                onClick={() => setShowQExp(true)}
-                disabled={selectedAns === null}
-                style={{
-                  padding: '9px 22px', fontSize: 14, fontWeight: 600, border: 'none', borderRadius: 8,
-                  background: selectedAns === null ? '#ddd' : '#1a73e8',
-                  color: selectedAns === null ? '#999' : '#fff',
-                  cursor: selectedAns === null ? 'default' : 'pointer',
-                }}
-              >
-                Submit
-              </button>
-            ) : (
-              <button
-                onClick={handleQContinue}
-                style={{
-                  padding: '9px 22px', fontSize: 14, fontWeight: 600, border: 'none', borderRadius: 8,
-                  background: '#4caf50', color: '#fff', cursor: 'pointer',
-                }}
-              >
-                Place Cell
-              </button>
+              fontWeight:700, fontSize:13, color:clr, padding:'4px 8px',
+              background:clr+'18', borderRadius:6, marginBottom:8,
+            }}>{c.name}</div>
+
+            {/* notable change question */}
+            {c.q && (
+              <div style={{marginBottom:8}}>
+                <button
+                  onClick={() => { if (!qDone) setQOpen(v => !v); }}
+                  style={{
+                    width:'100%', textAlign:'left', padding:'6px 10px',
+                    background: qDone ? '#e8f5e9' : '#fff3e0',
+                    border:'1px solid ' + (qDone ? '#66bb6a' : '#ffb74d'),
+                    borderRadius:6, cursor: qDone ? 'default' : 'pointer',
+                    fontWeight:600, fontSize:11,
+                    color: qDone ? '#2e7d32' : '#e65100',
+                  }}>
+                  {qDone ? 'Notable change: answered' : 'Notable change — tap to answer'}
+                </button>
+                {qOpen && !qDone && (
+                  <div style={{marginTop:5,background:'#fffde7',borderRadius:6,padding:'8px 7px'}}>
+                    <div style={{fontWeight:600,fontSize:11,marginBottom:6,lineHeight:1.45,color:'#333'}}>
+                      {c.q.text}
+                    </div>
+                    {c.q.opts.map((opt, i) => {
+                      let bg='#fff', bdr='1px solid #ddd', col='#333';
+                      if (qExp) {
+                        if (i === c.q.ans)  { bg='#e8f5e9'; bdr='1.5px solid #4caf50'; col='#1b5e20'; }
+                        else if (i === qSel){ bg='#ffebee'; bdr='1.5px solid #ef9a9a'; col='#b71c1c'; }
+                      } else if (i === qSel) { bg='#e8f0fe'; bdr='1.5px solid #1a73e8'; }
+                      return (
+                        <label key={i} style={{
+                          display:'block', marginBottom:4, padding:'4px 6px',
+                          border:bdr, borderRadius:5, cursor:'pointer',
+                          background:bg, color:col, fontSize:10.5, lineHeight:1.4,
+                        }}>
+                          <input type="radio" name={'q'+selId} checked={qSel === i}
+                            onChange={() => { if (!qExp) setQSel(i); }}
+                            style={{marginRight:5}}
+                          />
+                          {opt}
+                        </label>
+                      );
+                    })}
+                    {!qExp ? (
+                      <button onClick={() => setQExp(true)} disabled={qSel === null}
+                        style={{
+                          marginTop:4, padding:'4px 12px', border:'none', borderRadius:5,
+                          background: qSel === null ? '#ddd' : '#7b1fa2',
+                          color: qSel === null ? '#999' : '#fff',
+                          cursor: qSel === null ? 'default' : 'pointer',
+                          fontWeight:700, fontSize:11,
+                        }}>Submit</button>
+                    ) : (
+                      <div>
+                        <div style={{
+                          fontSize:10, color:'#1a3f8f', lineHeight:1.5, marginTop:5,
+                          padding:'4px 6px', background:'#e8f0fe', borderRadius:4,
+                        }}>{c.q.exp}</div>
+                        <button
+                          onClick={() => {
+                            setPhases(prev => ({...prev, [selId]:'q_done'}));
+                            setQOpen(false); setQSel(null); setQExp(false);
+                          }}
+                          style={{
+                            marginTop:5, padding:'4px 12px', border:'none', borderRadius:5,
+                            background:'#555', color:'#fff', cursor:'pointer', fontSize:11,
+                          }}>Continue</button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* mitosis choice */}
+            {showMito && (
+              <div style={{marginBottom:8}}>
+                <div style={{fontWeight:600,fontSize:11,marginBottom:5,color:'#333'}}>
+                  Can this cell divide by mitosis?
+                </div>
+                <div style={{display:'flex',gap:8}}>
+                  <button onClick={() => chooseMitosis('yes')} style={{
+                    flex:1, padding:'7px', background:'#e8f5e9',
+                    border:'1.5px solid #4caf50', borderRadius:6,
+                    cursor:'pointer', fontWeight:700, color:'#2e7d32', fontSize:11,
+                  }}>Yes (green)</button>
+                  <button onClick={() => chooseMitosis('no')} style={{
+                    flex:1, padding:'7px', background:'#ffebee',
+                    border:'1.5px solid #f44336', borderRadius:6,
+                    cursor:'pointer', fontWeight:700, color:'#c62828', fontSize:11,
+                  }}>No (red)</button>
+                </div>
+              </div>
+            )}
+
+            {/* mitosis result badge */}
+            {mval !== undefined && !showSize && (
+              <div style={{
+                padding:'4px 8px', borderRadius:5, fontSize:11, fontWeight:600, marginBottom:6,
+                background: mval==='yes' ? '#e8f5e9' : '#ffebee',
+                color: mval==='yes' ? '#2e7d32' : '#c62828',
+              }}>
+                Mitosis: {mval==='yes' ? 'capable' : 'not capable'}
+                {mval === (c.mitosis ? 'yes' : 'no') ? ' — correct' : ' — incorrect'}
+              </div>
+            )}
+
+            {/* size check */}
+            {showSize && (
+              <div>
+                <div style={{fontWeight:600,fontSize:11,marginBottom:5,color:'#333'}}>
+                  Diameter of a {c.short}? (µm)
+                </div>
+                <div style={{display:'flex',gap:6}}>
+                  <input value={sizeIn}
+                    onChange={e => { setSizeIn(e.target.value); setSizeFb(null); }}
+                    onKeyDown={e => { if (e.key === 'Enter' && !sizeFb) submitSize(); }}
+                    placeholder="e.g. 7.5 or 10-12"
+                    style={{
+                      flex:1, padding:'5px 8px', fontSize:12, outline:'none',
+                      border:'1.5px solid ' + (sizeFb==='ok'?'#4caf50':sizeFb==='no'?'#f44336':'#ccc'),
+                      borderRadius:6,
+                    }}
+                  />
+                  {!sizeFb && (
+                    <button onClick={submitSize} style={{
+                      padding:'5px 10px', background:clr, color:'#fff',
+                      border:'none', borderRadius:6, cursor:'pointer', fontWeight:700, fontSize:12,
+                    }}>Check</button>
+                  )}
+                </div>
+                {sizeFb && (
+                  <div>
+                    <div style={{
+                      marginTop:4, fontSize:11, fontWeight:600,
+                      color: sizeFb==='ok' ? '#2e7d32' : '#c62828',
+                    }}>
+                      {sizeFb==='ok' ? 'Correct!' : 'Answer: ' + (CMAP[selId] ? CMAP[selId].size : '') + ' µm'}
+                    </div>
+                    <button onClick={continueSize} style={{
+                      marginTop:6, padding:'4px 12px', border:'none', borderRadius:5,
+                      background:'#555', color:'#fff', cursor:'pointer', fontSize:11,
+                    }}>Continue</button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
-        </div>
+        )}
       </div>
     );
   }
 
-  /* ── Size check modal ──────────────────────────────────── */
-  function SizeModal() {
-    if (!pendingSize) return null;
+  // ── Render: duration modal ──
+  function renderDurModal() {
+    if (!pDur) return null;
+    const lin = LINS[pDur];
     return (
       <div style={{
-        position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 1000, padding: 20,
+        position:'fixed', inset:0, background:'rgba(0,0,0,.45)',
+        display:'flex', alignItems:'center', justifyContent:'center', zIndex:300,
       }}>
         <div style={{
-          background: '#fff', borderRadius: 14, padding: 28,
-          maxWidth: 420, width: '100%', boxShadow: '0 8px 32px rgba(0,0,0,.2)',
+          background:'#fff', borderRadius:12, padding:24, width:340,
+          boxShadow:'0 8px 32px rgba(0,0,0,.22)',
         }}>
-          <div style={{ fontSize: 10, color: '#6a1b9a', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 10 }}>
-            Final Stage — Size Check
+          <div style={{fontWeight:700,fontSize:15,marginBottom:6,color:'#222'}}>{lin.label} complete!</div>
+          <div style={{color:'#555',fontSize:13,marginBottom:14,lineHeight:1.5}}>
+            How long does {lin.label.toLowerCase()} take in total?
+            <br/><span style={{fontSize:11,color:'#999'}}>(answer in days)</span>
           </div>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 6, lineHeight: 1.4 }}>
-            What is the size of the <strong>{pendingSize.name}</strong>?
-          </div>
-          <div style={{ fontSize: 13, color: '#666', marginBottom: 14 }}>Enter in micrometers (µm)</div>
-          <input
-            type="text"
-            value={sizeInput}
-            onChange={e => { setSizeInput(e.target.value); setSizeChecked(false); setSizeCorrect(null); }}
-            placeholder="e.g. 7.5 or 10-12"
+          <input value={durIn}
+            onChange={e => { setDurIn(e.target.value); setDurFb(null); }}
+            onKeyDown={e => { if (e.key === 'Enter' && !durFb) submitDur(); }}
+            placeholder="e.g. 7"
             style={{
-              width: '100%', padding: '10px 12px', fontSize: 15, borderRadius: 8, marginBottom: 12, outline: 'none',
-              border: `1.5px solid ${sizeChecked ? (sizeCorrect ? '#4caf50' : '#f44336') : '#ccc'}`,
+              width:'100%', padding:'9px 12px', fontSize:14, outline:'none',
+              border:'1.5px solid ' + (durFb==='ok'?'#4caf50':durFb==='no'?'#f44336':'#ccc'),
+              borderRadius:8, boxSizing:'border-box',
             }}
           />
-          {sizeChecked && (
+          {durFb && (
             <div style={{
-              padding: '10px 14px', borderRadius: 8, marginBottom: 14, fontSize: 13,
-              background: sizeCorrect ? '#e8f5e9' : '#ffebee',
-              border: `1px solid ${sizeCorrect ? '#4caf50' : '#f44336'}`,
-              color: sizeCorrect ? '#2e7d32' : '#c62828',
+              marginTop:5, fontSize:12, fontWeight:600,
+              color: durFb==='ok' ? '#2e7d32' : '#c62828',
             }}>
-              {sizeCorrect
-                ? 'Correct. ' + pendingSize.name + ' = ' + pendingSize.correctSize + '.'
-                : 'Not quite. Correct size: ' + pendingSize.correctSize + '.'}
+              {durFb==='ok' ? 'Correct!' : 'Duration: ' + lin.duration}
             </div>
           )}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-            {!sizeChecked ? (
-              <button
-                onClick={() => { setSizeChecked(true); setSizeCorrect(checkSize(sizeInput, pendingSize.correctSize)); }}
-                disabled={!sizeInput.trim()}
-                style={{
-                  padding: '9px 22px', fontSize: 14, fontWeight: 600, border: 'none', borderRadius: 8,
-                  background: sizeInput.trim() ? '#1a73e8' : '#ddd',
-                  color: sizeInput.trim() ? '#fff' : '#999',
-                  cursor: sizeInput.trim() ? 'pointer' : 'default',
-                }}
-              >
-                Check
-              </button>
-            ) : (
-              <button
-                onClick={() => setPendingSize(null)}
-                style={{
-                  padding: '9px 22px', fontSize: 14, fontWeight: 600, border: 'none', borderRadius: 8,
-                  background: '#4caf50', color: '#fff', cursor: 'pointer',
-                }}
-              >
-                Continue
-              </button>
-            )}
+          <div style={{marginTop:12,display:'flex',gap:8}}>
+            {!durFb
+              ? <button onClick={submitDur} style={{flex:1,padding:8,background:'#7b1fa2',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',fontWeight:700,fontSize:13}}>Check</button>
+              : <button onClick={continueDur} style={{flex:1,padding:8,background:'#555',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',fontWeight:700,fontSize:13}}>Continue</button>
+            }
           </div>
         </div>
       </div>
     );
   }
 
-  /* ── Info banner ───────────────────────────────────────── */
-  function InfoBanner({ data }) {
-    return (
-      <div style={{
-        marginBottom: 14, padding: '11px 14px',
-        background: '#fffde7', border: '1px solid #f9a825', borderRadius: 8,
-      }}>
-        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 3 }}>{data.label || data.name}</div>
-        {data.stimulus  && <div style={{ fontSize: 12, color: '#666', marginBottom: 1 }}>Stimulus: {data.stimulus}</div>}
-        {data.duration  && <div style={{ fontSize: 12, color: '#666', marginBottom: 1 }}>Duration: {data.duration}</div>}
-        {data.mitosesNote && <div style={{ fontSize: 12, color: '#666', marginBottom: 1 }}>{data.mitosesNote}</div>}
-        {data.note      && <div style={{ fontSize: 11, color: '#888', fontStyle: 'italic', marginTop: 3 }}>{data.note}</div>}
-      </div>
-    );
-  }
-
-  /* ── Render a column of cells ──────────────────────────── */
-  function renderColumn(cells, progressKey, prerequisiteFulfilled = true) {
-    const placed = progress[progressKey] || 0;
-    return cells.map((cell, idx) => (
-      <CellCardInner
-        key={cell.id}
-        cell={cell}
-        placed={idx < placed}
-        isCurrent={idx === placed && prerequisiteFulfilled && idx >= placed}
-        progressKey={progressKey}
-      />
-    ));
-  }
-
-  /* ── Render active lineage ─────────────────────────────── */
-  function renderLineage() {
-    if (activeLineage === 'granulopoiesis') {
-      const d = DATA.granulopoiesis;
-      const sharedTotal = d.shared.length;
-      const sharedPlaced = progress.granuloShared || 0;
-      const sharedDone = sharedPlaced >= sharedTotal;
-      return (
-        <div>
-          <InfoBanner data={d} />
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>
-            Shared Stages (all 3 sub-lineages)
-          </div>
-          {d.shared.map((cell, idx) => (
-            <CellCardInner
-              key={cell.id}
-              cell={cell}
-              placed={idx < sharedPlaced}
-              isCurrent={idx === sharedPlaced}
-              progressKey="granuloShared"
-            />
-          ))}
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '.06em', marginTop: 18, marginBottom: 8 }}>
-            Sub-lineages — diverge at Myelocyte
-          </div>
-          {!sharedDone && (
-            <div style={{ fontSize: 12, color: '#999', fontStyle: 'italic', marginBottom: 10 }}>
-              Place all shared stages above to unlock the sub-lineages.
-            </div>
-          )}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-            {Object.entries(d.branches).map(([bKey, branch]) => (
-              <div key={bKey}>
-                <div style={{
-                  fontWeight: 700, fontSize: 11, color: '#555', textAlign: 'center',
-                  padding: '5px 4px', background: '#f0f0f0', borderRadius: 6, marginBottom: 6,
-                }}>
-                  {branch.label}
-                </div>
-                <div style={{ fontSize: 10, color: '#888', textAlign: 'center', marginBottom: 8 }}>
-                  {branch.stimulus}
-                </div>
-                {branch.cells.map((cell, idx) => {
-                  const p = progress[bKey] || 0;
-                  return (
-                    <CellCardInner
-                      key={cell.id}
-                      cell={cell}
-                      placed={idx < p}
-                      isCurrent={idx === p && sharedDone}
-                      progressKey={bKey}
-                    />
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    if (activeLineage === 'lymphopoiesis') {
-      const d = DATA.lymphopoiesis;
-      return (
-        <div>
-          <InfoBanner data={d} />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-            {Object.entries(d.branches).map(([bKey, branch]) => (
-              <div key={bKey}>
-                <div style={{
-                  fontWeight: 700, fontSize: 11, color: '#555', textAlign: 'center',
-                  padding: '5px 4px', background: '#f0f0f0', borderRadius: 6, marginBottom: 8,
-                }}>
-                  {branch.label}
-                </div>
-                {branch.cells.map((cell, idx) => {
-                  const p = progress[bKey] || 0;
-                  return (
-                    <CellCardInner
-                      key={cell.id}
-                      cell={cell}
-                      placed={idx < p}
-                      isCurrent={idx === p}
-                      progressKey={bKey}
-                    />
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    // Simple lineage
-    const d = DATA[activeLineage];
-    const p = progress[activeLineage] || 0;
-    return (
-      <div>
-        <InfoBanner data={d} />
-        {d.cells.map((cell, idx) => (
-          <CellCardInner
-            key={cell.id}
-            cell={cell}
-            placed={idx < p}
-            isCurrent={idx === p}
-            progressKey={activeLineage}
-          />
-        ))}
-      </div>
-    );
-  }
-
-  /* ── Main render ─────────────────────────────────────────── */
+  // ── Main render ──
   return (
-    <div style={{ minHeight: '100vh', background: '#f5f5f5', display: 'flex', flexDirection: 'column' }}>
+    <div style={{display:'flex',flexDirection:'column',height:'100vh',background:'#f2f2f2',fontFamily:'system-ui,sans-serif',overflow:'hidden'}}>
 
-      {/* Top bar */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 10, padding: '13px 20px',
-        background: 'rgba(242,237,232,0.95)', borderBottom: '1px solid #ccc', flexShrink: 0,
-      }}>
-        <button onClick={onBack} style={{
-          background: 'none', border: '1px solid #999', borderRadius: 8,
-          color: '#555', cursor: 'pointer', padding: '6px 14px', fontSize: 14, flexShrink: 0,
-        }}>
-          Back
+      {/* top bar */}
+      <div style={{display:'flex',alignItems:'center',gap:12,padding:'7px 16px',background:'#fff',borderBottom:'1px solid #e0e0e0',flexShrink:0}}>
+        <button onClick={onBack} style={{background:'none',border:'none',cursor:'pointer',fontSize:20,color:'#555',lineHeight:1}}>
+          &#8592;
         </button>
-        <div style={{ fontWeight: 700, fontSize: 15 }}>Hematopoiesis Building Map</div>
-        <div style={{ marginLeft: 8, fontSize: 12, color: '#888' }}>
-          All lineages originate from the Hematopoietic Stem Cell (HSC)
-        </div>
-        <button onClick={resetProgress} style={{
-          marginLeft: 'auto', background: 'none', border: '1px solid #e57373',
-          borderRadius: 8, color: '#c62828', cursor: 'pointer', padding: '5px 12px', fontSize: 12, flexShrink: 0,
-        }}>
-          Reset Progress
+        <span style={{fontWeight:700,fontSize:14}}>Hematopoiesis Building Map</span>
+        <button onClick={doReset} style={{marginLeft:'auto',fontSize:11,color:'#999',background:'none',border:'1px solid #ddd',borderRadius:5,padding:'3px 10px',cursor:'pointer'}}>
+          Reset
         </button>
       </div>
 
-      {/* Lineage tabs */}
-      <div style={{
-        display: 'flex', borderBottom: '1px solid #ddd', background: '#fff',
-        overflowX: 'auto', flexShrink: 0,
-      }}>
-        {LINEAGE_TABS.map(({ key, label }) => {
-          const { placed, total } = lineageStats(key);
-          const active = activeLineage === key;
-          const done = placed >= total;
-          return (
-            <button key={key}
-              onClick={() => { setActiveLineage(key); setActiveZone(null); }}
-              style={{
-                padding: '11px 16px', fontSize: 13,
-                fontWeight: active ? 700 : 500,
-                color: active ? '#1a73e8' : '#555',
-                background: 'none', border: 'none',
-                borderBottom: active ? '2px solid #1a73e8' : '2px solid transparent',
-                cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all .1s',
-              }}
-            >
-              {label}
-              <span style={{ marginLeft: 5, fontSize: 10, color: done ? '#4caf50' : '#aaa' }}>
-                {placed}/{total}
-              </span>
-            </button>
-          );
-        })}
+      {/* SVG diagram */}
+      <div style={{flex:1,position:'relative',overflow:'hidden'}}>
+        <svg ref={svgRef}
+          viewBox={'0 0 ' + DW + ' ' + DH}
+          style={{width:'100%',height:'100%',display:'block'}}
+          preserveAspectRatio="xMidYMid meet"
+        >
+          {/* zone background fills */}
+          <rect x={0} y={0}        width={DW} height={BLOOD_Y}            fill="#fffde7"/>
+          <rect x={0} y={BLOOD_Y}  width={DW} height={TISSUE_Y-BLOOD_Y}   fill="#fff5f5"/>
+          <rect x={0} y={TISSUE_Y} width={DW} height={DH-TISSUE_Y}        fill="#f1faf2"/>
+
+          {/* zone label strip */}
+          <rect x={0} y={0}        width={40} height={BLOOD_Y}            fill="#f3e5f5"/>
+          <rect x={0} y={BLOOD_Y}  width={40} height={TISSUE_Y-BLOOD_Y}   fill="#fce4ec"/>
+          <rect x={0} y={TISSUE_Y} width={40} height={DH-TISSUE_Y}        fill="#e8f5e9"/>
+          <line x1={40} y1={0}         x2={40} y2={DH}        stroke="#ccc" strokeWidth={1}/>
+          <line x1={40} y1={BLOOD_Y}   x2={DW} y2={BLOOD_Y}  stroke="#ccc" strokeWidth={1} strokeDasharray="5,4"/>
+          <line x1={40} y1={TISSUE_Y}  x2={DW} y2={TISSUE_Y} stroke="#ccc" strokeWidth={1} strokeDasharray="5,4"/>
+
+          {/* zone labels */}
+          <text x={20} y={BLOOD_Y/2} textAnchor="middle" dominantBaseline="middle"
+                transform={'rotate(-90,20,' + (BLOOD_Y/2) + ')'}
+                fontSize={8} fontWeight={700} fill="#7b1fa2" letterSpacing={1.2}>BONE MARROW</text>
+          <text x={20} y={BLOOD_Y+(TISSUE_Y-BLOOD_Y)/2} textAnchor="middle" dominantBaseline="middle"
+                transform={'rotate(-90,20,' + (BLOOD_Y+(TISSUE_Y-BLOOD_Y)/2) + ')'}
+                fontSize={8} fontWeight={700} fill="#c62828" letterSpacing={1.2}>BLOOD</text>
+          <text x={20} y={TISSUE_Y+(DH-TISSUE_Y)/2} textAnchor="middle" dominantBaseline="middle"
+                transform={'rotate(-90,20,' + (TISSUE_Y+(DH-TISSUE_Y)/2) + ')'}
+                fontSize={8} fontWeight={700} fill="#2e7d32" letterSpacing={1.2}>TISSUE</text>
+
+          {/* L-path connectors */}
+          {CELLS.map(cell =>
+            cell.par.map(pid => {
+              const pp = CMAP[pid]; if (!pp) return null;
+              return (
+                <path key={pid+'-'+cell.id}
+                  d={lpath(pp.x, pp.y, cell.x, cell.y)}
+                  fill="none" stroke="#cecece" strokeWidth={1.5}
+                />
+              );
+            })
+          )}
+
+          {/* cell nodes */}
+          {CELLS.map(cell => renderCell(cell.id))}
+        </svg>
+
+        {/* floating popover */}
+        {renderPopover()}
       </div>
 
-      {/* Main content */}
-      <div style={{ flex: 1, display: 'flex', padding: 18, overflow: 'auto', alignItems: 'flex-start' }}>
-        <LocationSidebar />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {renderLineage()}
-        </div>
-      </div>
-
-      <QuestionModal />
-      <SizeModal />
+      {/* duration modal */}
+      {renderDurModal()}
     </div>
   );
 }

@@ -1,492 +1,340 @@
-/* hematopoiesis-map-data.js
-   Data for the Hematopoiesis Building Map (Histology > Blood & Hematopoiesis).
-   All cell sizes, timings, stimuli, and notable changes are sourced from:
-     WS09 Blood.pdf and WS10 Hemopoiesis.pdf
-*/
+/* hematopoiesis-map-data.js  V2
+   SVG tree fill-in-the-blank map — all cells, keywords, notes, questions
+   ─────────────────────────────────────────────────────────────────────── */
+(function () {
 
-window.HEMA_INITIAL_PROGRESS = {
-  erythropoiesis: 0,
-  thrombopoiesis: 0,
-  granuloShared:  0,
-  neutrophil:     0,
-  eosinophil:     0,
-  basophil:       0,
-  monopoiesis:    0,
-  b_cell:         0,
-  t_cell:         0,
-};
+  /* ── diagram constants (shared with component) ── */
+  var R  = 13;   // cell circle radius (SVG units)
+  var DW = 870;  // viewBox width
+  var DH = 710;  // viewBox height
+  var BLOOD_Y  = 490;  // y where Bone Marrow → Blood zone begins
+  var TISSUE_Y = 600;  // y where Blood → Tissue zone begins
 
-/* Zone config used by the component (duplicated here so data file is self-describing) */
-window.HEMA_ZONE_CONFIG = {
-  bone_marrow: { label: 'Bone Marrow', color: '#7b3e28', bg: '#fdf3ee', border: '#c87941' },
-  blood:       { label: 'Blood',       color: '#b71c1c', bg: '#fff0f0', border: '#e57373' },
-  tissue:      { label: 'Tissue',      color: '#1a3f8f', bg: '#f0f4ff', border: '#7986cb' },
-};
+  window.HEMA_CONSTS = { R: R, DW: DW, DH: DH, BLOOD_Y: BLOOD_Y, TISSUE_Y: TISSUE_Y };
 
-window.HEMA_MAP_DATA = {
+  /* ────────────────────────────────────────────────────────
+     CELLS
+     par[]   = ids of parent cells (for unlock sequencing)
+     kw[]    = keywords — user input must start with one (case-insensitive,
+               punctuation stripped, min 4 chars)
+     note    = short info shown in popover (stimulus + stage time)
+     mitosis = true if cell CAN divide (used after user guesses)
+     isFinal = true for terminal blood cells that get a size question
+     isTissue= true for tissue-resident cells (name only, no extras)
+     q       = notable-change question object (optional)
+       .text  = question prompt
+       .opts  = array of 4 answer strings
+       .ans   = index of correct answer
+       .exp   = explanation shown after submit
+  ──────────────────────────────────────────────────────── */
+  window.HEMA_CELLS = [
 
-  /* ── ERYTHROPOIESIS ─────────────────────────────────────────────── */
-  erythropoiesis: {
-    label: 'Erythropoiesis',
-    stimulus: 'EPO (Erythropoietin) — produced by peritubular fibroblasts of the kidney in response to hypoxia',
-    duration: '~7 days (bone marrow phase) + ~3 days (reticulocyte in blood)',
-    mitosesNote: '3–5 mitotic divisions; nucleus becomes progressively smaller and more condensed',
-    cells: [
-      {
-        id: 'e_bfue',
-        name: 'BFU-E',
-        fullName: 'Burst-Forming Unit – Erythroid',
-        size: '~12–15 µm',
-        zone: 'bone_marrow',
-        mitosis: true,
-        isCFU: true,
-        note: 'Committed erythroid progenitor; not morphologically recognizable by light microscopy; responds to EPO but less sensitively than CFU-E',
-      },
-      {
-        id: 'e_cfue',
-        name: 'CFU-E',
-        fullName: 'Colony-Forming Unit – Erythroid',
-        size: '~10–12 µm',
-        zone: 'bone_marrow',
-        mitosis: true,
-        isCFU: true,
-        note: 'Most EPO-sensitive progenitor; not morphologically distinguishable; gives rise to the proerythroblast',
-      },
-      {
-        id: 'e_pro',
-        name: 'Proerythroblast',
-        size: '14–20 µm',
-        zone: 'bone_marrow',
-        mitosis: true,
-        note: 'First morphologically recognizable erythroid precursor; large pale nucleus with 1–2 nucleoli; strongly basophilic cytoplasm (abundant free ribosomes beginning Hb synthesis)',
-      },
-      {
-        id: 'e_baso',
-        name: 'Basophilic Erythroblast',
-        size: '12–16 µm',
-        zone: 'bone_marrow',
-        mitosis: true,
-        note: 'Intensely basophilic cytoplasm (peak ribosome content); nucleus coarser and smaller than proerythroblast; nucleoli disappear',
-      },
-      {
-        id: 'e_poly',
-        name: 'Polychromatophilic Erythroblast',
-        size: '12–14 µm',
-        zone: 'bone_marrow',
-        mitosis: true,
-        note: 'Mixed gray-pink cytoplasm — ribosomes (basophilic) plus accumulating hemoglobin (eosinophilic); nucleus condensing; last actively dividing stage in most textbooks',
-      },
-      {
-        id: 'e_ortho',
-        name: 'Orthochromatophilic Erythroblast',
-        size: '8–10 µm',
-        zone: 'bone_marrow',
-        mitosis: false,
-        note: 'Eosinophilic (pink) cytoplasm; hemoglobin now dominant; nucleus pyknotic and eccentric; CANNOT undergo mitosis; nucleus is expelled at this stage',
-        question: {
-          text: 'What structural change occurs in the erythrocyte precursor at this stage?',
-          options: [
-            'The nucleus is extruded (ejected) from the cell, producing an anucleate cell',
-            'The cell undergoes endomitosis, increasing its DNA content without dividing',
-            'Specific granules appear in the cytoplasm for the first time',
-            'The nucleus acquires multiple lobes connected by thin chromatin strands',
-          ],
-          correct: 0,
-          explanation: 'The orthochromatophilic erythroblast ejects its pyknotic nucleus (nuclear extrusion), producing the anucleate reticulocyte. This is a defining event in erythropoiesis — the cell permanently loses the ability to synthesize DNA. The expelled nucleus is phagocytosed by macrophages in the bone marrow.',
-        },
-      },
-      {
-        id: 'e_retic',
-        name: 'Reticulocyte',
-        size: '7 ± 0.5 µm',
-        zone: 'blood',
-        mitosis: false,
-        note: 'Anucleate; still contains residual ribosomes and mitochondria (visible as a blue reticulum with brilliant cresyl blue stain); spends ~3 days in blood maturing into an erythrocyte; slightly larger than mature RBC',
-      },
-      {
-        id: 'e_eryth',
-        name: 'Erythrocyte (RBC)',
-        size: '7.5 µm',
-        zone: 'blood',
-        mitosis: false,
-        note: 'Anucleate biconcave disc; no organelles; lifespan ~120 days; removed by macrophages in spleen, liver, and bone marrow; 7.5 µm = normocyte',
-        isFinal: true,
-        correctSize: '7.5 µm',
-      },
-    ],
-  },
+    /* ── Stem ── */
+    { id:'hsc', name:'Hematopoietic Stem Cell', short:'HSC',
+      kw:['hematopoietic stem','hemocytoblast','multipotential stem','hsc'],
+      x:450, y:45, zone:'bone_marrow', par:[], mitosis:true,
+      note:'Stimulus: SCF, CXCL12, TPO | Self-renews throughout life' },
 
-  /* ── THROMBOPOIESIS ─────────────────────────────────────────────── */
-  thrombopoiesis: {
-    label: 'Thrombopoiesis',
-    stimulus: 'Thrombopoietin (TPO) — produced mainly by the liver; also IL-3 and IL-6',
-    duration: '~10 days (entire bone marrow process)',
-    mitosesNote: 'Unique: undergoes endomitosis (polyploidization) instead of regular mitosis',
-    cells: [
-      {
-        id: 't_cfumeg',
-        name: 'CFU-Meg',
-        fullName: 'Colony-Forming Unit – Megakaryocyte',
-        size: '~15–20 µm',
-        zone: 'bone_marrow',
-        mitosis: true,
-        isCFU: true,
-        note: 'Committed megakaryocyte progenitor; strongly stimulated by TPO; begins to undergo endomitosis at this stage',
-      },
-      {
-        id: 't_mkbl',
-        name: 'Megakaryoblast',
-        size: '25–50 µm',
-        zone: 'bone_marrow',
-        mitosis: false,
-        showAsSpecial: true,
-        note: 'First recognizable precursor; large basophilic cell; undergoes endomitosis (DNA replication without cell division), reaching 8N–64N ploidy; one of the largest cells in bone marrow at this stage',
-        question: {
-          text: 'What type of nuclear division — distinct from normal mitosis — characterizes the megakaryoblast and gives the megakaryocyte its enormous size?',
-          options: [
-            'Endomitosis — DNA replicates repeatedly without cytokinesis, making the nucleus polyploid (8N to 64N)',
-            'Meiosis — the cell undergoes two rounds of reduction division, becoming haploid',
-            'Amitosis — the nucleus fragments directly without a mitotic spindle',
-            'Normal mitosis — the cell divides repeatedly but daughter cells immediately fuse back together',
-          ],
-          correct: 0,
-          explanation: 'Endomitosis is the defining feature of megakaryopoiesis. The DNA is replicated repeatedly (S phase) but the cell never enters mitosis or divides. This produces a polyploid nucleus (8N, 16N, 32N, or 64N). The enormous DNA content drives cytoplasmic expansion, allowing one megakaryocyte to eventually shed thousands of platelets.',
-        },
-      },
-      {
-        id: 't_promk',
-        name: 'Promegakaryocyte',
-        size: '50–80 µm',
-        zone: 'bone_marrow',
-        mitosis: false,
-        note: 'Cell enlarges dramatically; cytoplasmic granules develop; demarcation membrane system (DMS) forms — an extensive invagination of the plasma membrane that pre-demarcates future platelet territories',
-      },
-      {
-        id: 't_mk',
-        name: 'Megakaryocyte',
-        size: 'up to 150 µm',
-        zone: 'bone_marrow',
-        mitosis: false,
-        note: 'Largest cell in the body (~150 µm); polylobulated nucleus; extends long cytoplasmic projections (protoplatelets) through sinusoid walls into the bloodstream; each megakaryocyte produces ~2,000–3,000 platelets',
-      },
-      {
-        id: 't_plt',
-        name: 'Platelet (Thrombocyte)',
-        size: '2–4 µm',
-        zone: 'blood',
-        mitosis: false,
-        note: 'Anucleate cytoplasmic fragment shed from megakaryocyte protoplatelets; contains alpha-granules (fibrinogen, vWF, P-selectin) and dense granules (ADP, serotonin, Ca²+); lifespan ~10 days; normal count 150,000–400,000/µL',
-        isFinal: true,
-        correctSize: '2–4 µm',
-      },
-    ],
-  },
+    /* ── Common progenitors ── */
+    { id:'cmp', name:'Common Myeloid Progenitor', short:'CMP',
+      kw:['common myeloid','myeloid progenitor','cmp'],
+      x:280, y:108, zone:'bone_marrow', par:['hsc'], mitosis:true,
+      note:'Stimulus: SCF, IL-3, GM-CSF | Gives rise to all myeloid lineages' },
 
-  /* ── GRANULOPOIESIS ─────────────────────────────────────────────── */
-  granulopoiesis: {
-    label: 'Granulopoiesis',
-    stimulus: 'G-CSF (neutrophils), GM-CSF (all granulocytes), IL-3 (multi-CSF), IL-5 (eosinophils)',
-    duration: '~14 days (bone marrow); mature granulocytes stored for ~5 days before release',
-    mitosesNote: '5 mitotic divisions total; the MYELOCYTE is the LAST cell capable of mitosis',
-    shared: [
-      {
-        id: 'g_cfugm',
-        name: 'CFU-GM',
-        fullName: 'Colony-Forming Unit – Granulocyte/Monocyte',
-        size: '~12–15 µm',
-        zone: 'bone_marrow',
-        mitosis: true,
-        isCFU: true,
-        note: 'Bipotent progenitor; can commit to granulocyte (CFU-G, CFU-Eo, CFU-Baso) or monocyte (CFU-M) lineage depending on growth factor signals',
-      },
-      {
-        id: 'g_mybl',
-        name: 'Myeloblast',
-        size: '15–20 µm',
-        zone: 'bone_marrow',
-        mitosis: true,
-        note: 'First morphologically recognizable granulocyte precursor; large round nucleus with prominent nucleoli; cytoplasm agranular (NO granules yet); similar appearance across all 3 granulocyte lineages at this stage',
-      },
-      {
-        id: 'g_promyelo',
-        name: 'Promyelocyte',
-        size: '20–25 µm',
-        zone: 'bone_marrow',
-        mitosis: true,
-        note: 'Largest cell in this lineage; azurophilic (primary/non-specific) granules appear for the first time — these persist in all daughter cells of all three granulocyte types; Golgi apparatus prominent',
-        question: {
-          text: 'What appears in the cytoplasm for the first time at the promyelocyte stage, and what is its significance for all subsequent granulocyte stages?',
-          options: [
-            'Azurophilic (primary) granules — non-specific lysosomes containing MPO, defensins, and elastase; present in all granulocyte subtypes from this point forward',
-            'Specific (secondary) granules — which define each granulocyte subtype (neutrophilic, eosinophilic, basophilic)',
-            'Demarcation membranes — pre-demarcating future cytoplasmic fragments for platelet release',
-            'A multilobed nucleus connected by thin chromatin strands',
-          ],
-          correct: 0,
-          explanation: 'Azurophilic primary granules appear at the promyelocyte stage and are retained in all subsequent stages. These are non-specific lysosomes (myeloperoxidase, elastase, defensins). Specific (secondary) granules, which define the granulocyte subtype, appear later at the myelocyte stage.',
-        },
-      },
-    ],
-    branches: {
-      neutrophil: {
-        label: 'Neutrophil',
-        stimulus: 'G-CSF',
-        cells: [
-          {
-            id: 'n_myelo',
-            name: 'Neutrophilic Myelocyte',
-            size: '12–16 µm',
-            zone: 'bone_marrow',
-            mitosis: true,
-            isLastMitotic: true,
-            note: 'Specific (secondary) neutrophilic granules appear — smaller and less eosinophilic than primary granules; LAST MITOTIC CELL in granulopoiesis; nucleus becomes indented (kidney-shaped starting here)',
-            question: {
-              text: 'The myelocyte marks a critical transition in granulopoiesis. What two features define this stage?',
-              options: [
-                'It is the LAST cell capable of mitosis, AND specific (secondary) granules appear for the first time, defining the cell\'s identity as neutrophil, eosinophil, or basophil',
-                'It is the first cell to lose its nucleus, AND azurophilic granules appear for the first time',
-                'It is the first cell to enter the bloodstream, AND the nucleus becomes multilobed',
-                'It is the last cell to retain nucleoli, AND demarcation membranes form',
-              ],
-              correct: 0,
-              explanation: 'The myelocyte is the last mitotically active cell in granulopoiesis (5 total divisions occur up to and including the myelocyte stage). Specific (secondary) granules appear here for the first time — these are the granules that define the cell\'s type (neutrophilic = small pale granules; eosinophilic = large orange-red; basophilic = large dark purple). All subsequent stages are post-mitotic.',
-            },
-          },
-          {
-            id: 'n_meta',
-            name: 'Neutrophilic Metamyelocyte',
-            size: '12–14 µm',
-            zone: 'bone_marrow',
-            mitosis: false,
-            note: 'Kidney-shaped (horseshoe) nucleus; no longer capable of division; enters the post-mitotic maturation pool',
-          },
-          {
-            id: 'n_band',
-            name: 'Band Cell (Stab Cell)',
-            size: '10–12 µm',
-            zone: 'bone_marrow',
-            mitosis: false,
-            note: 'Nucleus forms a curved C- or U-shaped band without lobes; small number circulate in blood normally (1–5%); increase in bands ("left shift") indicates bacterial infection',
-          },
-          {
-            id: 'n_seg',
-            name: 'Neutrophil (Segmented)',
-            size: '10–12 µm',
-            zone: 'blood',
-            mitosis: false,
-            note: 'Nucleus has 2–5 lobes connected by thin chromatin strands; most abundant leukocyte (60–70% of WBC); primary phagocyte; lifespan ~6–8h in blood, 1–3 days in tissue',
-            isFinal: true,
-            correctSize: '10–12 µm',
-          },
-        ],
-      },
-      eosinophil: {
-        label: 'Eosinophil',
-        stimulus: 'IL-5, GM-CSF',
-        cells: [
-          {
-            id: 'eo_myelo',
-            name: 'Eosinophilic Myelocyte',
-            size: '12–16 µm',
-            zone: 'bone_marrow',
-            mitosis: true,
-            isLastMitotic: true,
-            note: 'Large, bright orange-red specific granules appear (contain MBP, ECP, EPO, EDN); LAST MITOTIC CELL; nucleus begins to indent',
-          },
-          {
-            id: 'eo_meta',
-            name: 'Eosinophilic Metamyelocyte',
-            size: '12–14 µm',
-            zone: 'bone_marrow',
-            mitosis: false,
-            note: 'Horseshoe-shaped nucleus; prominent eosinophilic granules make identification easy',
-          },
-          {
-            id: 'eo_eos',
-            name: 'Eosinophil',
-            size: '12–14 µm',
-            zone: 'blood',
-            mitosis: false,
-            note: 'Bilobed nucleus (spectacle shape); large orange-red granules; ~1–4% of WBC; role in allergy, asthma, and parasitic (helminth) defense; lifespan ~8–12 days in tissue',
-            isFinal: true,
-            correctSize: '12–14 µm',
-          },
-        ],
-      },
-      basophil: {
-        label: 'Basophil',
-        stimulus: 'IL-3',
-        cells: [
-          {
-            id: 'ba_myelo',
-            name: 'Basophilic Myelocyte',
-            size: '12–16 µm',
-            zone: 'bone_marrow',
-            mitosis: true,
-            isLastMitotic: true,
-            note: 'Large, dark purple-black specific granules appear (contain heparin and histamine); LAST MITOTIC CELL; granules may obscure the nucleus',
-          },
-          {
-            id: 'ba_meta',
-            name: 'Basophilic Metamyelocyte',
-            size: '12–14 µm',
-            zone: 'bone_marrow',
-            mitosis: false,
-            note: 'Irregular nucleus (may appear S-shaped or bilobed); characteristic dark granules often overlie the nucleus',
-          },
-          {
-            id: 'ba_baso',
-            name: 'Basophil',
-            size: '9–11 µm',
-            zone: 'blood',
-            mitosis: false,
-            note: 'Irregular or S-shaped nucleus largely obscured by dark granules (heparin, histamine, leukotrienes); rarest granulocyte (<1% WBC); tissue counterpart = mast cell (though mast cells have a separate progenitor); IgE receptors (FcεRI) on surface',
-            isFinal: true,
-            correctSize: '9–11 µm',
-          },
-        ],
-      },
+    { id:'clp', name:'Common Lymphoid Progenitor', short:'CLP',
+      kw:['common lymphoid','lymphoid progenitor','clp'],
+      x:698, y:108, zone:'bone_marrow', par:['hsc'], mitosis:true,
+      note:'Stimulus: SCF, IL-7, Flt3L | Gives rise to all lymphoid lineages' },
+
+    /* ── Thrombopoiesis ── */
+    { id:'mkbl', name:'Megakaryoblast', short:'Megakaryoblast',
+      kw:['megakaryoblast'],
+      x:68, y:178, zone:'bone_marrow', par:['cmp'], mitosis:false, lineage:'thrombopoiesis',
+      note:'Stimulus: TPO | ~2 days | First committed megakaryocyte precursor',
+      q:{ text:'What unique form of nuclear multiplication occurs in this cell line, causing the cell to become massively polyploid without dividing?',
+          opts:['Endomitosis — DNA replicates repeatedly but the cell does not divide, producing a polyploid nucleus (up to 64N)',
+                'Meiosis — reduces chromosome number to haploid as in germ cells',
+                'Normal mitosis producing two identical daughter cells',
+                'Amitosis — direct nuclear fragmentation without a spindle apparatus'],
+          ans:0,
+          exp:'Endomitosis is unique to the megakaryocyte lineage. DNA replicates but cytokinesis is skipped, allowing the cell to accumulate up to 64 copies of every chromosome. This polyploidy provides the genetic material needed to shed thousands of platelets.' } },
+
+    { id:'promk', name:'Promegakaryocyte', short:'Promegakaryocyte',
+      kw:['promegakaryocyte'],
+      x:68, y:248, zone:'bone_marrow', par:['mkbl'], mitosis:false, lineage:'thrombopoiesis',
+      note:'Stimulus: TPO | ~2-3 days | Cytoplasm expands; demarcation membranes form' },
+
+    { id:'mk', name:'Megakaryocyte', short:'Megakaryocyte',
+      kw:['megakaryocyte'],
+      x:68, y:318, zone:'bone_marrow', par:['promk'], mitosis:false, lineage:'thrombopoiesis',
+      note:'Stimulus: TPO | ~5 days | Extends proplatelets through sinusoids to shed platelets' },
+
+    { id:'plt', name:'Platelet', short:'Platelet',
+      kw:['platelet','thrombocyte'],
+      x:68, y:510, zone:'blood', par:['mk'], mitosis:false, lineage:'thrombopoiesis',
+      isFinal:true, size:'2-4',
+      note:'Stimulus: TPO | 7-10 days in blood | Anucleate fragment; mediates clotting' },
+
+    /* ── Erythropoiesis ── */
+    { id:'proerythr', name:'Proerythroblast', short:'Proerythroblast',
+      kw:['proerythroblast','pronormoblast'],
+      x:162, y:178, zone:'bone_marrow', par:['cmp'], mitosis:true, lineage:'erythropoiesis',
+      note:'Stimulus: EPO | ~1 day | Largest nucleated RBC precursor' },
+
+    { id:'baso_e', name:'Basophilic Erythroblast', short:'Basophilic Erythroblast',
+      kw:['basophilic erythroblast','basophilic normoblast'],
+      x:162, y:248, zone:'bone_marrow', par:['proerythr'], mitosis:true, lineage:'erythropoiesis',
+      note:'Stimulus: EPO | ~2 days | Dense basophilia from abundant ribosomes' },
+
+    { id:'poly_e', name:'Polychromatic Erythroblast', short:'Polychromatic Erythroblast',
+      kw:['polychromatic erythroblast','polychromatophilic','polychromatic normoblast'],
+      x:162, y:318, zone:'bone_marrow', par:['baso_e'], mitosis:true, lineage:'erythropoiesis',
+      note:'Stimulus: EPO | ~2 days | Haemoglobin accumulating; mixed basophilia + eosinophilia' },
+
+    { id:'ortho_e', name:'Orthochromatic Erythroblast', short:'Orthochromatic Erythroblast',
+      kw:['orthochromatic erythroblast','orthochromatic normoblast','orthochromatophilic','normoblast'],
+      x:162, y:390, zone:'bone_marrow', par:['poly_e'], mitosis:false, lineage:'erythropoiesis',
+      note:'Stimulus: EPO (waning) | ~1 day | Pyknotic nucleus about to be expelled',
+      q:{ text:'What defining structural event happens to this erythrocyte precursor that no other nucleated blood cell undergoes?',
+          opts:['The nucleus is actively extruded from the cell, producing an anucleate reticulocyte',
+                'The nucleus becomes multilobed, connected by thin chromatin strands',
+                'The cell undergoes endomitosis, massively increasing DNA content without division',
+                'Haemoglobin synthesis ceases completely as the cytoplasm fills with granules'],
+          ans:0,
+          exp:'Nuclear extrusion is the defining hallmark of the orthochromatic erythroblast. The pyknotic (condensed, dark) nucleus is expelled and phagocytosed by bone marrow macrophages. The resulting anucleate cell is the reticulocyte.' } },
+
+    { id:'retic', name:'Reticulocyte', short:'Reticulocyte',
+      kw:['reticulocyte'],
+      x:162, y:450, zone:'bone_marrow', par:['ortho_e'], mitosis:false, lineage:'erythropoiesis',
+      note:'EPO no longer needed | 1-2 days BM then ~1 day blood | Residual ribosome network visible with supravital stain' },
+
+    { id:'eryth', name:'Erythrocyte', short:'Erythrocyte',
+      kw:['erythrocyte','red blood cell','rbc'],
+      x:162, y:510, zone:'blood', par:['retic'], mitosis:false, lineage:'erythropoiesis',
+      isFinal:true, size:'7.5',
+      note:'Circulates ~120 days | Anucleate biconcave disc; no organelles' },
+
+    /* ── Granulopoiesis — shared myeloblast ── */
+    { id:'mybl', name:'Myeloblast', short:'Myeloblast',
+      kw:['myeloblast'],
+      x:348, y:178, zone:'bone_marrow', par:['cmp'], mitosis:true, lineage:'granulopoiesis',
+      note:'Stimulus: G-CSF, GM-CSF, IL-3 | <1 day | First recognisable granulocyte precursor; no granules yet' },
+
+    /* ── Basophil branch ── */
+    { id:'b_pro', name:'Basophilic Promyelocyte', short:'B. Promyelocyte',
+      kw:['basophilic promyelocyte','b promyelocyte'],
+      x:255, y:248, zone:'bone_marrow', par:['mybl'], mitosis:true, lineage:'granulopoiesis',
+      note:'Stimulus: G-CSF | ~2 days | Azurophilic primary granules appear for the first time' },
+
+    { id:'b_myelo', name:'Basophilic Myelocyte', short:'B. Myelocyte',
+      kw:['basophilic myelocyte','b myelocyte'],
+      x:255, y:318, zone:'bone_marrow', par:['b_pro'], mitosis:true, lineage:'granulopoiesis',
+      note:'Stimulus: G-CSF | ~4 days | Last mitotic stage; basophil-specific granules appear' },
+
+    { id:'b_meta', name:'Basophilic Metamyelocyte', short:'B. Metamyelocyte',
+      kw:['basophilic metamyelocyte','b metamyelocyte'],
+      x:255, y:388, zone:'bone_marrow', par:['b_myelo'], mitosis:false, lineage:'granulopoiesis',
+      note:'Stimulus: G-CSF | ~3-5 days | Kidney-shaped nucleus; no further division' },
+
+    { id:'b_band', name:'Basophilic Band Cell', short:'B. Band',
+      kw:['basophilic band','b band'],
+      x:255, y:450, zone:'bone_marrow', par:['b_meta'], mitosis:false, lineage:'granulopoiesis',
+      note:'Stimulus: G-CSF | ~4 days | Horseshoe (band) nucleus' },
+
+    { id:'basophil', name:'Basophil', short:'Basophil',
+      kw:['basophil'],
+      x:255, y:510, zone:'blood', par:['b_band'], mitosis:false, lineage:'granulopoiesis',
+      isFinal:true, size:'9-11',
+      note:'Stimulus: IL-3 | Few days in blood | Rarest granulocyte; role in allergy and antiparasitic responses' },
+
+    /* ── Neutrophil branch ── */
+    { id:'n_pro', name:'Neutrophilic Promyelocyte', short:'N. Promyelocyte',
+      kw:['neutrophilic promyelocyte','n promyelocyte'],
+      x:348, y:248, zone:'bone_marrow', par:['mybl'], mitosis:true, lineage:'granulopoiesis',
+      note:'Stimulus: G-CSF | ~2 days | Azurophilic (primary) granules appear; largest promyelocyte',
+      q:{ text:'What appears in the cytoplasm for the first time at the promyelocyte stage, shared by ALL three granulocyte lineages?',
+          opts:['Azurophilic (primary) granules — non-specific lysosomes containing MPO, defensins and elastase',
+                'Specific (secondary) granules that already define the eventual granulocyte subtype',
+                'A multilobed nucleus joined by thin chromatin bridges',
+                'Demarcation membranes used for fragmentation into cell products'],
+          ans:0,
+          exp:'Azurophilic primary granules appear first at the promyelocyte stage in ALL granulocyte subtypes. They contain myeloperoxidase (MPO), defensins, and elastase. Specific secondary granules — which define whether the cell becomes a neutrophil, eosinophil, or basophil — appear later at the myelocyte stage.' } },
+
+    { id:'n_myelo', name:'Neutrophilic Myelocyte', short:'N. Myelocyte',
+      kw:['neutrophilic myelocyte','n myelocyte'],
+      x:348, y:318, zone:'bone_marrow', par:['n_pro'], mitosis:true, lineage:'granulopoiesis',
+      note:'Stimulus: G-CSF | ~4 days | Last mitotic stage; neutrophil-specific (secondary) granules appear',
+      q:{ text:'What two defining features characterise the myelocyte stage across all granulocyte lineages?',
+          opts:['It is the LAST cell capable of mitosis AND specific (secondary) granules appear here for the first time',
+                'It is the FIRST anucleate cell AND specific granules disappear at this point',
+                'It is the FIRST cell to enter the bloodstream AND the nucleus becomes multilobed',
+                'It is the LAST cell with nucleoli AND demarcation membranes begin forming'],
+          ans:0,
+          exp:'The myelocyte is the final mitotically active granulocyte precursor — beyond this stage cells cannot divide. Specific secondary granules appear at the myelocyte stage and determine the cell\'s identity: neutrophilic, eosinophilic, or basophilic.' } },
+
+    { id:'n_meta', name:'Neutrophilic Metamyelocyte', short:'N. Metamyelocyte',
+      kw:['neutrophilic metamyelocyte','n metamyelocyte'],
+      x:348, y:388, zone:'bone_marrow', par:['n_myelo'], mitosis:false, lineage:'granulopoiesis',
+      note:'Stimulus: G-CSF | ~3-5 days | Kidney-shaped indented nucleus; no further division' },
+
+    { id:'n_band', name:'Neutrophilic Band Cell', short:'N. Band',
+      kw:['neutrophilic band','n band','stab cell','band neutrophil'],
+      x:348, y:450, zone:'bone_marrow', par:['n_meta'], mitosis:false, lineage:'granulopoiesis',
+      note:'Stimulus: G-CSF | ~4 days | Horseshoe nucleus; elevated in infection ("left shift")' },
+
+    { id:'neutrophil', name:'Neutrophil', short:'Neutrophil',
+      kw:['neutrophil'],
+      x:348, y:510, zone:'blood', par:['n_band'], mitosis:false, lineage:'granulopoiesis',
+      isFinal:true, size:'10-12',
+      note:'Stimulus: G-CSF | 4-8 hours in blood | Most abundant granulocyte; first responder to bacterial infection' },
+
+    /* ── Eosinophil branch ── */
+    { id:'e_pro', name:'Eosinophilic Promyelocyte', short:'E. Promyelocyte',
+      kw:['eosinophilic promyelocyte','e promyelocyte'],
+      x:440, y:248, zone:'bone_marrow', par:['mybl'], mitosis:true, lineage:'granulopoiesis',
+      note:'Stimulus: IL-5 | ~2 days | Azurophilic primary granules appear' },
+
+    { id:'e_myelo', name:'Eosinophilic Myelocyte', short:'E. Myelocyte',
+      kw:['eosinophilic myelocyte','e myelocyte'],
+      x:440, y:318, zone:'bone_marrow', par:['e_pro'], mitosis:true, lineage:'granulopoiesis',
+      note:'Stimulus: IL-5 | ~4 days | Last mitotic stage; large eosinophil-specific granules appear' },
+
+    { id:'e_meta', name:'Eosinophilic Metamyelocyte', short:'E. Metamyelocyte',
+      kw:['eosinophilic metamyelocyte','e metamyelocyte'],
+      x:440, y:388, zone:'bone_marrow', par:['e_myelo'], mitosis:false, lineage:'granulopoiesis',
+      note:'Stimulus: IL-5 | ~3-5 days | Kidney-shaped nucleus; non-dividing' },
+
+    { id:'e_band', name:'Eosinophilic Band Cell', short:'E. Band',
+      kw:['eosinophilic band','e band'],
+      x:440, y:450, zone:'bone_marrow', par:['e_meta'], mitosis:false, lineage:'granulopoiesis',
+      note:'Stimulus: IL-5 | ~4 days | Horseshoe nucleus' },
+
+    { id:'eosinophil', name:'Eosinophil', short:'Eosinophil',
+      kw:['eosinophil'],
+      x:440, y:510, zone:'blood', par:['e_band'], mitosis:false, lineage:'granulopoiesis',
+      isFinal:true, size:'12-14',
+      note:'Stimulus: IL-5 | 8-12 days in blood | Anti-parasitic; mediates allergic responses' },
+
+    /* ── Monopoiesis ── */
+    { id:'monbl', name:'Monoblast', short:'Monoblast',
+      kw:['monoblast'],
+      x:535, y:178, zone:'bone_marrow', par:['cmp'], mitosis:true, lineage:'monopoiesis',
+      note:'Stimulus: M-CSF, GM-CSF | <1 day | Committed monocyte progenitor' },
+
+    { id:'promono', name:'Promonocyte', short:'Promonocyte',
+      kw:['promonocyte'],
+      x:535, y:248, zone:'bone_marrow', par:['monbl'], mitosis:true, lineage:'monopoiesis',
+      note:'Stimulus: M-CSF | ~1-2 days | Irregular nucleus; lysosomal granules forming' },
+
+    { id:'mono', name:'Monocyte', short:'Monocyte',
+      kw:['monocyte'],
+      x:535, y:510, zone:'blood', par:['promono'], mitosis:false, lineage:'monopoiesis',
+      isFinal:true, size:'12-20',
+      note:'Stimulus: M-CSF | 1-3 days in blood | Kidney-shaped nucleus; migrates to tissue as macrophage' },
+
+    /* ── Lymphopoiesis ── */
+    { id:'lymphbl', name:'Lymphoblast', short:'Lymphoblast',
+      kw:['lymphoblast'],
+      x:698, y:178, zone:'bone_marrow', par:['clp'], mitosis:true, lineage:'lymphopoiesis',
+      note:'Stimulus: IL-7, SCF | ~1-3 days | Committed lymphoid precursor' },
+
+    { id:'prolymph', name:'Prolymphocyte', short:'Prolymphocyte',
+      kw:['prolymphocyte'],
+      x:698, y:248, zone:'bone_marrow', par:['lymphbl'], mitosis:true, lineage:'lymphopoiesis',
+      note:'Stimulus: IL-7 | ~1-2 days | Condensing chromatin; smaller than lymphoblast' },
+
+    { id:'small_l', name:'Small Lymphocyte', short:'Small Lymphocyte',
+      kw:['small lymphocyte'],
+      x:698, y:330, zone:'bone_marrow', par:['prolymph'], mitosis:false, lineage:'lymphopoiesis',
+      note:'Survival signals | Naive; long-lived in periphery' },
+
+    { id:'nk', name:'Natural Killer Cell', short:'NK Cell',
+      kw:['natural killer','nk cell','nk'],
+      x:635, y:510, zone:'blood', par:['small_l'], mitosis:false, lineage:'lymphopoiesis',
+      isFinal:true, size:'10-15',
+      note:'Stimulus: IL-15 | Large granular lymphocyte; kills virus-infected and tumour cells' },
+
+    { id:'b_lymph', name:'B Lymphocyte', short:'B Lymphocyte',
+      kw:['b lymphocyte','b-lymphocyte','b cell'],
+      x:698, y:510, zone:'blood', par:['small_l'], mitosis:false, lineage:'lymphopoiesis',
+      isFinal:true, size:'6-8',
+      note:'Stimulus: BAFF, antigen | Matures in bone marrow then lymph nodes; becomes plasma cell or memory B cell' },
+
+    { id:'t_lymph', name:'T Lymphocyte', short:'T Lymphocyte',
+      kw:['t lymphocyte','t-lymphocyte','t cell'],
+      x:762, y:510, zone:'blood', par:['small_l'], mitosis:false, lineage:'lymphopoiesis',
+      isFinal:true, size:'6-8',
+      note:'Stimulus: antigen + co-stimulation | Matures in thymus; CD4+ helper or CD8+ cytotoxic' },
+
+    /* ── Tissue cells (name only) ── */
+    { id:'mast', name:'Mast Cell', short:'Mast Cell',
+      kw:['mast cell','mast'],
+      x:185, y:648, zone:'tissue', par:['basophil'], mitosis:false, isTissue:true,
+      note:'From basophil-like progenitor; tissue resident; releases histamine on IgE activation' },
+
+    { id:'macrophage', name:'Macrophage', short:'Macrophage',
+      kw:['macrophage'],
+      x:420, y:648, zone:'tissue', par:['mono'], mitosis:false, isTissue:true,
+      note:'From monocyte; long-lived phagocyte — Kupffer cell (liver), microglia (brain), osteoclast (bone)' },
+
+    { id:'myeloid_dc', name:'Myeloid Dendritic Cell', short:'Myeloid DC',
+      kw:['myeloid dendritic','myeloid dc'],
+      x:535, y:648, zone:'tissue', par:['mono'], mitosis:false, isTissue:true,
+      note:'From monocyte; professional antigen-presenting cell; activates naive T cells' },
+
+    { id:'plasma', name:'Plasma Cell', short:'Plasma Cell',
+      kw:['plasma cell','plasmacyte','plasma'],
+      x:660, y:648, zone:'tissue', par:['b_lymph'], mitosis:false, isTissue:true,
+      note:'From B lymphocyte after antigen stimulation; secretes specific antibodies' },
+
+    { id:'lymphoid_dc', name:'Lymphoid Dendritic Cell', short:'Lymphoid DC',
+      kw:['lymphoid dendritic','lymphoid dc'],
+      x:762, y:648, zone:'tissue', par:['b_lymph'], mitosis:false, isTissue:true,
+      note:'Plasmacytoid DC; from lymphoid lineage; produces large amounts of type I interferon' },
+
+  ]; // end HEMA_CELLS
+
+
+  /* ── LINEAGES
+     terminals[] = final cell IDs whose completion triggers the duration quiz
+     durRange    = [min, max] acceptable numeric answer in days
+  ── */
+  window.HEMA_LINEAGES = {
+    thrombopoiesis: {
+      label:'Thrombopoiesis',
+      stimulus:'TPO (Thrombopoietin) — produced by liver and kidneys',
+      duration:'~10 days',
+      durRange:[8, 12],
+      terminals:['plt']
     },
-  },
-
-  /* ── MONOPOIESIS ─────────────────────────────────────────────────── */
-  monopoiesis: {
-    label: 'Monopoiesis',
-    stimulus: 'M-CSF (Monocyte Colony-Stimulating Factor); also GM-CSF and IL-3',
-    duration: '~3–4 days (bone marrow); monocytes circulate 1–3 days then migrate to tissue as macrophages',
-    cells: [
-      {
-        id: 'm_cfum',
-        name: 'CFU-M',
-        fullName: 'Colony-Forming Unit – Monocyte',
-        size: '~12–15 µm',
-        zone: 'bone_marrow',
-        mitosis: true,
-        isCFU: true,
-        note: 'Committed monocyte progenitor; diverges from CFU-GM; stimulated primarily by M-CSF',
-      },
-      {
-        id: 'm_monbl',
-        name: 'Monoblast',
-        size: '~15–20 µm',
-        zone: 'bone_marrow',
-        mitosis: true,
-        note: 'First recognizable monocyte precursor; morphologically similar to myeloblast — large ovoid nucleus, nucleoli present, agranular cytoplasm; distinguishable only by immunohistochemistry',
-      },
-      {
-        id: 'm_pro',
-        name: 'Promonocyte',
-        size: 'up to 18 µm',
-        zone: 'bone_marrow',
-        mitosis: true,
-        note: 'Undergoes 2 mitotic divisions; large indented (kidney-shaped) nucleus; fine azurophilic granules appear; cytoplasm grayish-blue ("ground glass"); still in bone marrow',
-      },
-      {
-        id: 'm_mono',
-        name: 'Monocyte',
-        size: '12–20 µm',
-        zone: 'blood',
-        mitosis: false,
-        note: 'Largest circulating leukocyte; kidney-shaped or horseshoe nucleus; gray-blue "ground glass" cytoplasm with fine vacuoles; ~5–8% of WBC; after 1–3 days in blood, migrates to tissue and differentiates into macrophage, dendritic cell, or Kupffer cell',
-        isFinal: true,
-        correctSize: '12–20 µm',
-      },
-    ],
-  },
-
-  /* ── LYMPHOPOIESIS ───────────────────────────────────────────────── */
-  lymphopoiesis: {
-    label: 'Lymphopoiesis',
-    stimulus: 'IL-7, SCF, BAFF (B cells); IL-7, Notch ligands (T cells); antigen stimulation drives further differentiation',
-    duration: 'B cells: ~1–2 weeks (bone marrow); T cells: weeks (thymus education)',
-    note: 'B cells mature in the Bone Marrow. T cell progenitors leave bone marrow early and complete maturation in the Thymus (positive and negative selection).',
-    branches: {
-      b_cell: {
-        label: 'B-Cell Lineage',
-        cells: [
-          {
-            id: 'lb_clp',
-            name: 'CLP',
-            fullName: 'Common Lymphoid Progenitor',
-            size: '~10–15 µm',
-            zone: 'bone_marrow',
-            mitosis: true,
-            isCFU: true,
-            note: 'Lymphoid-committed progenitor; gives rise to both B and T lymphocytes; B-cell CLP remains in bone marrow for maturation',
-          },
-          {
-            id: 'lb_blast',
-            name: 'B-Lymphoblast',
-            size: '8–12 µm',
-            zone: 'bone_marrow',
-            mitosis: true,
-            note: 'Undergoes 2–3 mitotic divisions; immunoglobulin gene rearrangement (V-D-J recombination) occurs; B-cell receptor (BCR = surface IgM) begins to be expressed; large open nucleus with nucleoli',
-          },
-          {
-            id: 'lb_pro',
-            name: 'B-Prolymphocyte',
-            size: '7–10 µm',
-            zone: 'bone_marrow',
-            mitosis: false,
-            note: 'Smaller nucleus; reduced mitotic activity; BCR expression increases; undergoes negative selection (clonal deletion) if autoreactive',
-          },
-          {
-            id: 'lb_lymph',
-            name: 'B-Lymphocyte (naive)',
-            size: '6–8 µm (small)',
-            zone: 'blood',
-            mitosis: false,
-            note: 'Small round nucleus; scant cytoplasm; carries surface IgM and IgD; naive B cell circulates until it encounters antigen in secondary lymphoid organs (lymph nodes, spleen); ~15–30% of circulating lymphocytes',
-            isFinal: true,
-            correctSize: '6–8 µm',
-          },
-        ],
-      },
-      t_cell: {
-        label: 'T-Cell Lineage',
-        cells: [
-          {
-            id: 'lt_clp',
-            name: 'CLP',
-            fullName: 'Common Lymphoid Progenitor',
-            size: '~10–15 µm',
-            zone: 'bone_marrow',
-            mitosis: true,
-            isCFU: true,
-            note: 'T-cell committed CLP leaves bone marrow and migrates to the thymus to complete maturation — all subsequent T-cell stages occur in the thymus',
-            zoneNote: '(Exits to Thymus)',
-          },
-          {
-            id: 'lt_blast',
-            name: 'T-Lymphoblast',
-            size: '8–12 µm',
-            zone: 'bone_marrow',
-            zoneNote: '(Thymus — cortex)',
-            mitosis: true,
-            note: 'Matures in the thymic cortex; TCR (T-cell receptor) gene rearrangement; 2–3 mitotic divisions; double-positive (CD4+CD8+) at this stage',
-          },
-          {
-            id: 'lt_pro',
-            name: 'T-Prolymphocyte',
-            size: '7–10 µm',
-            zone: 'bone_marrow',
-            zoneNote: '(Thymus — cortex/medulla)',
-            mitosis: false,
-            note: 'Undergoes thymic selection: positive selection (must recognize self-MHC) and negative selection (must NOT strongly recognize self-antigen); most cells die here (>95%); survivors become single-positive (CD4+ or CD8+)',
-          },
-          {
-            id: 'lt_lymph',
-            name: 'T-Lymphocyte (naive)',
-            size: '6–8 µm (small), 9–18 µm (large activated)',
-            zone: 'blood',
-            mitosis: false,
-            note: 'Exits thymus as single-positive naive T cell (CD4+ helper or CD8+ cytotoxic); ~60–70% of circulating lymphocytes; small T cell until activated by antigen presentation',
-            isFinal: true,
-            correctSize: '6–8 µm',
-          },
-        ],
-      },
+    erythropoiesis: {
+      label:'Erythropoiesis',
+      stimulus:'EPO (Erythropoietin) — produced by peritubular cells of the kidney in response to hypoxia',
+      duration:'~7 days (bone marrow) + 1-2 days (reticulocyte in blood)',
+      durRange:[6, 10],
+      terminals:['eryth']
     },
-  },
+    granulopoiesis: {
+      label:'Granulopoiesis',
+      stimulus:'G-CSF, GM-CSF, IL-3 (all branches); IL-5 (eosinophil); IL-3 (basophil)',
+      duration:'~14 days',
+      durRange:[12, 16],
+      terminals:['basophil', 'neutrophil', 'eosinophil']
+    },
+    monopoiesis: {
+      label:'Monopoiesis',
+      stimulus:'M-CSF (Monocyte Colony-Stimulating Factor)',
+      duration:'~3-4 days',
+      durRange:[2, 5],
+      terminals:['mono']
+    },
+    lymphopoiesis: {
+      label:'Lymphopoiesis',
+      stimulus:'IL-7, SCF (B cells in marrow); Notch signalling (T cells in thymus)',
+      duration:'~1-2 weeks for B cells; weeks for T cells (thymus)',
+      durRange:[5, 21],
+      terminals:['nk', 'b_lymph', 't_lymph']
+    },
+  };
 
-}; // end HEMA_MAP_DATA
+})();
