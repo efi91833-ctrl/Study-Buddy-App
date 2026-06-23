@@ -5183,6 +5183,26 @@ function GroupCard({g, lvls, isOpen, hasSelected, hasAnswer, hasBad, onToggle, b
    EPITHELIAL CELL TYPE GAME
    ═══════════════════════════════════════════════════════════════ */
 
+const CATEGORY_IMAGE = {
+  'Simple Squamous':                    'flat/simple-squamous.svg',
+  'Simple Cuboidal':                    'flat/simple-cuboidal.svg',
+  'Simple Columnar':                    'flat/simple-columnar.svg',
+  'Pseudostratified Columnar':          'flat/pseudostratified-columnar.svg',
+  'Germinal Epithelium':                'flat/germinal-epithelium.svg',
+  'Reticular Epithelium':               'flat/reticular-epithelium.svg',
+  'Stratified Squamous (non-keratinized)': 'flat/stratified-squamous-nonkeratinized.svg',
+  'Stratified Squamous (keratinized)':  'flat/stratified-squamous-keratinized.svg',
+  'Transitional (Urothelium)':          'flat/transitional-urothelium.svg',
+  'Stratified Cuboidal / Columnar':     'flat/stratified-cuboidal-columnar.svg',
+  'Trabecular':                         'flat/trabecular.svg',
+};
+const STRUCTURE_IMAGE = {
+  'Cilia':                   'flat/cilia.svg',
+  'Microvilli / Brush border':'flat/microvilli-brush-border.svg',
+  'Stereocilia':             'flat/stereocilia.svg',
+  'Lamellar bodies':         'flat/lamellar-bodies.svg',
+};
+
 const EPITHELIAL_CATEGORIES_LEFT = [
   'Simple Squamous',
   'Simple Cuboidal',
@@ -5334,15 +5354,25 @@ function EpithelialGame({ onBack }) {
     if (isCorrect) { bg = '#f1f8f4'; border = '#4caf50'; color = '#2a7a4a'; }
     else if (isWrong) { bg = '#fdf4f4'; border = '#e57373'; color = '#8a4040'; }
     else if (isSel) { bg = '#e8e8e8'; border = '#999'; color = '#1a1a1a'; }
+    const imgSrc = CATEGORY_IMAGE[cat];
     return (
       <button onClick={() => { if (!submitted) setSelType(cat); }} style={{
         width: '100%', padding: '9px 10px', marginBottom: 6,
         borderRadius: 9, border: `1.5px solid ${border}`,
         background: bg, color, fontWeight: isSel || isCorrect ? 700 : 500,
-        fontSize: 13, textAlign: 'left',
+        fontSize: 13, textAlign: 'center',
         cursor: submitted ? 'default' : 'pointer', lineHeight: 1.3,
         transition: 'all .12s',
-      }}>{cat}</button>
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+      }}>
+        <span>{cat}</span>
+        {imgSrc && (
+          <img
+            src={imgSrc} alt={cat}
+            style={{ width: '100%', maxHeight: '9vh', objectFit: 'contain', display: 'block' }}
+          />
+        )}
+      </button>
     );
   };
 
@@ -5354,13 +5384,21 @@ function EpithelialGame({ onBack }) {
     if (isCorrect) { bg = '#f1f8f4'; border = '#4caf50'; color = '#2a7a4a'; }
     else if (isWrong) { bg = '#fdf4f4'; border = '#e57373'; color = '#8a4040'; }
     else if (isSel) { bg = '#e8e8e8'; border = '#999'; color = '#1a1a1a'; }
+    const imgSrc = STRUCTURE_IMAGE[s];
     return (
       <button onClick={() => { if (!submitted) setSelStructure(s); }} style={{
         padding: '6px 12px', borderRadius: 7, border: `1.5px solid ${border}`,
         background: bg, color, fontWeight: isSel || isCorrect ? 700 : 400,
         fontSize: 12, cursor: submitted ? 'default' : 'pointer',
-        whiteSpace: 'nowrap', transition: 'all .12s',
-      }}>{s}</button>
+        transition: 'all .12s',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+        minWidth: 70,
+      }}>
+        {imgSrc && (
+          <img src={imgSrc} alt={s} style={{ height: '5vh', objectFit: 'contain' }} />
+        )}
+        <span>{s}</span>
+      </button>
     );
   };
 
