@@ -14,6 +14,9 @@
   <meta name="theme-color" content="#1976d2" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
 
+  <style>
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
   <script src="vendor/react.min.js"></script>
   <script src="vendor/react-dom.min.js"></script>
   <script src="vendor/babel.min.js"></script>
@@ -10992,6 +10995,8 @@ function VirtualSlidesQuiz({ onBack }) {
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState(null); // 'correct' | 'incorrect'
   const [iframeError, setIframeError] = useState(false);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [slideReady, setSlideReady] = useState(false);
   const [sessionStats, setSessionStats] = useState({ correct: 0, total: 0 });
 
   // Only slides that have a virtual microscope idx mapped
@@ -11036,7 +11041,15 @@ function VirtualSlidesQuiz({ onBack }) {
     setSubmitted(false);
     setResult(null);
     setIframeError(false);
+    setIframeLoaded(false);
+    setSlideReady(false);
   }, [qIdx]);
+
+  useEffect(() => {
+    if (!iframeLoaded) return;
+    const t = setTimeout(() => setSlideReady(true), 3500);
+    return () => clearTimeout(t);
+  }, [iframeLoaded]);
 
   function checkAnswer() {
     if (!answer.trim() || !currentSlide) return;
@@ -11130,7 +11143,7 @@ function VirtualSlidesQuiz({ onBack }) {
         )}
 
         {/* Virtual microscope */}
-        <div style={{ flex: 1, borderRadius: 10, overflow: 'hidden', marginBottom: 8, minHeight: 0 }}>
+        <div style={{ flex: 1, borderRadius: 10, overflow: 'hidden', marginBottom: 8, minHeight: 0, position: 'relative' }}>
           {!iframeError ? (
             <iframe
               key={currentSlide.idx}
@@ -11138,9 +11151,27 @@ function VirtualSlidesQuiz({ onBack }) {
               style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
               title="Virtual microscope"
               onError={() => setIframeError(true)}
+              onLoad={() => setIframeLoaded(true)}
               allow="fullscreen"
             />
-          ) : (
+          ) : null}
+          {/* Overlay — hides the slide name popup shown by the viewer on load */}
+          {!iframeError && !slideReady && (
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: '#1a1a2e',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexDirection: 'column', gap: 12,
+              transition: 'opacity 0.6s',
+              zIndex: 2,
+            }}>
+              <div style={{ width: 36, height: 36, border: '3px solid #444', borderTopColor: '#90caf9', borderRadius: '50%', animation: 'spin 0.9s linear infinite' }} />
+              <div style={{ color: '#888', fontSize: 13 }}>
+                {iframeLoaded ? 'Preparing slide...' : 'Loading slide...'}
+              </div>
+            </div>
+          )}
+          {iframeError && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: 430, color: '#aaa', gap: 14 }}>
               <div style={{ fontSize: 15 }}>This slide cannot be embedded — open it in a new tab to view it.</div>
               <a href={microscopeUrl} target="_blank" rel="noopener noreferrer"
