@@ -142,8 +142,6 @@
       color: #777;
       border: 1px solid rgba(0,0,0,0.1);
     }
-    .sidebar-stat.weak   { border-color: #aaa; color: #555; }
-    .sidebar-stat.mastered { border-color: #888; color: #333; }
 
     /* ── Bookshelf ── */
     .bookshelf-section {
@@ -255,8 +253,6 @@
       color: #aaa;
       border: 1px solid #2a2a2a;
     }
-    .stat-badge.weak { border-color: #666; color: #bbb; }
-    .stat-badge.mastered { border-color: #888; color: #ddd; }
 
     /* ── Exam Screen ── */
     .exam-header { margin-bottom: 28px; }
@@ -427,27 +423,6 @@
     .results-detail { flex: 1; }
     .results-detail h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; color: #1a1a1a; }
     .results-detail p  { font-size: 16px; color: #888; }
-
-    .weak-areas-box {
-      background: rgba(255,255,255,0.75);
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      padding: 18px 20px;
-      margin-top: 24px;
-    }
-    .weak-areas-box h3 { font-size: 15px; font-weight: 600; color: #555; margin-bottom: 12px; }
-    .weak-tag {
-      display: inline-block;
-      font-size: 13px; padding: 3px 10px;
-      border-radius: 10px;
-      background: rgba(0,0,0,0.05); color: #666;
-      border: 1px solid #ccc;
-      margin: 3px;
-    }
-
-    .progress-info {
-      font-size: 13px; color: #888; margin-top: 6px;
-    }
 
     /* ── Search Widget ── */
     .search-widget {
@@ -797,13 +772,6 @@
       transition: background .15s;
     }
     .anatomy-sidebar-card:hover { background: rgba(20,20,20,0.95); }
-    .anatomy-progress-bar {
-      height: 4px; background: rgba(255,255,255,0.15);
-      border-radius: 2px; margin-top: 8px; overflow: hidden;
-    }
-    .anatomy-progress-fill {
-      height: 100%; background: #aaa; border-radius: 2px; transition: width .4s;
-    }
 
     /* ── iPad / mobile responsive fixes ── */
     @media (max-width: 900px) {
@@ -1406,71 +1374,14 @@ const QUESTION_BANK = {
 // ─────────────────────────────────────────────────────────────
 // STORAGE HELPERS
 // ─────────────────────────────────────────────────────────────
-const STORAGE_KEY = 'studybuddy_v1';
-
-function loadProgress() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-  } catch {
-    return {};
-  }
-}
-
-function saveProgress(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
-
-function getSubjectProgress(subject) {
-  const all = loadProgress();
-  return all[subject] || { masteredIds: [], weakAreas: {} };
-}
-
-function updateSubjectProgress(subject, { newMastered = [], weakUpdates = {} }) {
-  const all = loadProgress();
-  const sp = all[subject] || { masteredIds: [], weakAreas: {} };
-
-  const masteredSet = new Set(sp.masteredIds);
-  newMastered.forEach(id => masteredSet.add(id));
-  sp.masteredIds = [...masteredSet];
-
-  Object.entries(weakUpdates).forEach(([topic, subs]) => {
-    if (!sp.weakAreas[topic]) sp.weakAreas[topic] = {};
-    Object.entries(subs).forEach(([subtopic, delta]) => {
-      sp.weakAreas[topic][subtopic] = (sp.weakAreas[topic][subtopic] || 0) + delta;
-    });
-  });
-
-  all[subject] = sp;
-  saveProgress(all);
-}
-
-// ─────────────────────────────────────────────────────────────
 // EXAM BUILDER
 // ─────────────────────────────────────────────────────────────
 function buildExam(subject, examIndex) {
-  const sp = getSubjectProgress(subject);
-  const masteredSet = new Set(sp.masteredIds);
-  const weakAreas = sp.weakAreas || {};
   const meta = QUESTION_BANK[subject];
-
-  // Use the specific exam's questions if available, otherwise the full flat list
   const source = (examIndex != null && meta.exams)
     ? meta.exams[examIndex].questions
     : meta.questions;
-
-  let pool = source.filter(q => !masteredSet.has(q.id));
-
-  if (pool.length === 0) {
-    pool = [...source];
-  }
-
-  pool.sort((a, b) => {
-    const wA = (weakAreas[a.topic]?.[a.subtopic] || 0);
-    const wB = (weakAreas[b.topic]?.[b.subtopic] || 0);
-    return wB - wA;
-  });
-
-  return pool;
+  return [...source];
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1569,15 +1480,6 @@ function ResultsBanner({ questions, answers, subject, onNext, onHome }) {
 
   const ringClass = pct >= 80 ? 'score-great' : pct >= 50 ? 'score-ok' : 'score-poor';
 
-  const wrongBySubtopic = {};
-  questions.forEach(q => {
-    if (hasAnswer(answers[q.id]) && !isCorrect(q, answers[q.id])) {
-      if (!wrongBySubtopic[q.subtopic]) wrongBySubtopic[q.subtopic] = 0;
-      wrongBySubtopic[q.subtopic]++;
-    }
-  });
-  const weakList = Object.keys(wrongBySubtopic);
-
   return (
     <div>
       <div className="results-banner">
@@ -1597,15 +1499,6 @@ function ResultsBanner({ questions, answers, subject, onNext, onHome }) {
         </div>
       </div>
 
-      {weakList.length > 0 && (
-        <div className="weak-areas-box">
-          <h3>Weak areas to focus on next time</h3>
-          {weakList.map(sub => (
-            <span key={sub} className="weak-tag">{sub}</span>
-          ))}
-        </div>
-      )}
-
       <div className="exam-actions" style={{ marginTop: 28 }}>
         <button className="btn-primary" onClick={onNext}>Next Exam →</button>
         <button className="btn-secondary" onClick={onHome}>Back to Subjects</button>
@@ -1622,8 +1515,6 @@ function ExamScreen({ subject, examIndex, onBack }) {
 
   const meta   = QUESTION_BANK[subject];
   const source = (examIndex != null && meta.exams) ? meta.exams[examIndex].questions : meta.questions;
-  const sp     = getSubjectProgress(subject);
-  const allMastered = source.length > 0 && source.every(q => sp.masteredIds.includes(q.id));
 
   function handleSelect(id, letter) {
     if (submitted) return;
@@ -1640,21 +1531,6 @@ function ExamScreen({ subject, examIndex, onBack }) {
   }
 
   function handleSubmit() {
-    const newMastered  = [];
-    const weakUpdates  = {};
-
-    questions.forEach(q => {
-      const ans = answers[q.id];
-      if (!hasAnswer(ans)) return;
-      if (isCorrect(q, ans)) {
-        newMastered.push(q.id);
-      } else {
-        if (!weakUpdates[q.topic]) weakUpdates[q.topic] = {};
-        weakUpdates[q.topic][q.subtopic] = (weakUpdates[q.topic][q.subtopic] || 0) + 1;
-      }
-    });
-
-    updateSubjectProgress(subject, { newMastered, weakUpdates });
     setSubmitted(true);
     setShowResults(true);
   }
@@ -1664,9 +1540,6 @@ function ExamScreen({ subject, examIndex, onBack }) {
   }
 
   const answeredCount = Object.keys(answers).length;
-  const sp2 = getSubjectProgress(subject);
-  const masteredCount = sp2.masteredIds.filter(id => source.some(q => q.id === id)).length;
-  const totalCount = source.length;
 
   return (
     <div className="content">
@@ -1675,12 +1548,9 @@ function ExamScreen({ subject, examIndex, onBack }) {
         <div className="exam-subject-label">
           <span>{subject}{examIndex != null && meta.exams ? ` · ${meta.exams[examIndex].name}` : ''}</span>
         </div>
-        <h1 className="exam-title">
-          {allMastered ? 'Full Review (all mastered!)' : 'Exam'}
-        </h1>
+        <h1 className="exam-title">Exam</h1>
         <p className="exam-meta">
           {questions.length} question{questions.length !== 1 ? 's' : ''}
-          {masteredCount > 0 && ` · ${masteredCount}/${totalCount} mastered`}
           {!submitted && answeredCount > 0 && ` · ${answeredCount} answered`}
         </p>
       </div>
@@ -2200,7 +2070,6 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
     ];
     const regularExams = meta.exams.filter(e => e.type !== 'czech_subject' && e.type !== 'czech_credit');
     const nameToExam   = Object.fromEntries(regularExams.map(e => [e.name, e]));
-    const sp           = getSubjectProgress(subject);
     const embExams     = EMB_TOPIC_NAMES.map(n => nameToExam[n]).filter(Boolean);
 
     return (
@@ -2223,21 +2092,18 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
           <div style={{ fontSize: 10, fontWeight: 700, color: '#bbb', padding: '4px 12px 6px',
             letterSpacing: '0.08em', textTransform: 'uppercase' }}>Exams</div>
 
-          {embExams.map((exam, i) => {
-            const done = exam.questions.length > 0 && exam.questions.every(q => sp.masteredIds.includes(q.id));
-            return (
-              <div key={'se-'+i} onClick={() => onSelectExam(meta.exams.indexOf(exam))}
-                style={{
-                  padding: '9px 12px 9px 14px', cursor: 'pointer',
-                  fontSize: 12, fontWeight: 400,
-                  color: done ? '#388e3c' : '#555',
-                  borderLeft: '3px solid transparent',
-                  lineHeight: 1.4, transition: 'background .12s',
-                }}>
-                {exam.name}
-              </div>
-            );
-          })}
+          {embExams.map((exam, i) => (
+            <div key={'se-'+i} onClick={() => onSelectExam(meta.exams.indexOf(exam))}
+              style={{
+                padding: '9px 12px 9px 14px', cursor: 'pointer',
+                fontSize: 12, fontWeight: 400,
+                color: '#555',
+                borderLeft: '3px solid transparent',
+                lineHeight: 1.4, transition: 'background .12s',
+              }}>
+              {exam.name}
+            </div>
+          ))}
         </div>
 
         {/* ── Right: prompt ── */}
@@ -2420,30 +2286,25 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
                   'Neural Tube & CNS Development',
                 ];
                 const nameToExam = Object.fromEntries(regularExams.map(e => [e.name, e]));
-                const sp = getSubjectProgress(subject);
                 const labelStyle = { gridColumn: '1 / -1', fontSize: 12, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '.07em', marginTop: 10, marginBottom: -2 };
                 const anatExams = regularExams.filter(e => !EMB_TOPIC_NAMES.includes(e.name));
                 const embExams  = EMB_TOPIC_NAMES.map(n => nameToExam[n]).filter(Boolean);
                 const totalEmbQ = embExams.reduce((s, e) => s + e.questions.length, 0);
-                const allEmbDone = embExams.length > 0 && embExams.every(e => e.questions.length > 0 && e.questions.every(q => sp.masteredIds.includes(q.id)));
                 return (
                   <>
                     {/* Anatomy section */}
                     {anatExams.length > 0 && (
                       <>
                         <div style={labelStyle}>Anatomy</div>
-                        {anatExams.map((exam, i) => {
-                          const done = exam.questions.length > 0 && exam.questions.every(q => sp.masteredIds.includes(q.id));
-                          return (
-                            <button key={'anat-'+i} onClick={() => onSelectExam(meta.exams.indexOf(exam))}
-                              style={{ ...cardStyle, background: done ? '#e8f5e9' : 'rgba(255,255,255,0.85)' }}>
-                              {exam.name}
-                              <div style={{ fontSize: 12, fontWeight: 400, color: '#888', marginTop: 4 }}>
-                                {exam.questions.length === 0 ? 'Coming soon' : `${exam.questions.length} questions${done ? ' · mastered' : ''}`}
-                              </div>
-                            </button>
-                          );
-                        })}
+                        {anatExams.map((exam, i) => (
+                          <button key={'anat-'+i} onClick={() => onSelectExam(meta.exams.indexOf(exam))}
+                            style={{ ...cardStyle, background: 'rgba(255,255,255,0.85)' }}>
+                            {exam.name}
+                            <div style={{ fontSize: 12, fontWeight: 400, color: '#888', marginTop: 4 }}>
+                              {exam.questions.length === 0 ? 'Coming soon' : `${exam.questions.length} questions`}
+                            </div>
+                          </button>
+                        ))}
                       </>
                     )}
                     {/* Embryology — opens sidebar */}
@@ -2452,10 +2313,10 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
                         <div style={labelStyle}>Embryology</div>
                         <button
                           onClick={() => setEmbSidebar(true)}
-                          style={{ ...cardStyle, gridColumn: '1 / -1', background: allEmbDone ? '#e8f5e9' : 'rgba(240,245,255,0.95)', borderLeft: '3px solid #5c6bc0' }}>
+                          style={{ ...cardStyle, gridColumn: '1 / -1', background: 'rgba(240,245,255,0.95)', borderLeft: '3px solid #5c6bc0' }}>
                           Embryology
                           <div style={{ fontSize: 12, fontWeight: 400, color: '#888', marginTop: 4 }}>
-                            {embExams.length} topics · {totalEmbQ} questions{allEmbDone ? ' · mastered' : ''}
+                            {embExams.length} topics · {totalEmbQ} questions
                           </div>
                         </button>
                       </>
@@ -2483,7 +2344,6 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
                   },
                 ];
                 const nameToExam = Object.fromEntries(regularExams.map(e => [e.name, e]));
-                const sp = getSubjectProgress(subject);
                 const labelStyle = { gridColumn: '1 / -1', fontSize: 12, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '.07em', marginTop: 10, marginBottom: -2 };
                 return HISTO_GROUPS.map(group => {
                   const groupExams = group.names.map(n => nameToExam[n]).filter(Boolean);
@@ -2491,34 +2351,27 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
                   return (
                     <React.Fragment key={group.label}>
                       <div style={labelStyle}>{group.label}</div>
-                      {groupExams.map((exam, i) => {
-                        const done = exam.questions.length > 0 && exam.questions.every(q => sp.masteredIds.includes(q.id));
-                        return (
-                          <button key={group.label+i} onClick={() => onSelectExam(meta.exams.indexOf(exam))}
-                            style={{ ...cardStyle, background: done ? '#e8f5e9' : 'rgba(255,255,255,0.85)' }}>
-                            {exam.name}
-                            <div style={{ fontSize: 12, fontWeight: 400, color: '#888', marginTop: 4 }}>
-                              {exam.questions.length === 0 ? 'Coming soon' : `${exam.questions.length} questions${done ? ' · mastered' : ''}`}
-                            </div>
-                          </button>
-                        );
-                      })}
+                      {groupExams.map((exam, i) => (
+                        <button key={group.label+i} onClick={() => onSelectExam(meta.exams.indexOf(exam))}
+                          style={{ ...cardStyle, background: 'rgba(255,255,255,0.85)' }}>
+                          {exam.name}
+                          <div style={{ fontSize: 12, fontWeight: 400, color: '#888', marginTop: 4 }}>
+                            {exam.questions.length === 0 ? 'Coming soon' : `${exam.questions.length} questions`}
+                          </div>
+                        </button>
+                      ))}
                     </React.Fragment>
                   );
                 });
-              })() : regularExams.map((exam, i) => {
-                const sp = getSubjectProgress(subject);
-                const done = exam.questions.length > 0 && exam.questions.every(q => sp.masteredIds.includes(q.id));
-                return (
-                  <button key={'reg-'+i} onClick={() => onSelectExam(meta.exams.indexOf(exam))}
-                    style={{ ...cardStyle, background: done ? '#e8f5e9' : 'rgba(255,255,255,0.85)' }}>
-                    {exam.name}
-                    <div style={{ fontSize: 12, fontWeight: 400, color: '#888', marginTop: 4 }}>
-                      {exam.questions.length === 0 ? 'Coming soon' : `${exam.questions.length} questions${done ? ' · mastered' : ''}`}
-                    </div>
-                  </button>
-                );
-              })}
+              })() : regularExams.map((exam, i) => (
+                <button key={'reg-'+i} onClick={() => onSelectExam(meta.exams.indexOf(exam))}
+                  style={{ ...cardStyle, background: 'rgba(255,255,255,0.85)' }}>
+                  {exam.name}
+                  <div style={{ fontSize: 12, fontWeight: 400, color: '#888', marginTop: 4 }}>
+                    {exam.questions.length === 0 ? 'Coming soon' : `${exam.questions.length} questions`}
+                  </div>
+                </button>
+              ))}
             </>
           );
         })()}
@@ -3494,14 +3347,7 @@ function HomeScreen({ onSelectSubject, onBooksChange, onOpenBook, onSpecialMode 
       <div className="home-sidebar">
         <div className="sidebar-label">Subjects</div>
         {Object.entries(QUESTION_BANK).map(([name, meta]) => {
-          const sp = getSubjectProgress(name);
-          const masteredCount = sp.masteredIds.length;
-          const totalCount    = meta.questions.length;
-          const weakCount     = Object.values(sp.weakAreas)
-            .flatMap(subs => Object.values(subs))
-            .filter(n => n > 0).length;
-          const available = totalCount - masteredCount;
-
+          const totalCount = meta.questions.length;
           return (
             <div
               key={name}
@@ -3512,15 +3358,6 @@ function HomeScreen({ onSelectSubject, onBooksChange, onOpenBook, onSpecialMode 
               <div className="sidebar-subject-desc">{meta.description}</div>
               <div className="sidebar-stats">
                 <span className="sidebar-stat">{totalCount} Qs</span>
-                {masteredCount > 0 && (
-                  <span className="sidebar-stat mastered">{masteredCount} mastered</span>
-                )}
-                {weakCount > 0 && (
-                  <span className="sidebar-stat weak">{weakCount} weak</span>
-                )}
-                {available === 0 && (
-                  <span className="sidebar-stat mastered">All done!</span>
-                )}
               </div>
             </div>
           );
@@ -6987,19 +6824,6 @@ function isDescendantOf(nodeId, ancestorId, allNodes) {
   return false;
 }
 
-/* ── Progress persistence helpers ── */
-const ASS_PROGRESS_KEY = 'ass_progress_v1';
-function loadAllProgress() {
-  try { return JSON.parse(localStorage.getItem(ASS_PROGRESS_KEY) || '{}'); }
-  catch(e) { return {}; }
-}
-function saveModuleProgress(moduleKey, nodeStats) {
-  try {
-    const all = loadAllProgress();
-    all[moduleKey] = nodeStats;
-    localStorage.setItem(ASS_PROGRESS_KEY, JSON.stringify(all));
-  } catch(e) {}
-}
 
 /* ── Error boundary ── */
 class ArteryErrorBoundary extends React.Component {
@@ -7265,8 +7089,6 @@ function ArteryAssemblyGame({ onBack }) {
   const [treeSearch,    setTreeSearch]    = useState('');   /* search within tree */
   const [hint,          setHint]          = useState(null); /* {text,nodeId} | null */
   const [hintTimer,     setHintTimer]     = useState(null);
-  const [allProgress,   setAllProgress]   = useState(() => loadAllProgress()); /* {[modKey]:{[nodeId]:{w,m,c}}} */
-  const [weakOnly,      setWeakOnly]      = useState(false); /* practice weak arteries mode */
   const [pinchScale,    setPinchScale]    = useState(1);     /* user pinch zoom */
 
   const treeContainerRef = useRef(null);
@@ -7302,15 +7124,6 @@ function ArteryAssemblyGame({ onBack }) {
     return map;
   }, [displayNodes]);
 
-  /* ── Progress helpers ── */
-  const modProgress = allProgress[moduleKey] || {};
-  const weakIds = React.useMemo(() => {
-    return new Set(displayNodes.filter(n => {
-      const s = modProgress[n.id];
-      return s && (s.w + (s.m || 0)) >= 2;
-    }).map(n => n.id));
-  }, [displayNodes, modProgress]);  /* eslint-disable-line */
-
   /* ── Which nodes the student must fill ── */
   const hiddenSet = React.useMemo(() => {
     const base =
@@ -7318,11 +7131,8 @@ function ArteryAssemblyGame({ onBack }) {
       : mode === 'practice'
         ? displayNodes.filter(n => n.type === 'branch' || n.type === 'terminal')
       : [];
-    const candidates = weakOnly && weakIds.size > 0
-      ? base.filter(n => weakIds.has(n.id))
-      : base;
-    return new Set(candidates.map(n => n.id));
-  }, [displayNodes, mode, weakOnly, weakIds]);
+    return new Set(base.map(n => n.id));
+  }, [displayNodes, mode]);
 
   /* ── Label → node map ── */
   const labelToNodeMap = React.useMemo(() => {
@@ -7386,7 +7196,7 @@ function ArteryAssemblyGame({ onBack }) {
     setInfoNode(null);
     setTreeSearch('');
     setHint(null);
-  }, [moduleKey, mode, difficulty, focusNodeId, weakOnly]);  /* eslint-disable-line */
+  }, [moduleKey, mode, difficulty, focusNodeId]);  /* eslint-disable-line */
 
 
   /* Keep ref in sync so the stable pinch effect always reads the latest scale */
@@ -7577,21 +7387,6 @@ function ArteryAssemblyGame({ onBack }) {
       }
     });
 
-    /* ── Save progress to localStorage ── */
-    if (moduleKey) {
-      const updated = { ...(allProgress[moduleKey] || {}) };
-      displayNodes.filter(n => hiddenSet.has(n.id)).forEach(node => {
-        const prev = updated[node.id] || { w: 0, m: 0, c: 0 };
-        const value = placed[node.id];
-        const ok = value && (value === node.label || (node.synonyms || []).includes(value));
-        if (!value) updated[node.id] = { ...prev, m: prev.m + 1 };
-        else if (ok)  updated[node.id] = { ...prev, c: prev.c + 1 };
-        else          updated[node.id] = { ...prev, w: prev.w + 1 };
-      });
-      saveModuleProgress(moduleKey, updated);
-      setAllProgress(loadAllProgress());
-    }
-
     setFeedback({ correct, wrongItems, missing });
     setSubmitted(true);
   }
@@ -7757,52 +7552,25 @@ function ArteryAssemblyGame({ onBack }) {
                         padding: '6px 14px 4px', textTransform: 'uppercase' }}>
             Modules
           </div>
-          {moduleKeys.map((k, i) => {
-            const prog = allProgress[k] || {};
-            const modNodes = (modules[k]?.nodes || []);
-            const weakCount = modNodes.filter(n => { const s = prog[n.id]; return s && (s.w + (s.m||0)) >= 2; }).length;
-            return (
-              <button key={k}
-                onClick={() => { setModuleKey(k); setFocusNodeId(null); setInfoNode(null); setWeakOnly(false); }}
-                style={{
-                  display: 'block', width: '100%', textAlign: 'left',
-                  padding: '6px 14px 6px 12px',
-                  background: k === moduleKey ? 'rgba(55,55,55,0.88)' : 'transparent',
-                  color: k === moduleKey ? '#fff' : '#444', border: 'none',
-                  borderLeft: k === moduleKey ? '3px solid #333' : '3px solid transparent',
-                  cursor: 'pointer', fontSize: 11.5, fontWeight: k === moduleKey ? 600 : 400,
-                  lineHeight: 1.35, display: 'flex', alignItems: 'center', gap: 4,
-                }}>
-                <span style={{ color: k === moduleKey ? 'rgba(255,255,255,0.45)' : '#bbb',
-                               fontSize: 10, marginRight: 3, flexShrink: 0 }}>
-                  {String(i + 1).padStart(2, '0')}
-                </span>
-                <span style={{ flex: 1 }}>{modules[k].title}</span>
-                {weakCount > 0 && (
-                  <span style={{
-                    background: '#c62828', color: '#fff', borderRadius: 10,
-                    fontSize: 9, fontWeight: 700, padding: '1px 5px', flexShrink: 0,
-                  }}>{weakCount}</span>
-                )}
-              </button>
-            );
-          })}
-
-          {/* Weak arteries practice */}
-          {weakIds.size > 0 && mode !== 'learn' && (
-            <div style={{ padding: '8px 10px', borderTop: '1px solid rgba(0,0,0,0.07)', marginTop: 4 }}>
-              <button
-                onClick={() => { setWeakOnly(v => !v); setFocusNodeId(null); }}
-                style={{
-                  width: '100%', padding: '5px 0', borderRadius: 7, border: 'none',
-                  background: weakOnly ? '#c62828' : 'rgba(198,40,40,0.10)',
-                  color: weakOnly ? '#fff' : '#c62828',
-                  fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                }}>
-                {weakOnly ? 'Stop weak practice' : `Practice weak (${weakIds.size})`}
-              </button>
-            </div>
-          )}
+          {moduleKeys.map((k, i) => (
+            <button key={k}
+              onClick={() => { setModuleKey(k); setFocusNodeId(null); setInfoNode(null); }}
+              style={{
+                display: 'block', width: '100%', textAlign: 'left',
+                padding: '6px 14px 6px 12px',
+                background: k === moduleKey ? 'rgba(55,55,55,0.88)' : 'transparent',
+                color: k === moduleKey ? '#fff' : '#444', border: 'none',
+                borderLeft: k === moduleKey ? '3px solid #333' : '3px solid transparent',
+                cursor: 'pointer', fontSize: 11.5, fontWeight: k === moduleKey ? 600 : 400,
+                lineHeight: 1.35, display: 'flex', alignItems: 'center', gap: 4,
+              }}>
+              <span style={{ color: k === moduleKey ? 'rgba(255,255,255,0.45)' : '#bbb',
+                             fontSize: 10, marginRight: 3, flexShrink: 0 }}>
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <span style={{ flex: 1 }}>{modules[k].title}</span>
+            </button>
+          ))}
 
           {/* Pinch zoom reset */}
           {pinchScale !== 1 && (
@@ -10548,8 +10316,6 @@ function BrainMriQuiz({ onBack }) {
     setScore({ correct: 0, total: 0 }); setWrongList([]); setDone(false);
   }
 
-  const pct = questions.length ? Math.round(((idx) / questions.length) * 100) : 0;
-
   /* ── Styles ── */
   const wrap = {
     height: '100vh',
@@ -10563,16 +10329,6 @@ function BrainMriQuiz({ onBack }) {
     padding: '14px 28px',
     background: 'rgba(242,237,232,0.85)',
     borderBottom: '1px solid #ccc',
-  };
-  const progressBar = {
-    height: 3, background: 'rgba(0,0,0,0.07)',
-    position: 'relative', overflow: 'hidden',
-  };
-  const progressFill = {
-    position: 'absolute', left: 0, top: 0, bottom: 0,
-    width: pct + '%',
-    background: '#4a7c6a',
-    transition: 'width .4s ease',
   };
   const body = {
     flex: 1,
@@ -10703,12 +10459,6 @@ function BrainMriQuiz({ onBack }) {
                 <p>{pctScore}% — {score.correct} correct out of {score.total} structures</p>
               </div>
             </div>
-            {wrongList.length > 0 && (
-              <div className="weak-areas-box">
-                <h3>Structures to review</h3>
-                <div>{wrongList.map((w, i) => <span key={i} className="weak-tag">{w}</span>)}</div>
-              </div>
-            )}
             <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
               <button className="btn-primary" onClick={handleRestart}>Restart Quiz</button>
               <button className="btn-secondary" onClick={onBack}>Back to Anatomy</button>
@@ -10730,8 +10480,6 @@ function BrainMriQuiz({ onBack }) {
           {idx + 1} / {questions.length}
         </span>
       </div>
-      <div style={progressBar}><div style={progressFill} /></div>
-
       <div style={body}>
         {/* Image */}
         <div style={imgWrap}>
@@ -10814,7 +10562,6 @@ function InstantFeedbackExam({ subject, examIndex, onBack }) {
   const [revealed, setRevealed] = useState(false);  // feedback shown
   const [score, setScore]       = useState({ correct: 0, answered: 0 });
   const [done, setDone]         = useState(false);
-  const [weakAreas, setWeakAreas] = useState({});
 
   const q = allQuestions[idx];
   const total = allQuestions.length;
@@ -10826,17 +10573,6 @@ function InstantFeedbackExam({ subject, examIndex, onBack }) {
     setRevealed(true);
     const correct = letter === q.correct;
     setScore(prev => ({ correct: prev.correct + (correct ? 1 : 0), answered: prev.answered + 1 }));
-    if (!correct) {
-      setWeakAreas(prev => {
-        const updated = { ...prev };
-        if (!updated[q.subtopic]) updated[q.subtopic] = 0;
-        updated[q.subtopic]++;
-        return updated;
-      });
-    } else {
-      // mark mastered
-      updateSubjectProgress(subject, { newMastered: [q.id], weakUpdates: {} });
-    }
   }
 
   function handleNext() {
@@ -10854,7 +10590,6 @@ function InstantFeedbackExam({ subject, examIndex, onBack }) {
   const ringClass = pct >= 80 ? 'score-great' : pct >= 50 ? 'score-ok' : 'score-poor';
 
   if (done) {
-    const weakList = Object.keys(weakAreas).sort((a, b) => weakAreas[b] - weakAreas[a]);
     return (
       <div className="content">
         <button className="topbar-back" style={{ marginBottom: 24 }} onClick={onBack}>← Back</button>
@@ -10868,14 +10603,6 @@ function InstantFeedbackExam({ subject, examIndex, onBack }) {
             <p>{score.correct} / {total} correct</p>
           </div>
         </div>
-        {weakList.length > 0 && (
-          <div className="weak-areas-box">
-            <h3>Weak areas</h3>
-            {weakList.map(sub => (
-              <span key={sub} className="weak-tag">{sub} ({weakAreas[sub]} wrong)</span>
-            ))}
-          </div>
-        )}
         <div className="exam-actions" style={{ marginTop: 28 }}>
           <button className="btn-primary" onClick={onBack}>Back to Exams</button>
         </div>
@@ -10972,21 +10699,7 @@ function InstantFeedbackExam({ subject, examIndex, onBack }) {
    License: https://creativecommons.org/licenses/by/4.0/
 ═══════════════════════════════════════════════════════════════ */
 
-function useVirtualSlideProgress() {
-  const KEY = 'virtual_slides_progress';
-  function load() {
-    try { return JSON.parse(localStorage.getItem(KEY) || '{"correct":[],"incorrect":[]}'); }
-    catch { return { correct: [], incorrect: [] }; }
-  }
-  function save(data) {
-    localStorage.setItem(KEY, JSON.stringify(data));
-  }
-  return { load, save };
-}
-
 function VirtualSlidesQuiz({ onBack }) {
-  const prog = useVirtualSlideProgress();
-  const [progress, setProgress] = useState(() => prog.load());
   const [filter, setFilter] = useState('All');
   const [started, setStarted] = useState(false);
   const [queue, setQueue] = useState([]);
@@ -11003,25 +10716,17 @@ function VirtualSlidesQuiz({ onBack }) {
   const availableSlides = VIRTUAL_SLIDES.filter(s => s.idx != null);
   const systems = ['All', ...Array.from(new Set(availableSlides.map(s => s.system)))];
 
-  function buildQueue(pFilter, pProgress) {
+  function buildQueue(pFilter) {
     let pool = availableSlides.filter(s => pFilter === 'All' || s.system === pFilter);
-    const mastered = pProgress.correct.filter(c => !pProgress.incorrect.includes(c));
-    pool = pool.filter(s => !mastered.includes(s.code));
-    const weighted = [];
-    pool.forEach(s => {
-      const times = pProgress.incorrect.includes(s.code) ? 3 : 1;
-      for (let i = 0; i < times; i++) weighted.push(s);
-    });
-    for (let i = weighted.length - 1; i > 0; i--) {
+    for (let i = pool.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [weighted[i], weighted[j]] = [weighted[j], weighted[i]];
+      [pool[i], pool[j]] = [pool[j], pool[i]];
     }
-    const seen = new Set();
-    return weighted.filter(s => seen.has(s.code) ? false : seen.add(s.code));
+    return pool;
   }
 
   function startQuiz() {
-    const q = buildQueue(filter, progress);
+    const q = buildQueue(filter);
     if (!q.length) return;
     setQueue(q);
     setQIdx(0);
@@ -11061,16 +10766,6 @@ function VirtualSlidesQuiz({ onBack }) {
     );
     setResult(correct ? 'correct' : 'incorrect');
     setSubmitted(true);
-
-    const newProg = { ...progress };
-    if (correct) {
-      if (!newProg.correct.includes(currentSlide.code)) newProg.correct.push(currentSlide.code);
-      newProg.incorrect = newProg.incorrect.filter(c => c !== currentSlide.code);
-    } else {
-      if (!newProg.incorrect.includes(currentSlide.code)) newProg.incorrect.push(currentSlide.code);
-    }
-    setProgress(newProg);
-    prog.save(newProg);
     setSessionStats(s => ({ correct: s.correct + (correct ? 1 : 0), total: s.total + 1 }));
   }
 
@@ -11082,13 +10777,6 @@ function VirtualSlidesQuiz({ onBack }) {
     setQIdx(i => i + 1);
   }
 
-  function resetProgress() {
-    const empty = { correct: [], incorrect: [] };
-    setProgress(empty);
-    prog.save(empty);
-  }
-
-  const mastered = progress.correct.filter(c => !progress.incorrect.includes(c));
   const total = availableSlides.length;
 
   // ── Session summary ──
@@ -11098,7 +10786,6 @@ function VirtualSlidesQuiz({ onBack }) {
         <button onClick={() => setStarted(false)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#555' }}>←</button>
         <h2 style={{ marginTop: 16 }}>Session complete</h2>
         <p style={{ fontSize: 16, color: '#555' }}>{sessionStats.correct} / {sessionStats.total} correct this session</p>
-        <p style={{ fontSize: 14, color: '#888' }}>{mastered.length} / {total} slides mastered overall</p>
         <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
           <button onClick={startQuiz} style={{ padding: '10px 22px', background: '#1976d2', color: '#fff', border: 'none', borderRadius: 10, cursor: 'pointer', fontWeight: 600 }}>
             New session
@@ -11122,9 +10809,7 @@ function VirtualSlidesQuiz({ onBack }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexShrink: 0 }}>
           <button onClick={() => setStarted(false)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#555', padding: 4 }}>←</button>
           <span style={{ fontSize: 13, color: '#888' }}>{qIdx + 1} / {queue.length}</span>
-          <div style={{ flex: 1, height: 4, background: '#eee', borderRadius: 4 }}>
-            <div style={{ width: ((qIdx / queue.length) * 100) + '%', height: '100%', background: '#1976d2', borderRadius: 4, transition: 'width .3s' }} />
-          </div>
+          <span style={{ flex: 1 }} />
           <span style={{ fontSize: 12, color: '#888' }}>{sessionStats.correct}/{sessionStats.total}</span>
           <a href={microscopeUrl} target="_blank" rel="noopener noreferrer"
             style={{ fontSize: 12, color: '#1976d2', textDecoration: 'none', padding: '3px 10px', border: '1px solid #90caf9', borderRadius: 6 }}>
@@ -11282,7 +10967,7 @@ function VirtualSlidesQuiz({ onBack }) {
   }
 
   // ── Start / menu ──
-  const queueCount = buildQueue(filter, progress).length;
+  const queueCount = buildQueue(filter).length;
   return (
     <div style={{ maxWidth: 600, margin: '0 auto', padding: '24px 20px' }}>
       <button onClick={onBack} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#555', padding: 4, marginBottom: 8 }}>←</button>
@@ -11293,22 +10978,6 @@ function VirtualSlidesQuiz({ onBack }) {
       <p style={{ color: '#aaa', margin: '0 0 20px', fontSize: 12 }}>
         {total} slides available — more will be added as mappings are confirmed
       </p>
-
-      {/* Progress bar */}
-      <div style={{ background: '#fff', borderRadius: 14, padding: '14px 18px', boxShadow: '0 1px 6px rgba(0,0,0,.08)', marginBottom: 18 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <span style={{ fontSize: 13, fontWeight: 600 }}>Progress</span>
-          <span style={{ fontSize: 13, color: '#888' }}>{mastered.length} / {total} mastered</span>
-        </div>
-        <div style={{ height: 8, background: '#eee', borderRadius: 4 }}>
-          <div style={{ width: (total ? (mastered.length / total) * 100 : 0) + '%', height: '100%', background: '#43a047', borderRadius: 4, transition: 'width .4s' }} />
-        </div>
-        {progress.incorrect.filter(c => availableSlides.some(s => s.code === c)).length > 0 && (
-          <div style={{ marginTop: 8, fontSize: 12, color: '#e65100' }}>
-            Needs practice: {progress.incorrect.filter(c => availableSlides.some(s => s.code === c)).join(', ')}
-          </div>
-        )}
-      </div>
 
       {/* System filter */}
       <div style={{ marginBottom: 18 }}>
@@ -11327,16 +10996,9 @@ function VirtualSlidesQuiz({ onBack }) {
         style={{ width: '100%', padding: '13px', background: queueCount ? '#1976d2' : '#ccc', color: '#fff', border: 'none', borderRadius: 12, cursor: queueCount ? 'pointer' : 'not-allowed', fontWeight: 700, fontSize: 16, marginBottom: 12 }}>
         Start Quiz
         <span style={{ fontWeight: 400, fontSize: 13, marginLeft: 8, opacity: .85 }}>
-          ({queueCount} slides to practice)
+          ({queueCount} slides)
         </span>
       </button>
-
-      {mastered.length > 0 && (
-        <button onClick={resetProgress}
-          style={{ width: '100%', padding: '10px', background: 'none', border: '1.5px solid #ddd', borderRadius: 12, cursor: 'pointer', color: '#888', fontSize: 13 }}>
-          Reset all progress
-        </button>
-      )}
 
       <div style={{ marginTop: 20, fontSize: 11, color: '#bbb', textAlign: 'center' }}>
         Virtual slides: WikiSkripta, projekt Univerzity Karlovy (CC BY 4.0) — wikiskripta.eu
