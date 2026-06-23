@@ -2586,6 +2586,30 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
         </div>
       )}
 
+      {/* ── Epithelial Cell Types Game — shown only in Histology ── */}
+      {subject === 'Histology' && (
+        <div style={{ marginTop: 20 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 8 }}>
+            Cell Type Matcher
+          </div>
+          <button
+            onClick={() => onSelectExam({ type: 'epithelial_game' })}
+            style={{
+              ...cardStyle,
+              background: 'linear-gradient(135deg, #f3e5f5 0%, #e8f5e9 100%)',
+              border: '2px solid #ab47bc',
+              width: '100%',
+              textAlign: 'left',
+            }}
+          >
+            Epithelial Cell Types
+            <div style={{ fontSize: 12, fontWeight: 400, color: '#6a1b9a', marginTop: 4 }}>
+              {EPITHELIAL_ITEMS.length} cells &amp; tissues · pick the correct epithelial type &amp; additional structure · scored independently
+            </div>
+          </button>
+        </div>
+      )}
+
       {/* ── Recommended Histology Slides — shown only in Histology ── */}
       {subject === 'Histology' && (
         <div style={{
@@ -5151,6 +5175,325 @@ function GroupCard({g, lvls, isOpen, hasSelected, hasAnswer, hasBad, onToggle, b
           {lvls.map(l => <BoneBtn key={l} lvl={l} useRib={false} {...boneProps}/>)}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   EPITHELIAL CELL TYPE GAME
+   ═══════════════════════════════════════════════════════════════ */
+
+const EPITHELIAL_CATEGORIES_LEFT = [
+  'Simple Squamous',
+  'Simple Cuboidal',
+  'Simple Columnar',
+  'Pseudostratified Columnar',
+  'Germinal Epithelium',
+  'Reticular Epithelium',
+];
+const EPITHELIAL_CATEGORIES_RIGHT = [
+  'Stratified Squamous (non-keratinized)',
+  'Stratified Squamous (keratinized)',
+  'Transitional (Urothelium)',
+  'Stratified Cuboidal / Columnar',
+  'Trabecular',
+];
+const EPITHELIAL_STRUCTURES = ['None', 'Cilia', 'Microvilli / Brush border', 'Stereocilia', 'Lamellar bodies'];
+
+const EPITHELIAL_ITEMS = [
+  // Simple Squamous
+  { label: 'Alveoli (type I pneumocytes)', type: 'Simple Squamous', structure: 'None' },
+  { label: 'Alveolar ducts', type: 'Simple Squamous', structure: 'None' },
+  { label: "Bowman's capsule (parietal layer)", type: 'Simple Squamous', structure: 'None' },
+  { label: 'Glomerular capillaries', type: 'Simple Squamous', structure: 'None' },
+  { label: 'Loop of Henle (thin limb)', type: 'Simple Squamous', structure: 'None' },
+  { label: 'Endothelium / Tunica intima', type: 'Simple Squamous', structure: 'None' },
+  { label: 'Mesothelium (peritoneum, pleura, pericardium)', type: 'Simple Squamous', structure: 'None' },
+  // Simple Cuboidal
+  { label: 'Proximal convoluted tubule', type: 'Simple Cuboidal', structure: 'Microvilli / Brush border' },
+  { label: 'Distal convoluted tubule', type: 'Simple Cuboidal', structure: 'None' },
+  { label: 'Collecting duct', type: 'Simple Cuboidal', structure: 'None' },
+  { label: 'Thyroid follicles', type: 'Simple Cuboidal', structure: 'None' },
+  { label: 'Ovarian surface epithelium', type: 'Simple Cuboidal', structure: 'None' },
+  { label: 'Choroid plexus', type: 'Simple Cuboidal', structure: 'Microvilli / Brush border' },
+  { label: 'Intercalated ducts (salivary glands)', type: 'Simple Cuboidal', structure: 'None' },
+  { label: 'Straight tubules (tubuli recti)', type: 'Simple Cuboidal', structure: 'None' },
+  { label: 'Rete testis', type: 'Simple Cuboidal', structure: 'None' },
+  { label: 'Terminal bronchioles', type: 'Simple Cuboidal', structure: 'None' },
+  { label: 'Respiratory bronchioles', type: 'Simple Cuboidal', structure: 'None' },
+  { label: 'Eustachian tube (tympanic end)', type: 'Simple Cuboidal', structure: 'None' },
+  { label: 'Club (Clara) cells', type: 'Simple Cuboidal', structure: 'None' },
+  // Simple Columnar
+  { label: 'Stomach (surface mucous cells)', type: 'Simple Columnar', structure: 'None' },
+  { label: 'Small intestine', type: 'Simple Columnar', structure: 'Microvilli / Brush border' },
+  { label: 'Large intestine / colon', type: 'Simple Columnar', structure: 'None' },
+  { label: 'Gallbladder', type: 'Simple Columnar', structure: 'Microvilli / Brush border' },
+  { label: 'Bile ducts', type: 'Simple Columnar', structure: 'None' },
+  { label: 'Uterine tube (fallopian tube)', type: 'Simple Columnar', structure: 'Cilia' },
+  { label: 'Endometrium', type: 'Simple Columnar', structure: 'Cilia' },
+  { label: 'Striated duct (intralobular, salivary glands)', type: 'Simple Columnar', structure: 'None' },
+  { label: 'Renal papilla / ducts of Bellini', type: 'Simple Columnar', structure: 'None' },
+  { label: 'Goblet cells', type: 'Simple Columnar', structure: 'None' },
+  // Pseudostratified Columnar
+  { label: 'Trachea', type: 'Pseudostratified Columnar', structure: 'Cilia' },
+  { label: 'Main bronchi (primary)', type: 'Pseudostratified Columnar', structure: 'Cilia' },
+  { label: 'Lobar bronchi (secondary)', type: 'Pseudostratified Columnar', structure: 'Cilia' },
+  { label: 'Segmental bronchi (tertiary)', type: 'Pseudostratified Columnar', structure: 'Cilia' },
+  { label: 'Bronchioles', type: 'Pseudostratified Columnar', structure: 'Cilia' },
+  { label: 'Nasal cavity / nasopharynx', type: 'Pseudostratified Columnar', structure: 'Cilia' },
+  { label: 'Eustachian tube (pharyngeal portion)', type: 'Pseudostratified Columnar', structure: 'Cilia' },
+  { label: 'Efferent ductules', type: 'Pseudostratified Columnar', structure: 'Cilia' },
+  { label: 'Epididymis', type: 'Pseudostratified Columnar', structure: 'Stereocilia' },
+  { label: 'Ductus deferens', type: 'Pseudostratified Columnar', structure: 'Stereocilia' },
+  { label: 'Ampulla (vas deferens)', type: 'Pseudostratified Columnar', structure: 'None' },
+  { label: 'Seminal vesicle', type: 'Pseudostratified Columnar', structure: 'None' },
+  { label: 'Prostate glands', type: 'Pseudostratified Columnar', structure: 'None' },
+  { label: 'Membranous urethra', type: 'Pseudostratified Columnar', structure: 'None' },
+  { label: 'Penile (spongy) urethra', type: 'Pseudostratified Columnar', structure: 'None' },
+  // Stratified Squamous non-keratinized
+  { label: 'Oral cavity', type: 'Stratified Squamous (non-keratinized)', structure: 'None' },
+  { label: 'Esophagus', type: 'Stratified Squamous (non-keratinized)', structure: 'None' },
+  { label: 'Cornea', type: 'Stratified Squamous (non-keratinized)', structure: 'None' },
+  { label: 'Vagina', type: 'Stratified Squamous (non-keratinized)', structure: 'None' },
+  { label: 'Ectocervix', type: 'Stratified Squamous (non-keratinized)', structure: 'None' },
+  { label: 'Anal canal (upper)', type: 'Stratified Squamous (non-keratinized)', structure: 'None' },
+  { label: 'Navicular fossa', type: 'Stratified Squamous (non-keratinized)', structure: 'None' },
+  // Stratified Squamous keratinized
+  { label: 'Skin (epidermis)', type: 'Stratified Squamous (keratinized)', structure: 'None' },
+  { label: 'Hard palate', type: 'Stratified Squamous (keratinized)', structure: 'None' },
+  { label: 'Gingiva', type: 'Stratified Squamous (keratinized)', structure: 'None' },
+  { label: 'External auditory canal', type: 'Stratified Squamous (keratinized)', structure: 'None' },
+  // Transitional
+  { label: 'Renal pelvis', type: 'Transitional (Urothelium)', structure: 'None' },
+  { label: 'Ureter', type: 'Transitional (Urothelium)', structure: 'None' },
+  { label: 'Urinary bladder', type: 'Transitional (Urothelium)', structure: 'None' },
+  { label: 'Prostatic urethra', type: 'Transitional (Urothelium)', structure: 'None' },
+  // Stratified Cuboidal / Columnar
+  { label: 'Excretory ducts of sweat glands', type: 'Stratified Cuboidal / Columnar', structure: 'None' },
+  { label: 'Large excretory ducts (salivary glands)', type: 'Stratified Cuboidal / Columnar', structure: 'None' },
+  { label: 'Conjunctiva', type: 'Stratified Cuboidal / Columnar', structure: 'None' },
+  // Trabecular
+  { label: 'Liver (hepatocytes)', type: 'Trabecular', structure: 'None' },
+  { label: 'Adrenal cortex', type: 'Trabecular', structure: 'None' },
+  { label: 'Parathyroid gland', type: 'Trabecular', structure: 'None' },
+  { label: 'Anterior pituitary', type: 'Trabecular', structure: 'None' },
+  { label: 'Islets of Langerhans', type: 'Trabecular', structure: 'None' },
+  { label: 'Pineal gland', type: 'Trabecular', structure: 'None' },
+  // Germinal Epithelium
+  { label: 'Seminiferous tubules', type: 'Germinal Epithelium', structure: 'None' },
+  // Reticular Epithelium
+  { label: 'Thymus', type: 'Reticular Epithelium', structure: 'None' },
+  { label: 'Stellate reticulum (enamel organ)', type: 'Reticular Epithelium', structure: 'None' },
+];
+
+function EpithelialGame({ onBack }) {
+  const [ITEMS] = useState(() => {
+    const a = [...EPITHELIAL_ITEMS];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  });
+
+  const [idx, setIdx] = useState(0);
+  const [selType, setSelType] = useState(null);
+  const [selStructure, setSelStructure] = useState(null);
+  const [submitted, setSubmitted] = useState(false);
+  const [typeScore, setTypeScore] = useState({ c: 0, a: 0 });
+  const [structScore, setStructScore] = useState({ c: 0, a: 0 });
+
+  const q = ITEMS[idx];
+
+  const submit = () => {
+    if (!selType) return;
+    const typeCorrect = selType === q.type;
+    const structCorrect = selStructure === q.structure;
+    setTypeScore(s => ({ c: s.c + (typeCorrect ? 1 : 0), a: s.a + 1 }));
+    if (selStructure !== null) {
+      setStructScore(s => ({ c: s.c + (structCorrect ? 1 : 0), a: s.a + 1 }));
+    }
+    setSubmitted(true);
+  };
+
+  const nav = d => {
+    setIdx(i => Math.max(0, Math.min(ITEMS.length - 1, i + d)));
+    setSelType(null); setSelStructure(null); setSubmitted(false);
+  };
+
+  const reset = () => {
+    setIdx(0); setSelType(null); setSelStructure(null);
+    setSubmitted(false); setTypeScore({ c: 0, a: 0 }); setStructScore({ c: 0, a: 0 });
+  };
+
+  const TypeBtn = ({ cat }) => {
+    const isSel = selType === cat;
+    const isCorrect = submitted && cat === q.type;
+    const isWrong = submitted && isSel && cat !== q.type;
+    let bg = '#f5f5f5', border = '#e0e0e0', color = '#333';
+    if (isCorrect) { bg = '#f1f8f4'; border = '#4caf50'; color = '#2a7a4a'; }
+    else if (isWrong) { bg = '#fdf4f4'; border = '#e57373'; color = '#8a4040'; }
+    else if (isSel) { bg = '#e8e8e8'; border = '#999'; color = '#1a1a1a'; }
+    return (
+      <button onClick={() => { if (!submitted) setSelType(cat); }} style={{
+        width: '100%', padding: '9px 10px', marginBottom: 6,
+        borderRadius: 9, border: `1.5px solid ${border}`,
+        background: bg, color, fontWeight: isSel || isCorrect ? 700 : 500,
+        fontSize: 13, textAlign: 'left',
+        cursor: submitted ? 'default' : 'pointer', lineHeight: 1.3,
+        transition: 'all .12s',
+      }}>{cat}</button>
+    );
+  };
+
+  const StructBtn = ({ s }) => {
+    const isSel = selStructure === s;
+    const isCorrect = submitted && s === q.structure;
+    const isWrong = submitted && isSel && s !== q.structure;
+    let bg = '#f5f5f5', border = '#e0e0e0', color = '#555';
+    if (isCorrect) { bg = '#f1f8f4'; border = '#4caf50'; color = '#2a7a4a'; }
+    else if (isWrong) { bg = '#fdf4f4'; border = '#e57373'; color = '#8a4040'; }
+    else if (isSel) { bg = '#e8e8e8'; border = '#999'; color = '#1a1a1a'; }
+    return (
+      <button onClick={() => { if (!submitted) setSelStructure(s); }} style={{
+        padding: '6px 12px', borderRadius: 7, border: `1.5px solid ${border}`,
+        background: bg, color, fontWeight: isSel || isCorrect ? 700 : 400,
+        fontSize: 12, cursor: submitted ? 'default' : 'pointer',
+        whiteSpace: 'nowrap', transition: 'all .12s',
+      }}>{s}</button>
+    );
+  };
+
+  const typeCorrect = submitted && selType === q.type;
+  const structCorrect = submitted && selStructure === q.structure;
+  const structWrong = submitted && selStructure !== null && selStructure !== q.structure;
+
+  return (
+    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 10px 60px' }}>
+
+      {/* Header */}
+      <div style={{
+        position: 'sticky', top: 0, zIndex: 10,
+        background: 'rgba(250,250,250,0.97)',
+        paddingTop: 16, paddingBottom: 10, marginBottom: 14,
+        borderBottom: '1px solid #e8e8e8',
+      }}>
+        <button className="topbar-back" onClick={onBack}>← Histology</button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+          <h2 style={{ fontSize: 19, fontWeight: 700, color: '#1a1a1a' }}>Epithelial Cell Types</h2>
+          <span style={{ fontSize: 13, color: '#999' }}>
+            Type: <strong style={{ color: '#1a1a1a' }}>{typeScore.c}</strong>/{typeScore.a}
+            &nbsp;&middot;&nbsp;
+            Structure: <strong style={{ color: '#1a1a1a' }}>{structScore.c}</strong>/{structScore.a}
+            &nbsp;&middot;&nbsp;
+            {idx + 1} / {ITEMS.length}
+          </span>
+        </div>
+      </div>
+
+      {/* 3-column layout */}
+      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+
+        {/* Left column — Simple / Specialized */}
+        <div style={{ width: 195, flexShrink: 0 }}>
+          <div style={{ fontSize: 10, fontWeight: 800, color: '#bbb', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 8, textAlign: 'center' }}>
+            Simple / Specialized
+          </div>
+          {EPITHELIAL_CATEGORIES_LEFT.map(cat => <TypeBtn key={cat} cat={cat} />)}
+        </div>
+
+        {/* Center */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+
+          {/* Question card */}
+          <div style={{
+            background: '#f8f8f8', border: '1px solid #e4e4e4',
+            borderRadius: 13, padding: '28px 20px',
+            marginBottom: 14, textAlign: 'center',
+          }}>
+            <div style={{ fontSize: 11, color: '#ccc', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 10 }}>
+              Select the epithelial type and additional structure
+            </div>
+            <div style={{ fontSize: 23, fontWeight: 700, color: '#1a1a1a', lineHeight: 1.3 }}>
+              {q.label}
+            </div>
+          </div>
+
+          {/* Structure picker */}
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#bbb', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 7 }}>
+              Additional structure
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {EPITHELIAL_STRUCTURES.map(s => <StructBtn key={s} s={s} />)}
+            </div>
+          </div>
+
+          {/* Action bar */}
+          <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
+            <button onClick={() => nav(-1)} disabled={idx === 0} style={{
+              padding: '9px 14px', borderRadius: 9, fontWeight: 600, fontSize: 14,
+              border: '1.5px solid', cursor: idx === 0 ? 'default' : 'pointer',
+              background: '#fff', color: idx === 0 ? '#ccc' : '#555',
+              borderColor: idx === 0 ? '#ebebeb' : '#d0d0d0',
+            }}>← Prev</button>
+            <button onClick={submit} disabled={!selType || submitted} style={{
+              flex: 1, padding: '9px 0', borderRadius: 9, border: 'none',
+              fontWeight: 700, fontSize: 14,
+              background: !selType || submitted ? '#e8e8e8' : '#1a1a1a',
+              color: !selType || submitted ? '#aaa' : '#fff',
+              cursor: !selType || submitted ? 'default' : 'pointer',
+            }}>Submit</button>
+            <button onClick={() => nav(1)} disabled={idx === ITEMS.length - 1} style={{
+              padding: '9px 14px', borderRadius: 9, fontWeight: 600, fontSize: 14,
+              border: '1.5px solid', cursor: idx === ITEMS.length - 1 ? 'default' : 'pointer',
+              background: '#fff', color: idx === ITEMS.length - 1 ? '#ccc' : '#555',
+              borderColor: idx === ITEMS.length - 1 ? '#ebebeb' : '#d0d0d0',
+            }}>Next →</button>
+            <button onClick={reset} style={{
+              padding: '9px 14px', borderRadius: 9, fontWeight: 600, fontSize: 14,
+              border: '1.5px solid #d0d0d0', background: '#fff', color: '#555', cursor: 'pointer',
+            }}>Reset</button>
+          </div>
+
+          {/* Feedback */}
+          {submitted && (
+            <div style={{
+              padding: '14px 17px', borderRadius: 12, fontSize: 14,
+              background: typeCorrect ? '#f1f8f4' : '#fdf4f4',
+              border: `1.5px solid ${typeCorrect ? '#bcdec8' : '#e8c4c4'}`,
+            }}>
+              <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+                <div>
+                  <span style={{ fontWeight: 700, color: typeCorrect ? '#2a7a4a' : '#8a4040' }}>
+                    Type: {typeCorrect ? 'Correct' : 'Incorrect'}
+                  </span>
+                  {!typeCorrect && (
+                    <span style={{ color: '#444', marginLeft: 6 }}>— {q.type}</span>
+                  )}
+                </div>
+                <div>
+                  <span style={{ fontWeight: 700, color: structCorrect ? '#2a7a4a' : (structWrong ? '#8a4040' : '#888') }}>
+                    Structure: {selStructure === null ? 'Not answered' : structCorrect ? 'Correct' : 'Incorrect'}
+                  </span>
+                  {structWrong && (
+                    <span style={{ color: '#444', marginLeft: 6 }}>— {q.structure}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right column — Stratified / Other */}
+        <div style={{ width: 195, flexShrink: 0 }}>
+          <div style={{ fontSize: 10, fontWeight: 800, color: '#bbb', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 8, textAlign: 'center' }}>
+            Stratified / Other
+          </div>
+          {EPITHELIAL_CATEGORIES_RIGHT.map(cat => <TypeBtn key={cat} cat={cat} />)}
+        </div>
+
+      </div>
     </div>
   );
 }
@@ -11570,6 +11913,8 @@ function App() {
             ? <BrainAtlas onBack={handleBack} />
           : specialMode?.type === 'virtual_slides'
             ? <VirtualSlidesQuiz onBack={handleBack} />
+          : specialMode?.type === 'epithelial_game'
+            ? <EpithelialGame onBack={handleBack} />
           : specialMode?.type === 'hematopoiesis_map'
             ? <HematopoiesisMap onBack={handleBack} />
           : specialMode?.type === 'instant_feedback'
