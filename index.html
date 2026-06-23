@@ -11159,24 +11159,53 @@ function HematopoiesisMap({ onBack }) {
         {!named && (
           <div>
             <div style={{fontWeight:600,marginBottom:5,fontSize:12,color:'#333'}}>What is this cell?</div>
-            <div style={{display:'flex',gap:6}}>
-              <input ref={nameRef} value={nameIn}
-                onChange={e => { setNameIn(e.target.value); setNameFb(null); }}
-                onKeyDown={e => { if (e.key === 'Enter') submitName(); }}
-                placeholder="Type cell name..."
-                style={{
-                  flex:1, padding:'5px 8px', fontSize:12, outline:'none',
-                  border:'1.5px solid ' + (nameFb === 'wrong' ? '#f44336' : '#ccc'),
-                  borderRadius:6,
-                }}
-              />
-              <button onClick={submitName} style={{
-                padding:'5px 10px', background:clr, color:'#fff',
-                border:'none', borderRadius:6, cursor:'pointer', fontWeight:700, fontSize:12,
-              }}>OK</button>
-            </div>
-            {nameFb === 'wrong' && (
-              <div style={{color:'#f44336',fontSize:11,marginTop:3}}>Try again</div>
+            {nameFb !== 'revealed' ? (
+              <div>
+                <div style={{display:'flex',gap:6}}>
+                  <input ref={nameRef} value={nameIn}
+                    onChange={e => { setNameIn(e.target.value); setNameFb(null); }}
+                    onKeyDown={e => { if (e.key === 'Enter') submitName(); }}
+                    placeholder="Type cell name..."
+                    style={{
+                      flex:1, padding:'5px 8px', fontSize:12, outline:'none',
+                      border:'1.5px solid ' + (nameFb === 'wrong' ? '#f44336' : '#ccc'),
+                      borderRadius:6,
+                    }}
+                  />
+                  <button onClick={submitName} style={{
+                    padding:'5px 10px', background:clr, color:'#fff',
+                    border:'none', borderRadius:6, cursor:'pointer', fontWeight:700, fontSize:12,
+                  }}>OK</button>
+                </div>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:4}}>
+                  {nameFb === 'wrong'
+                    ? <span style={{color:'#f44336',fontSize:11}}>Try again</span>
+                    : <span/>
+                  }
+                  <button onClick={() => setNameFb('revealed')}
+                    style={{background:'none',border:'none',cursor:'pointer',fontSize:11,color:'#999',textDecoration:'underline',padding:0}}>
+                    Reveal answer
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div style={{
+                  padding:'6px 10px',borderRadius:6,fontSize:13,fontWeight:700,
+                  background:'#f3e5f5',border:'1.5px solid #ce93d8',color:'#6a1b9a',marginBottom:8,
+                }}>{c.name}</div>
+                <button
+                  onClick={() => {
+                    setNameFb(null);
+                    const cc = CMAP[selId];
+                    if (cc.isTissue) { setPhases(p => ({...p, [selId]:'done'})); setSelId(null); }
+                    else { setPhases(p => ({...p, [selId]:'named'})); }
+                  }}
+                  style={{
+                    width:'100%',padding:'6px',background:'#6a1b9a',color:'#fff',
+                    border:'none',borderRadius:6,cursor:'pointer',fontWeight:700,fontSize:12,
+                  }}>Continue</button>
+              </div>
             )}
           </div>
         )}
