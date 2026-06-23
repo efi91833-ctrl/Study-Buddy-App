@@ -950,6 +950,7 @@
 <script src="brain-mri-quiz-data.js"></script>
 <script src="vein-formation-data.js"></script>
 <script src="histology-slides-data.js"></script>
+<script src="histology-slide-ids.js"></script>
 <script src="hematopoiesis-map-data.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
@@ -11159,7 +11160,7 @@ function VirtualSlidesQuiz({ onBack }) {
         </div>
 
         {/* Answer */}
-        <div style={{ background: '#fff', borderRadius: 14, padding: '12px 16px', boxShadow: '0 1px 8px rgba(0,0,0,.1)', flexShrink: 0 }}>
+        <div style={{ background: '#fff', borderRadius: 14, padding: '12px 16px', boxShadow: '0 1px 8px rgba(0,0,0,.1)', flexShrink: 0, maxHeight: submitted ? '55vh' : 'none', overflowY: submitted ? 'auto' : 'visible' }}>
           {!submitted ? (
             <div style={{ display: 'flex', gap: 10 }}>
               <input
@@ -11177,21 +11178,76 @@ function VirtualSlidesQuiz({ onBack }) {
               </button>
             </div>
           ) : (
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-              <div style={{ flex: 1, padding: '10px 14px', borderRadius: 10, background: result === 'correct' ? '#e8f5e9' : '#ffebee', border: '1.5px solid ' + resultColor }}>
-                <span style={{ fontWeight: 700, color: resultColor }}>
-                  {result === 'correct' ? 'Correct!' : 'Incorrect'}
-                </span>
-                {result === 'incorrect' && (
-                  <span style={{ color: '#555', marginLeft: 8 }}>
-                    Answer: <strong>{currentSlide.nameEn}{currentSlide.subtitle ? ' (' + currentSlide.subtitle + ')' : ''}</strong>
+            <div>
+              {/* Result row */}
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 8 }}>
+                <div style={{ flex: 1, padding: '10px 14px', borderRadius: 10, background: result === 'correct' ? '#e8f5e9' : '#ffebee', border: '1.5px solid ' + resultColor }}>
+                  <span style={{ fontWeight: 700, color: resultColor }}>
+                    {result === 'correct' ? 'Correct!' : 'Incorrect'}
                   </span>
-                )}
+                  {result === 'incorrect' && (
+                    <span style={{ color: '#555', marginLeft: 8 }}>
+                      Answer: <strong>{currentSlide.nameEn}{currentSlide.subtitle ? ' (' + currentSlide.subtitle + ')' : ''}</strong>
+                    </span>
+                  )}
+                </div>
+                <button onClick={nextSlide}
+                  style={{ padding: '10px 20px', background: '#1976d2', color: '#fff', border: 'none', borderRadius: 10, cursor: 'pointer', fontWeight: 600, fontSize: 15, flexShrink: 0 }}>
+                  {qIdx + 1 >= queue.length ? 'Finish' : 'Next'}
+                </button>
               </div>
-              <button onClick={nextSlide}
-                style={{ padding: '10px 20px', background: '#1976d2', color: '#fff', border: 'none', borderRadius: 10, cursor: 'pointer', fontWeight: 600, fontSize: 15, flexShrink: 0 }}>
-                {qIdx + 1 >= queue.length ? 'Finish' : 'Next'}
-              </button>
+
+              {/* Slide ID card */}
+              {(() => {
+                const id = window.SLIDE_IDS && window.SLIDE_IDS[currentSlide.code];
+                if (!id) return null;
+                return (
+                  <div style={{
+                    background: '#f8f9fa',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: 10,
+                    padding: '10px 14px',
+                    marginTop: 2,
+                  }}>
+                    {/* Header row */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                      <div>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: '#1565c0', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                          {currentSlide.code}
+                        </span>
+                        <span style={{ fontSize: 11, color: '#888', marginLeft: 8 }}>
+                          {currentSlide.stain}
+                        </span>
+                      </div>
+                      {currentSlide.wikiUrl && (
+                        <a href={currentSlide.wikiUrl} target="_blank" rel="noopener noreferrer"
+                          style={{ fontSize: 11, color: '#1976d2', textDecoration: 'none' }}>
+                          WikiSkripta
+                        </a>
+                      )}
+                    </div>
+                    {/* Location */}
+                    <div style={{ fontSize: 12, fontWeight: 600, color: '#333', marginBottom: 6 }}>
+                      {id.location}
+                    </div>
+                    {/* Structures */}
+                    <div style={{ fontSize: 11, color: '#555', lineHeight: 1.6 }}>
+                      {id.structures.map((s, i) => (
+                        <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 1 }}>
+                          <span style={{ color: '#1976d2', fontWeight: 700, minWidth: 14 }}>{i + 1}.</span>
+                          <span>{s}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Optional description */}
+                    {id.description && (
+                      <div style={{ fontSize: 11, color: '#777', marginTop: 6, fontStyle: 'italic', borderTop: '1px solid #e0e0e0', paddingTop: 6 }}>
+                        {id.description}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           )}
           <div style={{ fontSize: 10, color: '#ccc', marginTop: 6, textAlign: 'center' }}>
