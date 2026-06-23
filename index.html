@@ -11301,6 +11301,7 @@ function HematopoiesisMap({ onBack }) {
   const [qExp,    setQExp]    = useState(false);
   const [sizeIn,  setSizeIn]  = useState('');
   const [sizeFb,  setSizeFb]  = useState(null);    // null | 'ok' | 'no'
+  const [mitoFb,  setMitoFb]  = useState(null);    // null | 'wrong'
   const [pDur,    setPDur]    = useState(null);    // lineage key
   const [durIn,   setDurIn]   = useState('');
   const [durFb,   setDurFb]   = useState(null);    // null | 'ok' | 'no'
@@ -11377,7 +11378,7 @@ function HematopoiesisMap({ onBack }) {
     setSelId(id); setPopPos({x:sp.x, y:sp.y});
     setNameIn(''); setNameFb(null);
     setQOpen(false); setQSel(null); setQExp(false);
-    setSizeIn(''); setSizeFb(null);
+    setSizeIn(''); setSizeFb(null); setMitoFb(null);
     setTimeout(() => nameRef.current && nameRef.current.focus(), 60);
   }
 
@@ -11394,6 +11395,12 @@ function HematopoiesisMap({ onBack }) {
   function chooseMitosis(choice) {
     if (!selId) return;
     const c = CMAP[selId];
+    const correct = c.mitosis ? 'yes' : 'no';
+    if (choice !== correct) {
+      setMitoFb('wrong');
+      return;
+    }
+    setMitoFb(null);
     setMc(m => ({...m, [selId]:choice}));
     if (c.isFinal) {
       setPhases(p => ({...p, [selId]:'size_pending'}));
@@ -11690,18 +11697,21 @@ function HematopoiesisMap({ onBack }) {
                     cursor:'pointer', fontWeight:700, color:'#c62828', fontSize:11,
                   }}>No (red)</button>
                 </div>
+                {mitoFb === 'wrong' && (
+                  <div style={{color:'#f44336',fontSize:11,marginTop:4,fontWeight:600}}>
+                    Wrong — try again
+                  </div>
+                )}
               </div>
             )}
 
-            {/* mitosis result badge */}
+            {/* mitosis result badge (correct answer stored) */}
             {mval !== undefined && !showSize && (
               <div style={{
                 padding:'4px 8px', borderRadius:5, fontSize:11, fontWeight:600, marginBottom:6,
-                background: mval==='yes' ? '#e8f5e9' : '#ffebee',
-                color: mval==='yes' ? '#2e7d32' : '#c62828',
+                background:'#e8f5e9', color:'#2e7d32',
               }}>
-                Mitosis: {mval==='yes' ? 'capable' : 'not capable'}
-                {mval === (c.mitosis ? 'yes' : 'no') ? ' — correct' : ' — incorrect'}
+                Mitosis: {mval==='yes' ? 'capable' : 'not capable'} — correct
               </div>
             )}
 
