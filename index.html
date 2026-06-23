@@ -11145,15 +11145,16 @@ function HematopoiesisMap({ onBack }) {
         </div>
 
         {/* lineage info */}
-        {lin && (
+        {/* lineage info + cell note — only after correct answer */}
+        {named && lin && (
           <div style={{background:'#f7f7f7',borderRadius:6,padding:'5px 8px',marginBottom:8,fontSize:11}}>
             <div><b>{lin.label}</b> &mdash; {lin.duration}</div>
             <div style={{marginTop:2,color:'#666',lineHeight:1.45}}>{lin.stimulus}</div>
           </div>
         )}
-
-        {/* cell note */}
-        <div style={{color:'#555',lineHeight:1.5,marginBottom:9,fontSize:11}}>{c.note}</div>
+        {named && (
+          <div style={{color:'#555',lineHeight:1.5,marginBottom:9,fontSize:11}}>{c.note}</div>
+        )}
 
         {/* A) name input */}
         {!named && (
