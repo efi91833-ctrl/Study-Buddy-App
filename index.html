@@ -360,6 +360,12 @@
       color: #999;
       font-style: italic;
     }
+    .multi-hint {
+      margin: 2px 0 8px;
+      font-size: 12px;
+      color: #666;
+      font-style: italic;
+    }
 
     /* ── Submit / Actions ── */
     .exam-actions {
@@ -1464,6 +1470,22 @@ function buildExam(subject, examIndex) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────
+
+function isCorrect(q, ans) {
+  if (Array.isArray(q.correct)) {
+    if (!Array.isArray(ans) || ans.length !== q.correct.length) return false;
+    return [...q.correct].sort().join(',') === [...ans].sort().join(',');
+  }
+  return ans === q.correct;
+}
+
+function hasAnswer(ans) {
+  return Array.isArray(ans) ? ans.length > 0 : !!ans;
+}
+
+// ─────────────────────────────────────────────────────────────
 // COMPONENTS
 // ─────────────────────────────────────────────────────────────
 
@@ -1483,27 +1505,35 @@ function OptionButton({ letter, text, state, onClick, disabled }) {
 function QuestionCard({ question, index, answer, onSelect, submitted }) {
   const { id, topic, subtopic, question: qText, options, correct, explanation } = question;
 
+  const isMulti = Array.isArray(correct);
+  const ansArr  = isMulti ? (answer || []) : null;
+
   function getState(letter) {
     if (!submitted) {
-      return answer === letter ? 'selected' : '';
+      return isMulti ? (ansArr.includes(letter) ? 'selected' : '') : (answer === letter ? 'selected' : '');
     }
-    if (letter === correct) {
-      return answer ? 'correct' : 'reveal-correct';
+    if (isMulti) {
+      const inCorrect = correct.includes(letter);
+      const inAnswer  = ansArr.includes(letter);
+      if (inCorrect && inAnswer)  return 'correct';
+      if (inCorrect && !inAnswer) return 'reveal-correct';
+      if (!inCorrect && inAnswer) return 'wrong';
+      return '';
     }
-    if (letter === answer) {
-      return 'wrong';
-    }
-    if (!answer) return 'revealed';
+    if (letter === correct) return answer ? 'correct' : 'reveal-correct';
+    if (letter === answer)  return 'wrong';
+    if (!answer)            return 'revealed';
     return '';
   }
 
-  const unanswered = submitted && !answer;
+  const unanswered = submitted && !hasAnswer(answer);
 
   return (
     <div className="question-card">
       <div className="question-num">Question {index + 1}</div>
       <div className="question-topic-tag">{topic} › {subtopic}</div>
       <p className="question-text">{qText}</p>
+      {isMulti && <p className="multi-hint">Select all that apply</p>}
       <div className="options-grid">
         {Object.entries(options).map(([letter, text]) => (
           <OptionButton
@@ -1529,15 +1559,15 @@ function QuestionCard({ question, index, answer, onSelect, submitted }) {
 }
 
 function ResultsBanner({ questions, answers, subject, onNext, onHome }) {
-  const answered = questions.filter(q => answers[q.id]);
-  const correct  = answered.filter(q => answers[q.id] === q.correct);
+  const answered = questions.filter(q => hasAnswer(answers[q.id]));
+  const correct  = answered.filter(q => isCorrect(q, answers[q.id]));
   const pct = answered.length ? Math.round((correct.length / answered.length) * 100) : 0;
 
   const ringClass = pct >= 80 ? 'score-great' : pct >= 50 ? 'score-ok' : 'score-poor';
 
   const wrongBySubtopic = {};
   questions.forEach(q => {
-    if (answers[q.id] && answers[q.id] !== q.correct) {
+    if (hasAnswer(answers[q.id]) && !isCorrect(q, answers[q.id])) {
       if (!wrongBySubtopic[q.subtopic]) wrongBySubtopic[q.subtopic] = 0;
       wrongBySubtopic[q.subtopic]++;
     }
@@ -1593,7 +1623,16 @@ function ExamScreen({ subject, examIndex, onBack }) {
 
   function handleSelect(id, letter) {
     if (submitted) return;
-    setAnswers(prev => ({ ...prev, [id]: letter }));
+    const q = questions.find(q => q.id === id);
+    if (q && q.type === 'multi') {
+      setAnswers(prev => {
+        const cur  = prev[id] || [];
+        const next = cur.includes(letter) ? cur.filter(l => l !== letter) : [...cur, letter];
+        return { ...prev, [id]: next };
+      });
+    } else {
+      setAnswers(prev => ({ ...prev, [id]: letter }));
+    }
   }
 
   function handleSubmit() {
@@ -1602,8 +1641,8 @@ function ExamScreen({ subject, examIndex, onBack }) {
 
     questions.forEach(q => {
       const ans = answers[q.id];
-      if (!ans) return;
-      if (ans === q.correct) {
+      if (!hasAnswer(ans)) return;
+      if (isCorrect(q, ans)) {
         newMastered.push(q.id);
       } else {
         if (!weakUpdates[q.topic]) weakUpdates[q.topic] = {};
