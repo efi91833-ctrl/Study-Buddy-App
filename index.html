@@ -10704,6 +10704,38 @@ function InstantFeedbackExam({ subject, examIndex, onBack }) {
    License: https://creativecommons.org/licenses/by/4.0/
 ═══════════════════════════════════════════════════════════════ */
 
+function SlideViewer({ src }) {
+  const [revealed, setRevealed] = useState(false);
+  useEffect(() => {
+    setRevealed(false);
+    const t = setTimeout(() => setRevealed(true), 8000);
+    return () => clearTimeout(t);
+  }, [src]);
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <iframe
+        src={src}
+        style={{ width: '100%', height: '100%', border: 'none', display: 'block',
+          visibility: revealed ? 'visible' : 'hidden' }}
+        title="Virtual microscope"
+        allow="fullscreen"
+      />
+      {!revealed && (
+        <div style={{
+          position: 'absolute', inset: 0, background: '#1a1a2e',
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          justifyContent: 'center', gap: 12, zIndex: 2,
+        }}>
+          <div style={{ width: 36, height: 36, border: '3px solid #444',
+            borderTopColor: '#90caf9', borderRadius: '50%',
+            animation: 'spin 0.9s linear infinite' }} />
+          <div style={{ color: '#888', fontSize: 13 }}>Loading slide...</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function VirtualSlidesQuiz({ onBack }) {
   const [filter, setFilter] = useState('All');
   const [started, setStarted] = useState(false);
@@ -10823,40 +10855,8 @@ function VirtualSlidesQuiz({ onBack }) {
         )}
 
         {/* Virtual microscope */}
-        <div style={{ flex: 1, borderRadius: 10, overflow: 'hidden', marginBottom: 8, minHeight: 0, position: 'relative' }}>
-          {!iframeError ? (
-            <iframe
-              key={currentSlide.idx}
-              src={microscopeUrl}
-              style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
-              title="Virtual microscope"
-              onError={() => setIframeError(true)}
-              allow="fullscreen"
-            />
-          ) : null}
-          {/* Overlay — CSS animation hides it after 8s, key resets per slide */}
-          {!iframeError && (
-            <div key={'overlay-' + currentSlide.idx} style={{
-              position: 'absolute', inset: 0,
-              background: '#1a1a2e',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexDirection: 'column', gap: 12,
-              zIndex: 2,
-              animation: 'slideHide 0.8s ease-out 8s forwards',
-            }}>
-              <div style={{ width: 36, height: 36, border: '3px solid #444', borderTopColor: '#90caf9', borderRadius: '50%', animation: 'spin 0.9s linear infinite' }} />
-              <div style={{ color: '#888', fontSize: 13 }}>Loading slide...</div>
-            </div>
-          )}
-          {iframeError && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: 430, color: '#aaa', gap: 14 }}>
-              <div style={{ fontSize: 15 }}>This slide cannot be embedded — open it in a new tab to view it.</div>
-              <a href={microscopeUrl} target="_blank" rel="noopener noreferrer"
-                style={{ padding: '10px 24px', background: '#1976d2', color: '#fff', borderRadius: 10, textDecoration: 'none', fontWeight: 600 }}>
-                Open virtual slide
-              </a>
-            </div>
-          )}
+        <div style={{ flex: 1, borderRadius: 10, overflow: 'hidden', marginBottom: 8, minHeight: 0 }}>
+          <SlideViewer key={currentSlide.idx} src={microscopeUrl} />
         </div>
 
         {/* Answer */}
