@@ -10746,7 +10746,7 @@ function VirtualSlidesQuiz({ onBack }) {
     setResult(null);
     setIframeError(false);
     setSlideReady(false);
-    const t = setTimeout(() => setSlideReady(true), 4000);
+    const t = setTimeout(() => setSlideReady(true), 7000);
     return () => clearTimeout(t);
   }, [qIdx, started]);
 
