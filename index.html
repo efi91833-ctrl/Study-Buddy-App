@@ -16,6 +16,11 @@
 
   <style>
     @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes slideHide {
+      0%   { opacity: 1; visibility: visible; }
+      90%  { opacity: 1; visibility: visible; }
+      100% { opacity: 0; visibility: hidden; }
+    }
   </style>
   <script src="vendor/react.min.js"></script>
   <script src="vendor/react-dom.min.js"></script>
@@ -10708,7 +10713,6 @@ function VirtualSlidesQuiz({ onBack }) {
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState(null); // 'correct' | 'incorrect'
   const [iframeError, setIframeError] = useState(false);
-  const [slideReady, setSlideReady] = useState(false);
   const [sessionStats, setSessionStats] = useState({ correct: 0, total: 0 });
 
   // Only slides that have a virtual microscope idx mapped
@@ -10745,9 +10749,6 @@ function VirtualSlidesQuiz({ onBack }) {
     setSubmitted(false);
     setResult(null);
     setIframeError(false);
-    setSlideReady(false);
-    const t = setTimeout(() => setSlideReady(true), 7000);
-    return () => clearTimeout(t);
   }, [qIdx, started]);
 
   function checkAnswer() {
@@ -10833,20 +10834,18 @@ function VirtualSlidesQuiz({ onBack }) {
               allow="fullscreen"
             />
           ) : null}
-          {/* Overlay — hides the slide name popup shown by the viewer on load */}
-          {!iframeError && !slideReady && (
-            <div style={{
+          {/* Overlay — CSS animation hides it after 8s, key resets per slide */}
+          {!iframeError && (
+            <div key={'overlay-' + currentSlide.idx} style={{
               position: 'absolute', inset: 0,
               background: '#1a1a2e',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexDirection: 'column', gap: 12,
-              transition: 'opacity 0.6s',
               zIndex: 2,
+              animation: 'slideHide 0.8s ease-out 8s forwards',
             }}>
               <div style={{ width: 36, height: 36, border: '3px solid #444', borderTopColor: '#90caf9', borderRadius: '50%', animation: 'spin 0.9s linear infinite' }} />
-              <div style={{ color: '#888', fontSize: 13 }}>
-                Loading slide...
-              </div>
+              <div style={{ color: '#888', fontSize: 13 }}>Loading slide...</div>
             </div>
           )}
           {iframeError && (
