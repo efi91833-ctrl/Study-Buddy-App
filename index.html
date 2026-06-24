@@ -10708,7 +10708,6 @@ function VirtualSlidesQuiz({ onBack }) {
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState(null); // 'correct' | 'incorrect'
   const [iframeError, setIframeError] = useState(false);
-  const [iframeLoaded, setIframeLoaded] = useState(false);
   const [slideReady, setSlideReady] = useState(false);
   const [sessionStats, setSessionStats] = useState({ correct: 0, total: 0 });
 
@@ -10746,15 +10745,10 @@ function VirtualSlidesQuiz({ onBack }) {
     setSubmitted(false);
     setResult(null);
     setIframeError(false);
-    setIframeLoaded(false);
     setSlideReady(false);
-  }, [qIdx]);
-
-  useEffect(() => {
-    if (!iframeLoaded) return;
-    const t = setTimeout(() => setSlideReady(true), 3500);
+    const t = setTimeout(() => setSlideReady(true), 4000);
     return () => clearTimeout(t);
-  }, [iframeLoaded]);
+  }, [qIdx, started]);
 
   function checkAnswer() {
     if (!answer.trim() || !currentSlide) return;
@@ -10836,7 +10830,6 @@ function VirtualSlidesQuiz({ onBack }) {
               style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
               title="Virtual microscope"
               onError={() => setIframeError(true)}
-              onLoad={() => setIframeLoaded(true)}
               allow="fullscreen"
             />
           ) : null}
@@ -10852,7 +10845,7 @@ function VirtualSlidesQuiz({ onBack }) {
             }}>
               <div style={{ width: 36, height: 36, border: '3px solid #444', borderTopColor: '#90caf9', borderRadius: '50%', animation: 'spin 0.9s linear infinite' }} />
               <div style={{ color: '#888', fontSize: 13 }}>
-                {iframeLoaded ? 'Preparing slide...' : 'Loading slide...'}
+                Loading slide...
               </div>
             </div>
           )}
