@@ -3378,6 +3378,16 @@ function HomeScreen({ onSelectSubject, onBooksChange, onOpenBook, onSpecialMode 
             <div className="sidebar-subject-desc" style={{ color:'#5a7a90' }}>3D brain + MRI cross-sections</div>
           </div>
         )}
+        {onSpecialMode && (
+          <div
+            className="sidebar-subject-card"
+            onClick={() => onSpecialMode('clock')}
+            style={{ background:'rgba(10,10,10,0.92)', border:'1px solid rgba(176,176,176,0.30)' }}
+          >
+            <div className="sidebar-subject-name" style={{ color:'#b0b0b0', fontFamily:"'Share Tech Mono',monospace" }}>Clock</div>
+            <div className="sidebar-subject-desc" style={{ color:'#6a6a6a' }}>Clock · stopwatch · countdown · schedule</div>
+          </div>
+        )}
       </div>
 
       <div className="home-center">
@@ -8785,6 +8795,15 @@ function DissectionBank({ onBack }) {
 
 /* ── Page instructions shown before entering each section ── */
 const PAGE_INSTRUCTIONS = {
+  clock: {
+    title: 'Clock',
+    steps: [
+      'Keys 1-4 switch modes: Clock, Stopwatch, Countdown, Schedule.',
+      'Space starts/stops the stopwatch or countdown; R resets it.',
+      'Shift+E opens display settings (sizes, position, topic order); Escape closes any panel.',
+      'In Schedule, add FROM / TO / SUBJECT rows — a silent flash and banner mark each start time.',
+    ],
+  },
   anatomy_slides: {
     title: 'Anatomy Slides',
     steps: [
@@ -11616,6 +11635,384 @@ function HematopoiesisMap({ onBack }) {
 
 /* ─────────────────────────────────────────── */
 
+/* ── Clock / Stopwatch / Countdown / Schedule (utility panel) ── */
+const CLK_CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+.clk-root{position:fixed;inset:0;z-index:1000;background:#000;color:#b0b0b0;
+  font-family:'Share Tech Mono',ui-monospace,'Cascadia Mono','Courier New',monospace;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+  -webkit-user-select:none;user-select:none;cursor:default;}
+.clk-stack{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;}
+.clk-digits{line-height:1;white-space:nowrap;letter-spacing:.02em;color:#b0b0b0;font-variant-numeric:tabular-nums;}
+.clk-topic{line-height:1.04;text-align:center;max-width:96vw;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;color:#b0b0b0;}
+.clk-next{margin-top:2.4vh;font-size:1.5vw;color:#4a4a4a;letter-spacing:.18em;text-align:center;}
+.clk-ctrls{display:flex;flex-wrap:wrap;gap:26px;align-items:center;justify-content:center;margin-top:3vh;}
+.clk-ctrl{background:none;border:none;color:#6a6a6a;font-family:inherit;font-size:16px;
+  letter-spacing:.22em;cursor:pointer;padding:4px 2px;}
+.clk-ctrl:hover{color:#b0b0b0;}
+.clk-num{width:70px;background:#0c0c0c;border:1px solid #262626;border-radius:6px;color:#b0b0b0;
+  font-family:inherit;font-size:22px;text-align:center;padding:6px 4px;}
+.clk-num:focus{outline:none;border-color:#555;}
+.clk-menu{position:fixed;bottom:0;left:0;right:0;display:flex;gap:34px;align-items:center;
+  justify-content:center;padding:22px 0 26px;transition:opacity .45s ease;}
+.clk-mi{background:none;border:none;color:#5a5a5a;font-family:inherit;font-size:14px;
+  letter-spacing:.24em;cursor:pointer;padding:5px 2px;border-bottom:1px solid transparent;}
+.clk-mi:hover{color:#9a9a9a;}
+.clk-mi.active{color:#cfcfcf;border-bottom:1px solid #cfcfcf;}
+.clk-exit{position:fixed;bottom:25px;left:26px;background:none;border:none;color:#4a4a4a;
+  font-family:inherit;font-size:13px;letter-spacing:.16em;cursor:pointer;transition:opacity .45s ease;}
+.clk-exit:hover{color:#9a9a9a;}
+.clk-hint{position:fixed;bottom:26px;right:26px;color:#333;font-family:inherit;font-size:11px;
+  letter-spacing:.12em;transition:opacity .45s ease;}
+.clk-strip{position:fixed;bottom:0;left:0;right:0;height:74px;z-index:1100;}
+.clk-flash{position:fixed;inset:0;background:#fff;pointer-events:none;z-index:1400;}
+.clk-banner{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  pointer-events:none;z-index:1500;}
+.clk-banner>span{color:#fff;font-family:inherit;font-size:8vw;text-align:center;padding:0 4vw;
+  line-height:1.05;max-width:94vw;}
+.clk-ov{position:fixed;inset:0;z-index:1300;display:flex;align-items:flex-start;
+  justify-content:center;background:rgba(0,0,0,.85);overflow:auto;}
+.clk-ov.edit{align-items:flex-end;background:rgba(0,0,0,.30);}
+.clk-panel{background:#0b0b0b;border:1px solid #242424;border-radius:14px;padding:26px 28px;
+  width:min(560px,94vw);margin:6vh auto;color:#b0b0b0;font-family:inherit;}
+.clk-panel.edit{margin:0 auto 4vh;}
+.clk-ph{font-size:18px;letter-spacing:.2em;color:#cfcfcf;margin-bottom:20px;}
+.clk-row{display:grid;grid-template-columns:1fr 1fr 2fr auto;gap:10px;align-items:center;margin-bottom:10px;}
+.clk-in{background:#111;border:1px solid #262626;border-radius:6px;color:#b0b0b0;
+  font-family:inherit;font-size:15px;padding:8px;}
+.clk-in:focus{outline:none;border-color:#555;}
+.clk-del{background:none;border:1px solid #3a2020;color:#8a4a4a;border-radius:6px;
+  cursor:pointer;font-family:inherit;font-size:14px;padding:6px 12px;}
+.clk-del:hover{color:#c66;border-color:#663030;}
+.clk-btn{background:#151515;border:1px solid #2c2c2c;color:#b0b0b0;border-radius:7px;
+  cursor:pointer;font-family:inherit;font-size:14px;letter-spacing:.12em;padding:9px 18px;}
+.clk-btn:hover{border-color:#555;color:#e0e0e0;}
+.clk-field{margin-bottom:22px;}
+.clk-lab{display:flex;justify-content:space-between;font-size:13px;letter-spacing:.14em;
+  color:#8a8a8a;margin-bottom:8px;}
+.clk-field input[type=range]{width:100%;accent-color:#8a8a8a;}
+`;
+function clkPad(n){ return String(n).padStart(2,'0'); }
+function clkNum(k, d){ const v = parseFloat(localStorage.getItem(k)); return isNaN(v) ? d : v; }
+function clkToday(){ const d=new Date(); return d.getFullYear()+'-'+clkPad(d.getMonth()+1)+'-'+clkPad(d.getDate()); }
+function clkFmt(ms){ const t=Math.max(0,Math.floor(ms/1000));
+  return clkPad(Math.floor(t/3600))+':'+clkPad(Math.floor(t/60)%60)+':'+clkPad(t%60); }
+
+function Clock({ onBack }) {
+  const [now, setNow]                 = useState(new Date());
+  const [mode, setMode]               = useState('clock');       // clock | stopwatch | countdown
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [editOpen, setEditOpen]       = useState(false);
+
+  /* Persisted display settings */
+  const [clockSize, setClockSize]     = useState(() => clkNum('clock_clock_size', 18));
+  const [topicSize, setTopicSize]     = useState(() => clkNum('clock_topic_size', 12));
+  const [vertPos, setVertPos]         = useState(() => clkNum('clock_vert_pos', 0));
+  const [topicBelow, setTopicBelow]   = useState(() => localStorage.getItem('clock_topic_below') !== 'false');
+
+  /* Stopwatch */
+  const [swRunning, setSwRunning]     = useState(false);
+  const [swElapsed, setSwElapsed]     = useState(0);
+  const swRef = useRef({ start:0, base:0 });
+
+  /* Countdown */
+  const [cdF, setCdF]                 = useState({ h:'0', m:'5', s:'0' });
+  const [cdTotal, setCdTotal]         = useState(0);
+  const [cdRemain, setCdRemain]       = useState(0);
+  const [cdRunning, setCdRunning]     = useState(false);
+  const cdRef = useRef({ end:0 });
+
+  /* Schedule */
+  const [schedule, setSchedule]       = useState(() => {
+    try { const a = JSON.parse(localStorage.getItem('clock_schedule')||'[]'); return Array.isArray(a)?a:[]; }
+    catch(e){ return []; }
+  });
+
+  /* Flash + banner */
+  const [flashOn, setFlashOn]         = useState(false);
+  const [banner, setBanner]           = useState('');
+  const flashTimer  = useRef(null);
+  const bannerTimer = useRef(null);
+
+  /* Menu autohide */
+  const [menuVisible, setMenuVisible] = useState(true);
+  const menuTimer = useRef(null);
+
+  const sorted = useMemo(
+    () => [...schedule].sort((a,b) => (a.from||'').localeCompare(b.from||'')),
+    [schedule]
+  );
+
+  /* ── Silent visual flash (no sound anywhere) ── */
+  const flashScreen = useCallback((times) => {
+    if (flashTimer.current) clearInterval(flashTimer.current);
+    let n = times * 2, on = false;
+    flashTimer.current = setInterval(() => {
+      on = !on; setFlashOn(on); n--;
+      if (n <= 0) { clearInterval(flashTimer.current); flashTimer.current = null; setFlashOn(false); }
+    }, 110);
+  }, []);
+  const showBanner = useCallback((txt) => {
+    setBanner(txt);
+    if (bannerTimer.current) clearTimeout(bannerTimer.current);
+    bannerTimer.current = setTimeout(() => setBanner(''), 6000);
+  }, []);
+
+  /* ── Clock tick ── */
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 200);
+    return () => clearInterval(id);
+  }, []);
+
+  /* ── Stopwatch runner ── */
+  useEffect(() => {
+    if (!swRunning) return;
+    swRef.current.start = Date.now();
+    swRef.current.base  = swElapsed;
+    const id = setInterval(() => setSwElapsed(swRef.current.base + (Date.now() - swRef.current.start)), 55);
+    return () => clearInterval(id);
+  }, [swRunning]);
+
+  /* ── Countdown runner ── */
+  useEffect(() => {
+    if (!cdRunning) return;
+    cdRef.current.end = Date.now() + cdRemain;
+    const id = setInterval(() => {
+      const r = cdRef.current.end - Date.now();
+      if (r <= 0) { setCdRemain(0); setCdRunning(false); flashScreen(10); }
+      else setCdRemain(r);
+    }, 55);
+    return () => clearInterval(id);
+  }, [cdRunning]);
+
+  /* ── Schedule background checker (runs every second while clock is mounted) ── */
+  useEffect(() => {
+    const id = setInterval(() => {
+      const d = new Date();
+      const today = clkToday();
+      let fired;
+      try { fired = JSON.parse(localStorage.getItem('clock_fired') || '[]'); } catch(e){ fired = []; }
+      if (localStorage.getItem('clock_fired_date') !== today) {
+        fired = [];
+        localStorage.setItem('clock_fired_date', today);
+        localStorage.setItem('clock_fired', '[]');
+      }
+      const hhmm = clkPad(d.getHours()) + ':' + clkPad(d.getMinutes());
+      sorted.forEach(row => {
+        const key = row.from + '|' + row.subject;
+        if (row.from === hhmm && !fired.includes(key)) {
+          fired.push(key);
+          localStorage.setItem('clock_fired', JSON.stringify(fired));
+          flashScreen(14);
+          showBanner(row.subject);
+        }
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [sorted, flashScreen, showBanner]);
+
+  /* ── Persist settings + schedule ── */
+  useEffect(() => { localStorage.setItem('clock_clock_size', clockSize); }, [clockSize]);
+  useEffect(() => { localStorage.setItem('clock_topic_size', topicSize); }, [topicSize]);
+  useEffect(() => { localStorage.setItem('clock_vert_pos', vertPos); }, [vertPos]);
+  useEffect(() => { localStorage.setItem('clock_topic_below', topicBelow); }, [topicBelow]);
+  useEffect(() => { localStorage.setItem('clock_schedule', JSON.stringify(schedule)); }, [schedule]);
+
+  /* ── Menu autohide ── */
+  const pokeMenu = useCallback(() => {
+    setMenuVisible(true);
+    if (menuTimer.current) clearTimeout(menuTimer.current);
+    menuTimer.current = setTimeout(() => setMenuVisible(false), 2600);
+  }, []);
+  useEffect(() => {
+    pokeMenu();
+    return () => {
+      if (menuTimer.current) clearTimeout(menuTimer.current);
+      if (flashTimer.current) clearInterval(flashTimer.current);
+      if (bannerTimer.current) clearTimeout(bannerTimer.current);
+    };
+  }, [pokeMenu]);
+
+  /* ── Run / reset for the active mode ── */
+  const toggleRun = useCallback(() => {
+    if (mode === 'stopwatch') setSwRunning(r => !r);
+    else if (mode === 'countdown') { if (cdRemain > 0) setCdRunning(r => !r); }
+  }, [mode, cdRemain]);
+  const resetCurrent = useCallback(() => {
+    if (mode === 'stopwatch') { setSwRunning(false); setSwElapsed(0); }
+    else if (mode === 'countdown') { setCdRunning(false); setCdRemain(cdTotal); }
+  }, [mode, cdTotal]);
+
+  const setCountdown = () => {
+    const h = parseInt(cdF.h,10)||0, m = parseInt(cdF.m,10)||0, s = parseInt(cdF.s,10)||0;
+    const total = ((h*3600)+(m*60)+s) * 1000;
+    setCdTotal(total); setCdRemain(total); setCdRunning(false);
+  };
+
+  /* ── Keyboard shortcuts (active while panel mounted) ── */
+  useEffect(() => {
+    const onKey = (e) => {
+      const tag = (e.target.tagName || '').toUpperCase();
+      const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+      if (e.key === 'Escape') {
+        if (editOpen) { setEditOpen(false); e.preventDefault(); return; }
+        if (scheduleOpen) { setScheduleOpen(false); e.preventDefault(); return; }
+        onBack(); return;
+      }
+      if (e.shiftKey && (e.key === 'E' || e.key === 'e')) {
+        setEditOpen(o => !o); setScheduleOpen(false); e.preventDefault(); return;
+      }
+      if (typing) return;
+      if (e.key === '1') { setMode('clock'); setScheduleOpen(false); }
+      else if (e.key === '2') { setMode('stopwatch'); setScheduleOpen(false); }
+      else if (e.key === '3') { setMode('countdown'); setScheduleOpen(false); }
+      else if (e.key === '4') { setScheduleOpen(true); setEditOpen(false); }
+      else if (e.key === ' ') { e.preventDefault(); toggleRun(); }
+      else if (e.key === 'r' || e.key === 'R') { resetCurrent(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [editOpen, scheduleOpen, toggleRun, resetCurrent, onBack]);
+
+  /* ── Derived display ── */
+  const clockStr = clkPad(now.getHours()) + ':' + clkPad(now.getMinutes()) + ':' + clkPad(now.getSeconds());
+  const display  = mode === 'clock' ? clockStr : mode === 'stopwatch' ? clkFmt(swElapsed) : clkFmt(cdRemain);
+  const nowHHMM  = clkPad(now.getHours()) + ':' + clkPad(now.getMinutes());
+  const current  = sorted.find(r => r.from <= nowHHMM && nowHHMM < r.to);
+  const nextRow  = sorted.find(r => r.from > nowHHMM);
+
+  let topicPx = topicSize;
+  if (current && current.subject.length > 10) topicPx = Math.max(4, topicSize * 10 / current.subject.length);
+
+  const activeTab = scheduleOpen ? 'schedule' : mode;
+  const menuStyle = { opacity: menuVisible ? 1 : 0, pointerEvents: menuVisible ? 'auto' : 'none' };
+
+  const upd = (i, field, val) => setSchedule(s => s.map((r,idx) => idx===i ? {...r, [field]:val} : r));
+
+  const topicEl = mode === 'clock' && current ? (
+    <div className="clk-topic" style={{ fontSize: topicPx + 'vw' }}>{current.subject}</div>
+  ) : null;
+  const digitsEl = <div className="clk-digits" style={{ fontSize: clockSize + 'vw' }}>{display}</div>;
+
+  return (
+    <div className="clk-root" onMouseMove={pokeMenu}>
+      <style>{CLK_CSS}</style>
+
+      <div className="clk-stack" style={{ transform: 'translateY(' + vertPos + 'vh)' }}>
+        {topicBelow ? <>{digitsEl}{topicEl}</> : <>{topicEl}{digitsEl}</>}
+
+        {mode === 'clock' && nextRow && (
+          <div className="clk-next">NEXT — {nextRow.subject.toUpperCase()} AT {nextRow.from}</div>
+        )}
+
+        {mode === 'stopwatch' && (
+          <div className="clk-ctrls">
+            <button className="clk-ctrl" onClick={() => setSwRunning(r => !r)}>{swRunning ? 'STOP' : 'START'}</button>
+            <button className="clk-ctrl" onClick={() => { setSwRunning(false); setSwElapsed(0); }}>RESET</button>
+          </div>
+        )}
+
+        {mode === 'countdown' && (
+          <div className="clk-ctrls">
+            <input className="clk-num" type="number" min="0" value={cdF.h}
+              onChange={e => setCdF(f => ({...f, h:e.target.value}))} disabled={cdRunning} />
+            <input className="clk-num" type="number" min="0" max="59" value={cdF.m}
+              onChange={e => setCdF(f => ({...f, m:e.target.value}))} disabled={cdRunning} />
+            <input className="clk-num" type="number" min="0" max="59" value={cdF.s}
+              onChange={e => setCdF(f => ({...f, s:e.target.value}))} disabled={cdRunning} />
+            <button className="clk-ctrl" onClick={setCountdown}>SET</button>
+            <button className="clk-ctrl" onClick={() => { if (cdRemain > 0) setCdRunning(r => !r); }}>
+              {cdRunning ? 'STOP' : 'START'}</button>
+            <button className="clk-ctrl" onClick={() => { setCdRunning(false); setCdRemain(cdTotal); }}>RESET</button>
+          </div>
+        )}
+      </div>
+
+      {/* silent flash overlay */}
+      {flashOn && <div className="clk-flash" />}
+
+      {/* schedule alert banner */}
+      {banner && <div className="clk-banner"><span>{banner}</span></div>}
+
+      {/* menu bar (auto-hides) */}
+      <div className="clk-strip" onMouseEnter={pokeMenu} />
+      <div className="clk-menu" style={menuStyle}>
+        <button className={'clk-mi' + (activeTab==='clock'?' active':'')}
+          onClick={() => { setMode('clock'); setScheduleOpen(false); }}>CLOCK</button>
+        <button className={'clk-mi' + (activeTab==='stopwatch'?' active':'')}
+          onClick={() => { setMode('stopwatch'); setScheduleOpen(false); }}>STOPWATCH</button>
+        <button className={'clk-mi' + (activeTab==='countdown'?' active':'')}
+          onClick={() => { setMode('countdown'); setScheduleOpen(false); }}>COUNTDOWN</button>
+        <button className={'clk-mi' + (activeTab==='schedule'?' active':'')}
+          onClick={() => { setScheduleOpen(true); setEditOpen(false); }}>SCHEDULE</button>
+      </div>
+      <button className="clk-exit" style={menuStyle} onClick={onBack}>← SUBJECTS</button>
+      <div className="clk-hint" style={menuStyle}>1-4 MODES · SPACE START/STOP · R RESET · SHIFT+E EDIT · ESC CLOSE</div>
+
+      {/* schedule overlay */}
+      {scheduleOpen && (
+        <div className="clk-ov" onClick={e => { if (e.target === e.currentTarget) setScheduleOpen(false); }}>
+          <div className="clk-panel">
+            <div className="clk-ph">SCHEDULE</div>
+            {schedule.length === 0 && (
+              <div style={{ color:'#5a5a5a', fontSize:14, marginBottom:16 }}>No entries yet. Add a row below.</div>
+            )}
+            {schedule.map((r, i) => (
+              <div className="clk-row" key={i}>
+                <input className="clk-in" type="time" value={r.from||''} onChange={e => upd(i,'from',e.target.value)} />
+                <input className="clk-in" type="time" value={r.to||''} onChange={e => upd(i,'to',e.target.value)} />
+                <input className="clk-in" type="text" placeholder="Subject" value={r.subject||''}
+                  onChange={e => upd(i,'subject',e.target.value)} />
+                <button className="clk-del" onClick={() => setSchedule(s => s.filter((_,idx) => idx!==i))}>Remove</button>
+              </div>
+            ))}
+            <div style={{ display:'flex', gap:12, marginTop:18 }}>
+              <button className="clk-btn" onClick={() => setSchedule(s => [...s, { from:'', to:'', subject:'' }])}>+ Add row</button>
+              <button className="clk-btn" onClick={() => {
+                setSchedule(s => [...s].filter(r => r.from && r.to && r.subject)
+                  .sort((a,b) => a.from.localeCompare(b.from)));
+                setScheduleOpen(false);
+              }}>Done</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* edit overlay (live preview — clock stays visible behind) */}
+      {editOpen && (
+        <div className="clk-ov edit" onClick={e => { if (e.target === e.currentTarget) setEditOpen(false); }}>
+          <div className="clk-panel edit">
+            <div className="clk-ph">DISPLAY SETTINGS</div>
+            <div className="clk-field">
+              <div className="clk-lab"><span>TOPIC SIZE</span><span>{topicSize}vw</span></div>
+              <input type="range" min="3" max="25" step="0.5" value={topicSize}
+                onChange={e => setTopicSize(parseFloat(e.target.value))} />
+            </div>
+            <div className="clk-field">
+              <div className="clk-lab"><span>CLOCK SIZE</span><span>{clockSize}vw</span></div>
+              <input type="range" min="3" max="25" step="0.5" value={clockSize}
+                onChange={e => setClockSize(parseFloat(e.target.value))} />
+            </div>
+            <div className="clk-field">
+              <div className="clk-lab"><span>VERTICAL POSITION</span><span>{vertPos}vh</span></div>
+              <input type="range" min="-40" max="40" step="1" value={vertPos}
+                onChange={e => setVertPos(parseFloat(e.target.value))} />
+            </div>
+            <div className="clk-field" style={{ marginBottom:6 }}>
+              <div className="clk-lab"><span>TOPIC ORDER</span><span></span></div>
+              <button className="clk-btn" onClick={() => setTopicBelow(b => !b)}>
+                Topic {topicBelow ? 'BELOW' : 'ABOVE'} clock</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────── */
+
 function App() {
   const [subject, setSubject]       = useState(null);
   const [examIndex, setExamIndex]   = useState(null);
@@ -11668,7 +12065,9 @@ function App() {
     )}
     <div className="app">
       {specialMode?.type !== 'brain_atlas' && <SearchWidget books={books} />}
-      {specialMode?.type === 'anatomy_slides'
+      {specialMode?.type === 'clock'
+        ? <Clock onBack={handleBack} />
+        : specialMode?.type === 'anatomy_slides'
         ? <AnatomyTest onBack={handleBack} />
         : specialMode?.type === 'czech_credit'
           ? <CzechCreditTest testKey={specialMode.testKey} onBack={handleBack} />
