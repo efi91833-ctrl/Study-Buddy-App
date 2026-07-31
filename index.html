@@ -910,6 +910,10 @@
 <body>
 <div id="root"></div>
 
+<!-- Progress tracking: attempt history, mastery, weak areas. Plain JS, loads
+     before the question banks so the app code can rely on window.Progress. -->
+<script src="progress.js"></script>
+
 <script src="histology-questions.js"></script>
 <script src="anatomy-questions.js"></script>
 <script src="embryo-questions.js"></script>
@@ -970,17 +974,40 @@ function getCustomLabels() {
     })
     .catch(() => {});
 })();
+/* Set by the disk-save path below so the UI can tell the user their boxes are
+ * only in this browser. Read via window.labelSaveState. */
+window.labelSaveState = { diskOk: null, lastError: null };
+
 function saveCustomLabelsForSlide(slideId, labels) {
   const all = getCustomLabels();
   all[slideId] = labels;
   const json = JSON.stringify(all);
-  localStorage.setItem('anatomy_custom_labels', json);
-  // Also persist to labels.json on disk so boxes survive browser clears
+  try {
+    localStorage.setItem('anatomy_custom_labels', json);
+  } catch (e) {
+    console.error('[labels] browser storage full — label boxes were NOT saved:', e);
+    window.labelSaveState = { diskOk: false, lastError: 'Browser storage full' };
+    return;
+  }
+  // Also persist to labels.json on disk so boxes survive a browser data clear.
+  // This only works when server.py is running; when opened as a plain file the
+  // boxes live in localStorage alone, which is worth knowing rather than
+  // silently assuming they are backed up.
   fetch('/save-labels', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: json,
-  }).catch(() => {}); // silent if server not running
+  })
+    .then(r => {
+      if (!r.ok) throw new Error('server responded ' + r.status);
+      window.labelSaveState = { diskOk: true, lastError: null };
+    })
+    .catch(err => {
+      if (window.labelSaveState.diskOk !== false) {
+        console.warn('[labels] saved to this browser only — labels.json not updated:', err.message);
+      }
+      window.labelSaveState = { diskOk: false, lastError: err.message };
+    });
 }
 // Returns user-drawn boxes for this slide (from localStorage), then built-in defaults
 function getLabelsForSlide(slideId) {
@@ -1377,16 +1404,102 @@ const QUESTION_BANK = {
 };
 
 // ─────────────────────────────────────────────────────────────
-// STORAGE HELPERS
-// ─────────────────────────────────────────────────────────────
 // EXAM BUILDER
 // ─────────────────────────────────────────────────────────────
-function buildExam(subject, examIndex) {
+// Number of questions drawn for a "Focus Weak Areas" session.
+const WEAK_FOCUS_SIZE = 25;
+// Below this many unmastered questions, a curated exam is shown in full
+// instead of as a near-empty list.
+const MIN_EXAM_SIZE = 3;
+
+function shuffled(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/* Some questions appear in more than one curated exam on purpose — the mock
+ * credit tests reuse questions from the topic exams. That is correct inside a
+ * single exam, but when every exam is flattened into one pool it would show
+ * the same question twice in one sitting. Collapse by question text. */
+function dedupeByStem(questions) {
+  const seen = new Set();
+  return questions.filter(q => {
+    const k = String(q.question || q.id || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (!k) return true;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
+/* Every question available for a subject / exam selection. */
+function poolFor(subject, examIndex) {
   const meta = QUESTION_BANK[subject];
-  const source = (examIndex != null && meta.exams)
-    ? meta.exams[examIndex].questions
-    : meta.questions;
-  return [...source];
+  if (!meta) return [];
+  if (examIndex === 'all' || examIndex === 'weak' || examIndex == null || !meta.exams) {
+    const all = meta.exams ? meta.exams.flatMap(e => e.questions || []) : (meta.questions || []);
+    return dedupeByStem(all);
+  }
+  const exam = meta.exams[examIndex];
+  // A single curated exam is left exactly as authored.
+  return (exam && exam.questions) || [];
+}
+
+/* Draw `size` questions without replacement, probability proportional to how
+ * badly the question is going. Weak subtopics dominate but nothing is locked
+ * out, so the exam still has variety. */
+function weightedSample(subject, pool, size) {
+  const items = pool.map(q => ({ q, w: window.Progress ? window.Progress.weightFor(subject, q) : 1 }));
+  const picked = [];
+  let total = items.reduce((s, it) => s + it.w, 0);
+  while (picked.length < size && items.length > 0) {
+    let r = Math.random() * total;
+    let idx = 0;
+    for (; idx < items.length; idx++) {
+      r -= items[idx].w;
+      if (r <= 0) break;
+    }
+    if (idx >= items.length) idx = items.length - 1;
+    total -= items[idx].w;
+    picked.push(items[idx].q);
+    items.splice(idx, 1);
+  }
+  return picked;
+}
+
+/* Returns { questions, exhausted, focused, hidden }
+ *   exhausted — everything in this exam is already mastered, so the full set
+ *               is being shown for review rather than an empty screen
+ *   focused   — this is a weak-area session
+ *   hidden    — how many mastered questions were filtered out
+ */
+function buildExam(subject, examIndex) {
+  const focused = examIndex === 'weak';
+  const pool = poolFor(subject, examIndex);
+  const P = window.Progress;
+
+  const fresh = P ? pool.filter(q => !P.isMastered(subject, q)) : pool;
+  const hidden = pool.length - fresh.length;
+
+  if (focused) {
+    const source = fresh.length ? fresh : pool;
+    return {
+      questions: shuffled(weightedSample(subject, source, Math.min(WEAK_FOCUS_SIZE, source.length))),
+      exhausted: fresh.length === 0,
+      focused: true,
+      hidden,
+    };
+  }
+
+  // Curated exam: keep the author's ordering, just drop what is already mastered.
+  if (fresh.length < MIN_EXAM_SIZE) {
+    return { questions: [...pool], exhausted: true, focused: false, hidden: 0 };
+  }
+  return { questions: fresh, exhausted: false, focused: false, hidden };
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1409,6 +1522,42 @@ function hasAnswer(ans) {
 // COMPONENTS
 // ─────────────────────────────────────────────────────────────
 
+/* ── Option shuffling ──────────────────────────────────────────────────────
+ * The banks have a strong positional tell: in the current data the correct
+ * answer is the longest option ~70% of the time and some banks lean heavily
+ * on one letter. Fixed order also means a retake can be passed from memory of
+ * where the answer sat rather than from knowing it.
+ *
+ * So the DISPLAYED letter is positional (first option shown is always "A")
+ * while the value passed to onSelect and stored in `answers` remains the
+ * question's ORIGINAL letter. Scoring, explanations, and progress tracking
+ * therefore need no changes at all.
+ *
+ * No bank uses "all of the above"-style options, which would break under
+ * reordering — checked before enabling this.
+ */
+const DISPLAY_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+function shuffleOptions(options) {
+  const entries = Object.entries(options || {});
+  for (let i = entries.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [entries[i], entries[j]] = [entries[j], entries[i]];
+  }
+  return entries.map(([letter, text], i) => ({
+    label: DISPLAY_LETTERS[i] || letter,
+    letter,          // original key — this is what gets stored and scored
+    text,
+  }));
+}
+
+/* Stable for the lifetime of the mounted card, so options do not jump around
+ * while the user is reading them. A new question means a new mount (the lists
+ * are keyed by question id), which reshuffles. */
+function useShuffledOptions(options) {
+  return useState(() => shuffleOptions(options))[0];
+}
+
 function OptionButton({ letter, text, state, onClick, disabled }) {
   return (
     <button
@@ -1424,6 +1573,7 @@ function OptionButton({ letter, text, state, onClick, disabled }) {
 
 function QuestionCard({ question, index, answer, onSelect, submitted }) {
   const { id, topic, subtopic, question: qText, options, correct, explanation } = question;
+  const shownOptions = useShuffledOptions(options);
 
   const isMulti = Array.isArray(correct);
   const ansArr  = isMulti ? (answer || []) : null;
@@ -1455,10 +1605,10 @@ function QuestionCard({ question, index, answer, onSelect, submitted }) {
       <p className="question-text">{qText}</p>
       {isMulti && <p className="multi-hint">Select all that apply</p>}
       <div className="options-grid">
-        {Object.entries(options).map(([letter, text]) => (
+        {shownOptions.map(({ label, letter, text }) => (
           <OptionButton
             key={letter}
-            letter={letter}
+            letter={label}
             text={text}
             state={getState(letter)}
             onClick={() => onSelect(id, letter)}
@@ -1478,12 +1628,45 @@ function QuestionCard({ question, index, answer, onSelect, submitted }) {
   );
 }
 
-function ResultsBanner({ questions, answers, subject, onNext, onHome }) {
+/* Per-subtopic accuracy for a single sitting. Skipped questions are left out
+ * entirely rather than counted against the subtopic. */
+function sessionBreakdown(questions, answers) {
+  const groups = {};
+  questions.forEach(q => {
+    if (!hasAnswer(answers[q.id])) return;
+    const name = q.subtopic || q.topic || 'Untagged';
+    if (!groups[name]) groups[name] = { name, topic: q.topic || '', n: 0, c: 0 };
+    groups[name].n += 1;
+    if (isCorrect(q, answers[q.id])) groups[name].c += 1;
+  });
+  return Object.values(groups)
+    .map(g => ({ ...g, accuracy: g.n ? g.c / g.n : 0 }))
+    .sort((a, b) => a.accuracy - b.accuracy || b.n - a.n);
+}
+
+function AccuracyBar({ accuracy }) {
+  const pct = Math.round(accuracy * 100);
+  const color = pct >= 80 ? '#4caf50' : pct >= 50 ? '#ffa726' : '#e53935';
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 96 }}>
+      <div style={{ flex: 1, height: 6, background: '#eee', borderRadius: 3, overflow: 'hidden' }}>
+        <div style={{ width: pct + '%', height: '100%', background: color, borderRadius: 3 }} />
+      </div>
+      <span style={{ fontSize: 12, fontWeight: 700, color, minWidth: 34, textAlign: 'right' }}>{pct}%</span>
+    </div>
+  );
+}
+
+function ResultsBanner({ questions, answers, subject, onNext, onFocusWeak, onHome }) {
   const answered = questions.filter(q => hasAnswer(answers[q.id]));
   const correct  = answered.filter(q => isCorrect(q, answers[q.id]));
   const pct = answered.length ? Math.round((correct.length / answered.length) * 100) : 0;
 
   const ringClass = pct >= 80 ? 'score-great' : pct >= 50 ? 'score-ok' : 'score-poor';
+
+  const thisExam = sessionBreakdown(questions, answers);
+  const weakHere = thisExam.filter(g => g.accuracy < 1);
+  const overallWeak = window.Progress ? window.Progress.weakAreas(subject, 5) : [];
 
   return (
     <div>
@@ -1504,22 +1687,72 @@ function ResultsBanner({ questions, answers, subject, onNext, onHome }) {
         </div>
       </div>
 
+      {weakHere.length > 0 && (
+        <div style={{
+          marginTop: 22, padding: '16px 18px', borderRadius: 14,
+          background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(0,0,0,0.10)',
+        }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#aaa', letterSpacing: '.08em',
+                        textTransform: 'uppercase', marginBottom: 12 }}>
+            Where you lost marks
+          </div>
+          {weakHere.map(g => (
+            <div key={g.name} style={{ display: 'flex', alignItems: 'center', gap: 14,
+                                       padding: '6px 0', fontSize: 14 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap' }}>{g.name}</div>
+                <div style={{ fontSize: 11, color: '#999' }}>{g.c} of {g.n} correct</div>
+              </div>
+              <AccuracyBar accuracy={g.accuracy} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {overallWeak.length > 0 && (
+        <div style={{
+          marginTop: 14, padding: '16px 18px', borderRadius: 14,
+          background: 'rgba(255,248,240,0.9)', border: '1px solid rgba(255,167,38,0.35)',
+        }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#c07a20', letterSpacing: '.08em',
+                        textTransform: 'uppercase', marginBottom: 10 }}>
+            Weakest areas overall
+          </div>
+          {overallWeak.map(g => (
+            <div key={g.name} style={{ display: 'flex', alignItems: 'center', gap: 14,
+                                       padding: '5px 0', fontSize: 14 }}>
+              <div style={{ flex: 1, minWidth: 0, color: '#5a4a30', overflow: 'hidden',
+                            textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</div>
+              <span style={{ fontSize: 11, color: '#a08a68' }}>{g.attempts} tries</span>
+              <AccuracyBar accuracy={g.accuracy} />
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="exam-actions" style={{ marginTop: 28 }}>
-        <button className="btn-primary" onClick={onNext}>Next Exam →</button>
+        <button className="btn-primary" onClick={onFocusWeak}>Practise Weak Areas →</button>
+        <button className="btn-secondary" onClick={onNext}>Back to Exams</button>
         <button className="btn-secondary" onClick={onHome}>Back to Subjects</button>
       </div>
     </div>
   );
 }
 
-function ExamScreen({ subject, examIndex, onBack }) {
-  const [questions]  = useState(() => buildExam(subject, examIndex));
+function ExamScreen({ subject, examIndex, onBack, onFocusWeak }) {
+  // Built once per mount. Remounting (a new exam selection) rebuilds, which is
+  // what picks up newly mastered questions.
+  const [built] = useState(() => buildExam(subject, examIndex));
+  const questions = built.questions;
   const [answers, setAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [showResults, setShowResults] = useState(false);
 
-  const meta   = QUESTION_BANK[subject];
-  const source = (examIndex != null && meta.exams) ? meta.exams[examIndex].questions : meta.questions;
+  const meta = QUESTION_BANK[subject];
+  const examName = examIndex === 'weak'
+    ? 'Weak Areas'
+    : (examIndex != null && meta.exams && meta.exams[examIndex] ? meta.exams[examIndex].name : '');
 
   function handleSelect(id, letter) {
     if (submitted) return;
@@ -1538,26 +1771,46 @@ function ExamScreen({ subject, examIndex, onBack }) {
   function handleSubmit() {
     setSubmitted(true);
     setShowResults(true);
+    // Record before paint so a crash in the results UI cannot lose the attempt.
+    if (window.Progress) {
+      window.Progress.recordExam(subject, examName, questions, answers, {
+        isCorrect,
+        hasAnswer,
+      });
+    }
+    window.scrollTo(0, 0);
   }
 
   function handleNext() {
     onBack();
   }
 
-  const answeredCount = Object.keys(answers).length;
+  // Answers can hold empty arrays for multi-select questions that were touched
+  // then cleared, so count real answers rather than object keys.
+  const answeredCount = questions.filter(q => hasAnswer(answers[q.id])).length;
 
   return (
     <div className="content">
       <div className="exam-header">
         <button className="topbar-back" style={{ marginBottom: 16 }} onClick={onBack}>← Subjects</button>
         <div className="exam-subject-label">
-          <span>{subject}{examIndex != null && meta.exams ? ` · ${meta.exams[examIndex].name}` : ''}</span>
+          <span>{subject}{examName ? ` · ${examName}` : ''}</span>
         </div>
-        <h1 className="exam-title">Exam</h1>
+        <h1 className="exam-title">{built.focused ? 'Weak Areas' : 'Exam'}</h1>
         <p className="exam-meta">
           {questions.length} question{questions.length !== 1 ? 's' : ''}
           {!submitted && answeredCount > 0 && ` · ${answeredCount} answered`}
+          {!submitted && built.hidden > 0 && ` · ${built.hidden} mastered, hidden`}
         </p>
+        {built.exhausted && !submitted && (
+          <p style={{
+            marginTop: 10, padding: '10px 14px', borderRadius: 10, fontSize: 13,
+            background: 'rgba(232,245,233,0.9)', border: '1px solid #a5d6a7', color: '#2e7d32',
+          }}>
+            You have already answered everything here correctly. Showing the full set for review —
+            these answers still count toward your progress.
+          </p>
+        )}
       </div>
 
       <div className="question-list">
@@ -1590,6 +1843,7 @@ function ExamScreen({ subject, examIndex, onBack }) {
           answers={answers}
           subject={subject}
           onNext={handleNext}
+          onFocusWeak={onFocusWeak || handleNext}
           onHome={onBack}
         />
       )}
@@ -2041,6 +2295,71 @@ function CzechCreditTest({ testKey: initialKey, onBack }) {
 }
 
 // ─────────────────────────────────────────────────────────────
+/* Progress summary + entry point to a weak-area session.
+ * Renders nothing until there is enough history to say anything useful, so a
+ * fresh subject is not cluttered with empty stats. */
+function WeakAreaCard({ subject, onSelectExam, cardStyle }) {
+  const [, force] = useState(0);
+  useEffect(() => {
+    if (!window.Progress) return;
+    return window.Progress.subscribe(() => force(n => n + 1));
+  }, []);
+
+  if (!window.Progress) return null;
+  const stats = window.Progress.summary(subject);
+  if (!stats.attempts) return null;
+
+  const weak = window.Progress.weakAreas(subject, 4);
+  const pct = Math.round(stats.accuracy * 100);
+  const poolSize = poolFor(subject, null).length;
+
+  return (
+    <div style={{ marginTop: 22 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: '#999', textTransform: 'uppercase',
+                    letterSpacing: '.07em', marginBottom: 8 }}>
+        Your Progress
+      </div>
+
+      <div style={{ ...cardStyle, cursor: 'default', padding: '16px 18px' }}>
+        <div style={{ display: 'flex', gap: 22, fontSize: 13, fontWeight: 400, color: '#666',
+                      marginBottom: weak.length ? 14 : 0, flexWrap: 'wrap' }}>
+          <span><strong style={{ color: '#1a1a1a', fontSize: 17 }}>{pct}%</strong> overall</span>
+          <span><strong style={{ color: '#1a1a1a', fontSize: 17 }}>{stats.mastered}</strong> mastered
+            {poolSize ? ` of ${poolSize}` : ''}</span>
+          <span><strong style={{ color: '#1a1a1a', fontSize: 17 }}>{stats.exams}</strong> exams taken</span>
+        </div>
+
+        {weak.length > 0 && (
+          <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: 12 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#c07a20', letterSpacing: '.06em',
+                          textTransform: 'uppercase', marginBottom: 8 }}>
+              Weakest areas
+            </div>
+            {weak.map(g => (
+              <div key={g.name} style={{ display: 'flex', alignItems: 'center', gap: 12,
+                                         padding: '4px 0', fontSize: 13, fontWeight: 400 }}>
+                <span style={{ flex: 1, minWidth: 0, color: '#444', overflow: 'hidden',
+                               textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</span>
+                <AccuracyBar accuracy={g.accuracy} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <button
+        onClick={() => onSelectExam('weak')}
+        style={{ ...cardStyle, width: '100%', marginTop: 10,
+                 background: '#fff6e9', border: '2px solid #ffb74d' }}>
+        Practise Weak Areas
+        <div style={{ fontSize: 12, fontWeight: 400, color: '#b57a20', marginTop: 4 }}>
+          Up to {WEAK_FOCUS_SIZE} questions · weighted to what you keep getting wrong · mastered ones excluded
+        </div>
+      </button>
+    </div>
+  );
+}
+
 function ExamPicker({ subject, onSelectExam, onBack }) {
   const meta = QUESTION_BANK[subject];
   const cardStyle = {
@@ -2381,6 +2700,9 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
           );
         })()}
       </div>
+
+      {/* ── Weak-area practice + progress summary ── */}
+      <WeakAreaCard subject={subject} onSelectExam={onSelectExam} cardStyle={cardStyle} />
 
       {/* ── Medical Informatics: Full Test button ── */}
       {subject === 'Medical Informatics' && (
@@ -6841,22 +7163,51 @@ function isDescendantOf(nodeId, ancestorId, allNodes) {
 
 
 /* ── Error boundary ── */
-class ArteryErrorBoundary extends React.Component {
-  constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+/* General-purpose boundary. Previously this only wrapped the artery game, so a
+ * throw anywhere else (brain atlas, muscle lab, a malformed question object)
+ * unmounted the whole tree and left a blank white page with nothing but a
+ * console message. Now every module gets a recoverable error state.
+ *
+ * `onReset` lets the caller navigate away instead of retrying a screen that
+ * will just throw again. */
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+    // Bound in the constructor rather than written as a class property, because
+    // the in-browser Babel build here does not enable class-properties syntax.
+    this.reset = this.reset.bind(this);
+  }
   static getDerivedStateFromError(error) { return { hasError: true, error }; }
-  componentDidCatch(error, info) { console.warn('ArteryAssemblyGame error:', error, info); }
+  componentDidCatch(error, info) {
+    console.error(`[${this.props.label || 'app'}] crashed:`, error, info && info.componentStack);
+  }
+  reset() {
+    this.setState({ hasError: false, error: null });
+    if (this.props.onReset) this.props.onReset();
+  }
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ padding: '40px 20px', textAlign: 'center', color: '#888' }}>
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#c00', marginBottom: 10 }}>
-            Something went wrong loading this module.
+        <div style={{ padding: '48px 24px', textAlign: 'center', color: '#888', maxWidth: 520, margin: '0 auto' }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: '#c00', marginBottom: 10 }}>
+            Something went wrong in {this.props.label || 'this screen'}.
           </div>
-          <div style={{ fontSize: 12, marginBottom: 20, color: '#aaa' }}>{String(this.state.error || '')}</div>
-          <button onClick={() => this.setState({ hasError: false, error: null })}
-            style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid #ccc',
-                     background: '#f5f5f5', cursor: 'pointer', fontSize: 13 }}>
-            Try again
+          <div style={{ fontSize: 12, marginBottom: 8, color: '#aaa' }}>
+            {String(this.state.error || '')}
+          </div>
+          <div style={{ fontSize: 12, marginBottom: 22, color: '#bbb' }}>
+            Your saved progress is not affected.
+          </div>
+          <button onClick={this.reset}
+            style={{ padding: '9px 22px', borderRadius: 8, border: '1px solid #ccc',
+                     background: '#f5f5f5', cursor: 'pointer', fontSize: 13, marginRight: 8 }}>
+            {this.props.onReset ? 'Go back' : 'Try again'}
+          </button>
+          <button onClick={() => window.location.reload()}
+            style={{ padding: '9px 22px', borderRadius: 8, border: '1px solid #ccc',
+                     background: '#fff', cursor: 'pointer', fontSize: 13 }}>
+            Reload app
           </button>
         </div>
       );
@@ -6864,6 +7215,11 @@ class ArteryErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
+
+/* Kept so the existing artery call site keeps working. */
+const ArteryErrorBoundary = ({ children }) => (
+  <ErrorBoundary label="Artery Assembly">{children}</ErrorBoundary>
+);
 
 /* ── Single slot card ── */
 function AssSlot({ node, placed, selectedVessel, onSlotClick, submitted,
@@ -10564,22 +10920,13 @@ function BrainMriQuiz({ onBack }) {
 // INSTANT FEEDBACK EXAM  (one question at a time)
 // ─────────────────────────────────────────────────────────────
 function InstantFeedbackExam({ subject, examIndex, onBack }) {
-  const allQuestions = React.useMemo(() => {
-    const meta = QUESTION_BANK[subject];
-    let pool;
-    if (examIndex === 'all') {
-      pool = (meta.exams || []).flatMap(e => e.questions);
-    } else {
-      pool = (examIndex != null && meta.exams) ? meta.exams[examIndex].questions : meta.questions;
-    }
-    // shuffle
-    const arr = [...pool];
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-  }, [subject, examIndex]);
+  // Shares buildExam with ExamScreen, so mastery filtering and weak-area
+  // weighting apply here too instead of being a second, divergent code path.
+  const built = React.useMemo(
+    () => buildExam(subject, examIndex),
+    [subject, examIndex]
+  );
+  const allQuestions = React.useMemo(() => shuffled(built.questions), [built]);
 
   const [idx, setIdx]           = useState(0);
   const [chosen, setChosen]     = useState(null);   // letter chosen for current question
@@ -10591,11 +10938,16 @@ function InstantFeedbackExam({ subject, examIndex, onBack }) {
   const total = allQuestions.length;
   const isCorrect = chosen === q?.correct;
 
+  // Reshuffles whenever the question changes; stable while one is on screen.
+  const shownOptions = React.useMemo(() => shuffleOptions(q?.options), [idx, q]);
+
   function handleChoose(letter) {
     if (revealed) return;
     setChosen(letter);
     setRevealed(true);
     const correct = letter === q.correct;
+    // Instant-feedback answers count toward mastery and weak areas immediately.
+    if (window.Progress) window.Progress.record(subject, q, correct);
     setScore(prev => ({ correct: prev.correct + (correct ? 1 : 0), answered: prev.answered + 1 }));
   }
 
@@ -10612,6 +10964,15 @@ function InstantFeedbackExam({ subject, examIndex, onBack }) {
 
   const pct = score.answered ? Math.round((score.correct / score.answered) * 100) : 0;
   const ringClass = pct >= 80 ? 'score-great' : pct >= 50 ? 'score-ok' : 'score-poor';
+
+  if (!total || !q) {
+    return (
+      <div className="content">
+        <button className="topbar-back" style={{ marginBottom: 24 }} onClick={onBack}>← Back</button>
+        <p style={{ color: '#666' }}>No questions available for this selection.</p>
+      </div>
+    );
+  }
 
   if (done) {
     return (
@@ -10669,7 +11030,7 @@ function InstantFeedbackExam({ subject, examIndex, onBack }) {
         <div className="question-topic-tag">{q.topic} › {q.subtopic}</div>
         <p className="question-text">{q.question}</p>
         <div className="options-grid">
-          {Object.entries(q.options).map(([letter, text]) => (
+          {shownOptions.map(({ label, letter, text }) => (
             <button
               key={letter}
               onClick={() => handleChoose(letter)}
@@ -10682,7 +11043,7 @@ function InstantFeedbackExam({ subject, examIndex, onBack }) {
                 transition: 'all .15s', width: '100%',
               }}
             >
-              <span style={{ fontWeight: 700, minWidth: 22 }}>{letter}.</span>
+              <span style={{ fontWeight: 700, minWidth: 22 }}>{label}.</span>
               <span>{text}</span>
               {revealed && letter === q.correct && <span style={{ marginLeft: 'auto', fontWeight: 700 }}>✓</span>}
               {revealed && letter === chosen && letter !== q.correct && <span style={{ marginLeft: 'auto', fontWeight: 700 }}>✗</span>}
@@ -12020,6 +12381,9 @@ function App() {
   const [books, setBooks]           = useState([]);
   const [openBook, setOpenBook]     = useState(null);
   const [pendingNav, setPendingNav] = useState(null); // { instr, action }
+  // Bumped to force a fresh ExamScreen even when the selection is unchanged,
+  // e.g. "Practise Weak Areas" pressed twice in a row.
+  const [examNonce, setExamNonce]   = useState(0);
 
   const meta     = subject ? QUESTION_BANK[subject] : null;
   const hasExams = meta?.exams != null;
@@ -12039,8 +12403,15 @@ function App() {
       const key = val.type || 'exam';
       showInstructionsThen(key, () => setSpecialMode(val));
     } else {
-      showInstructionsThen('exam', () => setExamIndex(val));
+      showInstructionsThen('exam', () => { setExamIndex(val); setExamNonce(n => n + 1); });
     }
+  }
+  /* Weak-area practice: skips the instruction overlay because it is only ever
+     reached from a results screen the user is already reading. */
+  function handleFocusWeak() {
+    setSpecialMode(null);
+    setExamIndex('weak');
+    setExamNonce(n => n + 1);
   }
   function handleBack() {
     if (specialMode) {
@@ -12065,6 +12436,13 @@ function App() {
     )}
     <div className="app">
       {specialMode?.type !== 'brain_atlas' && <SearchWidget books={books} />}
+      {/* One boundary around the whole router, re-keyed per screen so moving to
+          a different screen clears a previous crash automatically. */}
+      <ErrorBoundary
+        key={`eb:${specialMode?.type || ''}:${subject || ''}:${examIndex}`}
+        label={specialMode?.type || subject || 'Study Buddy'}
+        onReset={handleBack}
+      >
       {specialMode?.type === 'clock'
         ? <Clock onBack={handleBack} />
         : specialMode?.type === 'anatomy_slides'
@@ -12108,8 +12486,17 @@ function App() {
               />
             : hasExams && examIndex === null
               ? <ExamPicker subject={subject} onSelectExam={handleExamSelect} onBack={() => { setSubject(null); setExamIndex(null); setSpecialMode(null); }} />
-              : <ExamScreen subject={subject} examIndex={examIndex} onBack={handleBack} />
+              /* keyed so switching exams (or jumping to weak-area practice)
+                 remounts and rebuilds the question set from fresh progress */
+              : <ExamScreen
+                  key={`${subject}:${examIndex}:${examNonce}`}
+                  subject={subject}
+                  examIndex={examIndex}
+                  onBack={handleBack}
+                  onFocusWeak={handleFocusWeak}
+                />
       }
+      </ErrorBoundary>
       {openBook && (
         <BookReader bookId={openBook.id} bookTitle={openBook.title} onClose={() => setOpenBook(null)} />
       )}
@@ -12394,35 +12781,14 @@ function Root() {
 
   /* Localhost bypass — skip Firebase auth entirely when running locally */
   const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  if (isLocalhost) return <App />;
 
-  /* If Firebase SDK failed to load — show retry screen (hooks already called above) */
-  if (!FIREBASE_OK) return (
-    <div style={{
-      minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center',
-      background:'rgba(242,237,232,1)',
-    }}>
-      <div style={{
-        background:'rgba(255,255,255,0.92)', borderRadius:18,
-        boxShadow:'0 8px 40px rgba(0,0,0,0.13)', padding:'40px 36px',
-        maxWidth:340, textAlign:'center', backdropFilter:'blur(8px)',
-      }}>
-        <div style={{fontWeight:700, fontSize:20, color:'#1a1a1a', marginBottom:12}}>Connection Error</div>
-        <div style={{fontSize:13, color:'#666', lineHeight:1.6, marginBottom:20}}>
-          Could not connect to the authentication service. Please check your internet connection and try again.
-        </div>
-        <button
-          onClick={() => window.location.reload()}
-          style={{padding:'10px 24px', borderRadius:10, border:'none', background:'#1a1a1a', color:'#fff', fontWeight:700, fontSize:14, cursor:'pointer'}}
-        >
-          Try Again
-        </button>
-      </div>
-    </div>
-  );
-
+  /* NOTE: every hook in this component must run before the early returns
+     below. The auth effect used to sit after them, which meant the hook count
+     depended on isLocalhost / FIREBASE_OK. Those happen to be constant for a
+     session so it never blew up, but any future conditional would have made it
+     a "rendered fewer hooks than expected" crash. */
   useEffect(() => {
-    if (!fbAuth) return;
+    if (isLocalhost || !FIREBASE_OK || !fbAuth) return;
     let firestoreUnsub = null;
 
     /* Handle the redirect result coming back from Google */
@@ -12457,7 +12823,34 @@ function Root() {
     });
 
     return () => { authUnsub(); if (firestoreUnsub) firestoreUnsub(); };
-  }, []);
+  }, [isLocalhost]);
+
+  if (isLocalhost) return <App />;
+
+  /* If Firebase SDK failed to load — show retry screen (hooks already called above) */
+  if (!FIREBASE_OK) return (
+    <div style={{
+      minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center',
+      background:'rgba(242,237,232,1)',
+    }}>
+      <div style={{
+        background:'rgba(255,255,255,0.92)', borderRadius:18,
+        boxShadow:'0 8px 40px rgba(0,0,0,0.13)', padding:'40px 36px',
+        maxWidth:340, textAlign:'center', backdropFilter:'blur(8px)',
+      }}>
+        <div style={{fontWeight:700, fontSize:20, color:'#1a1a1a', marginBottom:12}}>Connection Error</div>
+        <div style={{fontSize:13, color:'#666', lineHeight:1.6, marginBottom:20}}>
+          Could not connect to the authentication service. Please check your internet connection and try again.
+        </div>
+        <button
+          onClick={() => window.location.reload()}
+          style={{padding:'10px 24px', borderRadius:10, border:'none', background:'#1a1a1a', color:'#fff', fontWeight:700, fontSize:14, cursor:'pointer'}}
+        >
+          Try Again
+        </button>
+      </div>
+    </div>
+  );
 
   /* Still loading auth state */
   if (fbUser === undefined) {

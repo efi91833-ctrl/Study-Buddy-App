@@ -13,3 +13,6 @@ node_modules/
 # Python cache
 __pycache__/
 *.pyc
+
+# Superseded copies of index.html, kept locally only
+_old/

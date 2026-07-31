@@ -5,17 +5,23 @@
    - Cache-first strategy for all GET requests
    ============================================================ */
 
-const CACHE_NAME = 'study-buddy-v117';
+const CACHE_NAME = 'study-buddy-v118';
 
-/* All local files to pre-cache on install */
+/* All local files to pre-cache on install.
+   IMPORTANT: this list must contain every <script src> in index.html. Seven
+   data files (medinfo, brain labels, MRI quiz, vein formation, histology
+   slides/ids, hematopoiesis) were missing here, so those modules broke when the
+   app was opened offline even though the rest of it worked. */
 const LOCAL_ASSETS = [
   '/index.html',
   '/manifest.json',
   '/labels.json',
+  '/progress.js',
   '/histology-questions.js',
   '/anatomy-questions.js',
   '/embryo-questions.js',
   '/czech-questions.js',
+  '/medinfo-questions.js',
   '/czechQuestionBanks.js',
   '/muscle-bank.js',
   '/artery-game.js',
@@ -23,6 +29,12 @@ const LOCAL_ASSETS = [
   '/timeline-data.js',
   '/dissection-questions.js',
   '/brain-atlas-data.js',
+  '/brain-labels.js',
+  '/brain-mri-quiz-data.js',
+  '/vein-formation-data.js',
+  '/histology-slides-data.js',
+  '/histology-slide-ids.js',
+  '/hematopoiesis-map-data.js',
   /* Vendored scripts — fully offline, no CDN needed */
   '/vendor/react.min.js',
   '/vendor/react-dom.min.js',
