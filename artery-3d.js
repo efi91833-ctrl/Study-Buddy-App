@@ -50,6 +50,35 @@
      glance. Both are lit identically; only the palette changes.
      --------------------------------------------------------------- */
   var LOOKS = {
+    /* Matches the medical-illustration convention used by Visible Body
+       and 3D4Medical: pure white ground, opaque warm ivory bone with
+       blue-grey costal cartilage, deep crimson vessels, and soft even
+       lighting with almost no cast shadow. Depth comes from the
+       environment and from bone occluding vessels, not from shadows. */
+    illustration: {
+      name: 'Illustration',
+      aorta:    0x9c2028,
+      systemic: 0xa62630,
+      coronary: 0x8e1b23,
+      visceral: 0xa93038,
+      stub:     0x9a5c5f,
+      bone:     0xece2cd,
+      cartilage:0xc3cdd2,
+      roughness: 0.52,
+      clearcoat: 0.35,
+      clearcoatRoughness: 0.4,
+      normalScale: 0.16,      /* surfaces read smooth, not fibrous */
+      background: '#ffffff',
+      env: 'bright',
+      exposure: 1.18,
+      ambient: 0.52,
+      keyIntensity: 0.55,
+      rimIntensity: 0.22,
+      shadows: false,
+      boneSolid: true,
+      boneOpacity: 1,
+      envMapIntensity: 1.05,
+    },
     specimen: {
       name: 'Specimen',
       aorta:    0xd6c3b0,
@@ -58,11 +87,21 @@
       visceral: 0xc98a74,
       stub:     0xa89086,
       bone:     0xe6dac2,
+      cartilage:0xd7d2c4,
       roughness: 0.44,
       clearcoat: 0.9,
       clearcoatRoughness: 0.3,
+      normalScale: 0.55,
       background: ['#e9e5df', '#cdc7bf', '#a8a29a'],
+      env: 'studio',
       exposure: 1.05,
+      ambient: 0.16,
+      keyIntensity: 1.15,
+      rimIntensity: 0.35,
+      shadows: true,
+      boneSolid: false,
+      boneOpacity: 0.62,
+      envMapIntensity: 1.0,
     },
     atlas: {
       name: 'Atlas',
@@ -72,13 +111,24 @@
       visceral: 0xd05a44,
       stub:     0xa1685f,
       bone:     0xeee3cc,
+      cartilage:0xccd4d8,
       roughness: 0.36,
       clearcoat: 0.7,
       clearcoatRoughness: 0.22,
+      normalScale: 0.42,
       background: ['#f2efe9', '#ddd8d0', '#bdb7ae'],
+      env: 'studio',
       exposure: 1.0,
+      ambient: 0.22,
+      keyIntensity: 0.95,
+      rimIntensity: 0.3,
+      shadows: true,
+      boneSolid: false,
+      boneOpacity: 0.7,
+      envMapIntensity: 1.0,
     },
   };
+  var LOOK_ORDER = ['illustration', 'specimen', 'atlas'];
 
   var PALETTE = { highlight: 0xffc400, correct: 0x2e9e5b, wrong: 0xc0392b, level: 0x7a8b99 };
 
@@ -229,11 +279,16 @@
      PMREMGenerator. This is what gives the wet highlights; without it
      a clearcoat has nothing to reflect and still looks like plastic.
      ================================================================= */
-  function buildStudioEnv(renderer) {
+  function buildStudioEnv(renderer, preset) {
+    var bright = preset === 'bright';
     var env = new THREE.Scene();
+    /* The illustration look needs an almost uniformly bright surround —
+       a white cyclorama — so that shading is gentle and nothing falls
+       into deep shadow. The studio preset is much darker, which is what
+       gives the specimen look its wet contrast. */
     var box = new THREE.Mesh(
       new THREE.BoxGeometry(120, 120, 120),
-      new THREE.MeshBasicMaterial({ color: 0x9aa0a6, side: THREE.BackSide })
+      new THREE.MeshBasicMaterial({ color: bright ? 0xdfe3e6 : 0x9aa0a6, side: THREE.BackSide })
     );
     env.add(box);
 
@@ -248,21 +303,38 @@
       return m;
     }
 
-    /* Large soft key from above and in front — a dissection lamp. */
-    panel(70, 70, 0xffffff, 3.4, [10, 45, 30], [-Math.PI / 2.3, 0, 0]);
-    /* Cool fill from the left, so shaded sides do not go dead. */
-    panel(60, 90, 0xcddcf0, 1.1, [-55, 5, 0], [0, Math.PI / 2, 0]);
-    /* Warm bounce from below, which is what makes tissue read as wet. */
-    panel(80, 50, 0xffd9bc, 0.7, [0, -45, 10], [Math.PI / 2, 0, 0]);
-    /* Rim from behind. */
-    panel(50, 60, 0xffffff, 1.5, [20, 20, -55], [0, 0, 0]);
+    if (bright) {
+      /* Wraparound soft light from every direction: the illustration
+         style has no single obvious light source. */
+      panel(110, 110, 0xffffff, 2.2, [0, 55, 0],  [-Math.PI / 2, 0, 0]);
+      panel(110, 90,  0xffffff, 1.5, [0, 0, 55],  [0, 0, 0]);
+      panel(90, 90,   0xf4f7fa, 1.2, [-55, 0, 0], [0, Math.PI / 2, 0]);
+      panel(90, 90,   0xf4f7fa, 1.2, [55, 0, 0],  [0, -Math.PI / 2, 0]);
+      panel(110, 90,  0xffffff, 1.1, [0, 0, -55], [0, Math.PI, 0]);
+      panel(110, 110, 0xfdfbf7, 1.0, [0, -55, 0], [Math.PI / 2, 0, 0]);
+    } else {
+      /* Large soft key from above and in front — a dissection lamp. */
+      panel(70, 70, 0xffffff, 3.4, [10, 45, 30], [-Math.PI / 2.3, 0, 0]);
+      /* Cool fill from the left, so shaded sides do not go dead. */
+      panel(60, 90, 0xcddcf0, 1.1, [-55, 5, 0], [0, Math.PI / 2, 0]);
+      /* Warm bounce from below, which is what makes tissue read as wet. */
+      panel(80, 50, 0xffd9bc, 0.7, [0, -45, 10], [Math.PI / 2, 0, 0]);
+      /* Rim from behind. */
+      panel(50, 60, 0xffffff, 1.5, [20, 20, -55], [0, 0, 0]);
+    }
 
     var pmrem = new THREE.PMREMGenerator(renderer);
     pmrem.compileEquirectangularShader();
-    var rt = pmrem.fromScene(env, 0.03);
+    var rt = pmrem.fromScene(env, bright ? 0.06 : 0.03);
     pmrem.dispose();
     env.traverse(function (o) { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
     return rt.texture;
+  }
+
+  /* A look may specify a flat colour string or a three-stop gradient. */
+  function makeBackground(spec) {
+    if (typeof spec === 'string') return new THREE.Color(spec);
+    return gradientBackground(spec);
   }
 
   function gradientBackground(stops) {
@@ -372,7 +444,7 @@
     opts = opts || {};
     this.container = container;
     this.onPick = opts.onPick || function () {};
-    this.lookName = opts.look || 'specimen';
+    this.lookName = opts.look || 'illustration';
     this.look = LOOKS[this.lookName];
     this.meshes = {};
     this.baseColor = {};
@@ -391,23 +463,25 @@
     this.renderer.outputEncoding = THREE.sRGBEncoding;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = this.look.exposure;
-    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.enabled = this.look.shadows !== false;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(this.renderer.domElement);
 
     this.scene = new THREE.Scene();
-    this.scene.background = gradientBackground(this.look.background);
-    this.envTexture = buildStudioEnv(this.renderer);
+    this.scene.background = makeBackground(this.look.background);
+    this.envCache = {};
+    this.envTexture = this._env(this.look.env);
     this.scene.environment = this.envTexture;
 
     this.camera = new THREE.PerspectiveCamera(34, w / h, 0.5, 4000);
 
     /* Lights are deliberately restrained: most of the illumination is
        coming from the environment. These add direction and shadows. */
-    this.scene.add(new THREE.AmbientLight(0xffffff, 0.16));
-    var key = new THREE.DirectionalLight(0xfff4e8, 1.15);
+    this.ambient = new THREE.AmbientLight(0xffffff, this.look.ambient);
+    this.scene.add(this.ambient);
+    var key = new THREE.DirectionalLight(0xfff4e8, this.look.keyIntensity);
     key.position.set(28, 46, 40);
-    key.castShadow = true;
+    key.castShadow = this.look.shadows !== false;
     key.shadow.mapSize.set(2048, 2048);
     key.shadow.bias = -0.0012;
     key.shadow.normalBias = 0.02;
@@ -418,9 +492,10 @@
     this.scene.add(key);
     this.keyLight = key;
 
-    var rim = new THREE.DirectionalLight(0xcfe0f2, 0.35);
+    var rim = new THREE.DirectionalLight(0xcfe0f2, this.look.rimIntensity);
     rim.position.set(-34, 10, -40);
     this.scene.add(rim);
+    this.rimLight = rim;
 
     this.textures = vesselTextures();
     this.boneTex = boneTexture();
@@ -447,6 +522,14 @@
     };
     this._animate();
   }
+
+  /* Environment maps are expensive to prefilter, so each preset is
+     built once and reused when the look is switched. */
+  Artery3D.prototype._env = function (preset) {
+    preset = preset || 'studio';
+    if (!this.envCache[preset]) this.envCache[preset] = buildStudioEnv(this.renderer, preset);
+    return this.envCache[preset];
+  };
 
   Artery3D.prototype._updateCamera = function () {
     var s = this.spherical;
@@ -556,12 +639,12 @@
         color: colour,
         map: self.textures.map,
         normalMap: self.textures.normalMap,
-        normalScale: new THREE.Vector2(0.55, 0.55),
+        normalScale: new THREE.Vector2(L.normalScale, L.normalScale),
         roughness: L.roughness,
         metalness: 0.0,
         clearcoat: L.clearcoat,
         clearcoatRoughness: L.clearcoatRoughness,
-        envMapIntensity: 1.0,
+        envMapIntensity: L.envMapIntensity,
         transparent: !!v.stub,
         opacity: v.stub ? 0.55 : 1,
       });
@@ -585,7 +668,7 @@
     opts = opts || {};
     var L = this.look;
     var g = new THREE.Group();
-    var solid = !!opts.solid;
+    var solid = opts.solid === undefined ? !!L.boneSolid : !!opts.solid;
 
     var boneMat = new THREE.MeshPhysicalMaterial({
       color: L.bone,
@@ -595,8 +678,23 @@
       clearcoat: 0.18,
       clearcoatRoughness: 0.5,
       transparent: !solid,
-      opacity: solid ? 1 : 0.62,
+      opacity: solid ? 1 : L.boneOpacity,
       envMapIntensity: 0.85,
+      depthWrite: solid,
+    });
+
+    /* Costal cartilage is visibly different tissue — pale blue-grey,
+       smoother and slightly translucent. Drawing it separately is a
+       large part of why an illustrated thorax reads correctly. */
+    var cartMat = new THREE.MeshPhysicalMaterial({
+      color: L.cartilage,
+      roughness: 0.42,
+      metalness: 0.0,
+      clearcoat: 0.4,
+      clearcoatRoughness: 0.35,
+      transparent: !solid,
+      opacity: solid ? 1 : L.boneOpacity,
+      envMapIntensity: 0.9,
       depthWrite: solid,
     });
     var i;
@@ -664,8 +762,8 @@
       var v = vByLevel[rib.level]; if (!v) return;
       [1, -1].forEach(function (sign) {
         var pts = [];
-        for (var a = 0; a <= 16; a++) {
-          var t = a / 16;
+        for (var a = 0; a <= 20; a++) {
+          var t = a / 20;
           var ang = t * Math.PI * 0.86;
           pts.push(new THREE.Vector3(
             sign * Math.sin(ang) * rib.spread * MM,
@@ -673,14 +771,23 @@
             (v.z - v.d - 18 + (1 - Math.cos(ang)) * 0.5 * rib.reach + Math.sin(ang) * 12) * MM
           ));
         }
-        var curve = new THREE.CatmullRomCurve3(pts);
-        /* Ribs are flat blades, not rods. */
-        var geo = new THREE.TubeGeometry(curve, 26, 3.6 * MM, 6, false);
-        geo.scale(1, 1, 1);
-        var m = new THREE.Mesh(geo, boneMat);
-        m.scale.y = 1.45;
-        m.castShadow = solid; m.receiveShadow = true;
-        g.add(m);
+
+        /* The osseous rib runs from the vertebra to the costochondral
+           junction; the remainder is cartilage. Ribs 11 and 12 are
+           floating, so they get no cartilage at all. */
+        var floating = rib.n >= 11;
+        var split = floating ? pts.length : Math.round(pts.length * 0.74);
+
+        function blade(points, mat) {
+          if (points.length < 2) return;
+          var geo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 26, 3.6 * MM, 6, false);
+          var m = new THREE.Mesh(geo, mat);
+          m.scale.y = 1.45;              /* ribs are flat blades, not rods */
+          m.castShadow = solid; m.receiveShadow = true;
+          g.add(m);
+        }
+        blade(pts.slice(0, split + 1), boneMat);
+        if (!floating) blade(pts.slice(split), cartMat);
       });
     });
 
@@ -734,6 +841,7 @@
     g.visible = false;
     this.skeletonGroup = g;
     this.skeletonMaterial = boneMat;
+    this.cartilageMaterial = cartMat;
     this.scene.add(g);
     return g;
   };
@@ -761,11 +869,17 @@
   Artery3D.prototype.setLevelsVisible   = function (on) { if (this.levelGroup) this.levelGroup.visible = !!on; };
 
   Artery3D.prototype.setBoneSolid = function (solid) {
-    if (!this.skeletonMaterial) return;
-    this.skeletonMaterial.transparent = !solid;
-    this.skeletonMaterial.opacity = solid ? 1 : 0.62;
-    this.skeletonMaterial.depthWrite = solid;
-    this.skeletonMaterial.needsUpdate = true;
+    var self = this;
+    [this.skeletonMaterial, this.cartilageMaterial].forEach(function (m) {
+      if (!m) return;
+      m.transparent = !solid;
+      m.opacity = solid ? 1 : self.look.boneOpacity;
+      m.depthWrite = solid;
+      m.needsUpdate = true;
+    });
+    if (this.skeletonGroup) {
+      this.skeletonGroup.traverse(function (o) { if (o.isMesh) o.castShadow = solid && self.renderer.shadowMap.enabled; });
+    }
   };
 
   Artery3D.prototype.setShadows = function (on) {
@@ -777,13 +891,22 @@
     });
   };
 
-  /* Switch palette without rebuilding any geometry. */
+  /* Switch look without rebuilding any geometry. Palette, lighting,
+     environment, exposure and shadow policy all move together — they
+     are what distinguish an illustration from a specimen photograph. */
   Artery3D.prototype.setLook = function (name) {
     var L = LOOKS[name]; if (!L) return;
     this.lookName = name; this.look = L;
+
     this.renderer.toneMappingExposure = L.exposure;
     if (this.scene.background && this.scene.background.dispose) this.scene.background.dispose();
-    this.scene.background = gradientBackground(L.background);
+    this.scene.background = makeBackground(L.background);
+    this.scene.environment = this._env(L.env);
+
+    if (this.ambient) this.ambient.intensity = L.ambient;
+    if (this.keyLight) { this.keyLight.intensity = L.keyIntensity; this.keyLight.castShadow = L.shadows !== false; }
+    if (this.rimLight) this.rimLight.intensity = L.rimIntensity;
+    this.renderer.shadowMap.enabled = L.shadows !== false;
 
     var self = this;
     Object.keys(this.meshes).forEach(function (k) {
@@ -791,17 +914,24 @@
       var colour = L[region] || L.systemic;
       self.baseColor[k] = colour;
       var m = self.meshes[k].material;
-      m.color.setHex(colour);
+      if (self._selectedKey !== k) m.color.setHex(colour);
       m.roughness = L.roughness;
       m.clearcoat = L.clearcoat;
       m.clearcoatRoughness = L.clearcoatRoughness;
+      m.envMapIntensity = L.envMapIntensity;
+      if (m.normalScale) m.normalScale.set(L.normalScale, L.normalScale);
       m.needsUpdate = true;
+      self.meshes[k].castShadow = L.shadows !== false;
     });
     if (this.skeletonMaterial) { this.skeletonMaterial.color.setHex(L.bone); this.skeletonMaterial.needsUpdate = true; }
+    if (this.cartilageMaterial) { this.cartilageMaterial.color.setHex(L.cartilage); this.cartilageMaterial.needsUpdate = true; }
+    this.setBoneSolid(!!L.boneSolid);
+    return L;
   };
 
   Artery3D.prototype.highlight = function (key) {
     var self = this;
+    this._selectedKey = key;
     Object.keys(this.meshes).forEach(function (k) {
       var m = self.meshes[k].material;
       if (k === key) {
@@ -879,10 +1009,10 @@
     var engineRef = React.useRef(null);
     var sel = React.useState(null);           var selected = sel[0], setSelected = sel[1];
     var sk = React.useState(true);            var showSkeleton = sk[0], setShowSkeleton = sk[1];
-    var bs = React.useState(false);           var boneSolid = bs[0], setBoneSolid = bs[1];
-    var lv = React.useState(true);            var showLevels = lv[0], setShowLevels = lv[1];
-    var lk = React.useState('specimen');      var look = lk[0], setLook = lk[1];
-    var sh = React.useState(true);            var shadows = sh[0], setShadows = sh[1];
+    var bs = React.useState(true);            var boneSolid = bs[0], setBoneSolid = bs[1];
+    var lv = React.useState(false);           var showLevels = lv[0], setShowLevels = lv[1];
+    var lk = React.useState('illustration');  var look = lk[0], setLook = lk[1];
+    var sh = React.useState(false);           var shadows = sh[0], setShadows = sh[1];
     var st = React.useState(null);            var stats = st[0], setStats = st[1];
 
     React.useEffect(function () {
@@ -895,7 +1025,7 @@
         var tree = T.buildGlobalTree();
         var inst = T.expandInstances(tree);
         eng = new window.Artery3D(hostRef.current, {
-          look: 'specimen',
+          look: 'illustration',
           onPick: function (k) { setSelected(k); },
         });
         /* Cache each vessel's region so the palette can be swapped
@@ -905,10 +1035,10 @@
           if (inst[k]) eng._regionCache[k] = regionOf(k, G.vessels[k]);
         });
         eng.buildVessels(G.vessels, inst);
-        eng.buildSkeleton(G.skeleton, { solid: false });
+        eng.buildSkeleton(G.skeleton);
         eng.buildLevelMarkers(G.vertebrae, G.skeleton.levelNotes);
         eng.setSkeletonVisible(true);
-        eng.setLevelsVisible(true);
+        eng.setLevelsVisible(false);
         eng.frameAll();
         engineRef.current = eng;
 
@@ -929,7 +1059,14 @@
     React.useEffect(function () { if (engineRef.current) engineRef.current.setBoneSolid(boneSolid); }, [boneSolid]);
     React.useEffect(function () { if (engineRef.current) engineRef.current.setLevelsVisible(showLevels); }, [showLevels]);
     React.useEffect(function () { if (engineRef.current) engineRef.current.setShadows(shadows); }, [shadows]);
-    React.useEffect(function () { if (engineRef.current) { engineRef.current.setLook(look); engineRef.current.highlight(selected); } }, [look]);
+    /* Switching look also resets shadows and bone opacity to whatever
+       that look calls for, so the toggles follow it. */
+    React.useEffect(function () {
+      if (!engineRef.current) return;
+      var L = engineRef.current.setLook(look);
+      if (L) { setShadows(L.shadows !== false); setBoneSolid(!!L.boneSolid); }
+      engineRef.current.highlight(selected);
+    }, [look]);
     React.useEffect(function () { if (engineRef.current) engineRef.current.highlight(selected); }, [selected]);
 
     var G = window.ARTERY_3D_GEOMETRY;
@@ -968,8 +1105,11 @@
     return e('div', { style: { display: 'flex', flexDirection: 'column', height: '100vh', background: '#efece7' } },
       e('div', { style: { padding: '10px 14px', borderBottom: '1px solid #ddd', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, background: '#fff' } },
         e('button', { onClick: props.onBack, style: btn(false) }, '← Subjects'),
-        e('button', { onClick: function () { setLook(look === 'specimen' ? 'atlas' : 'specimen'); }, style: btn(false) },
-          look === 'specimen' ? 'Specimen look' : 'Atlas look'),
+        e('button', {
+          onClick: function () { setLook(LOOK_ORDER[(LOOK_ORDER.indexOf(look) + 1) % LOOK_ORDER.length]); },
+          style: btn(false),
+          title: 'Illustration, Specimen or Atlas',
+        }, LOOKS[look].name + ' look'),
         e('button', { onClick: function () { setShowSkeleton(!showSkeleton); }, style: btn(showSkeleton) }, 'Skeleton'),
         showSkeleton && e('button', { onClick: function () { setBoneSolid(!boneSolid); }, style: btn(boneSolid) }, 'Solid bone'),
         e('button', { onClick: function () { setShowLevels(!showLevels); }, style: btn(showLevels) }, 'Levels'),
@@ -995,7 +1135,7 @@
             : e('div', { style: { color: '#888', lineHeight: 1.6 } },
                 e('p', { style: { marginTop: 0 } }, 'Click any vessel to identify it.'),
                 e('p', null, 'Drag to orbit. Scroll to zoom. Shift-drag or right-drag to pan.'),
-                e('p', null, 'Specimen look is what a fresh prosection looks like — the aortic wall is thick pale tissue, not a red tube. Atlas look uses the red convention from your textbook.'),
+                e('p', null, 'The look button cycles three styles. Illustration is the clean textbook render: white ground, opaque ivory bone with blue-grey costal cartilage, deep crimson vessels. Specimen is what a fresh prosection looks like, where the aortic wall is thick pale tissue rather than a red tube. Atlas is the saturated red convention.'),
                 e('p', null, 'Faded vessels are stubs: their origin is placed and verified, their full course is not yet drawn.'),
                 e('p', { style: { fontSize: 11, color: '#aaa', marginTop: 24, lineHeight: 1.5 } },
                   'Coordinates are hand-authored from vertebral levels and bony landmarks, not from segmented imaging. ' +
