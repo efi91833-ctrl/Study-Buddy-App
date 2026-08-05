@@ -18,6 +18,7 @@ FILES = [
     ('https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js',            'babel.min.js'),
     ('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',                      'pdf.min.js'),
     ('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',               'pdf.worker.min.js'),
+    ('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',                     'three.min.js'),
 ]
 
 print('Downloading vendor scripts for offline use...\n')

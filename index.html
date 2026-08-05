@@ -932,7 +932,11 @@
 <script src="histology-slides-data.js"></script>
 <script src="histology-slide-ids.js"></script>
 <script src="hematopoiesis-map-data.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="vendor/three.min.js"></script>
+<script>if(!window.THREE){document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');}</script>
+<script src="artery-3d-topology.js"></script>
+<script src="artery-3d-geometry.js"></script>
+<script src="artery-3d.js"></script>
 
 <!-- Firebase SDK (compat v9) — required for Google auth + user approval -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -2484,6 +2488,16 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
             Artery Assembly
             <div style={{ fontSize: 11, fontWeight: 400, color: '#888', marginTop: 4 }}>
               Decision-tree · place vessels in correct position
+            </div>
+          </button>
+        )}
+        {/* 3D Arteries */}
+        {subject === 'Anatomy' && (
+          <button onClick={() => onSelectExam({ type: 'artery_3d' })}
+            style={{ ...cardStyle, background: 'rgba(245,245,245,0.95)', fontSize: 15 }}>
+            3D Arteries
+            <div style={{ fontSize: 11, fontWeight: 400, color: '#888', marginTop: 4 }}>
+              Rotatable arterial tree · click to identify · vertebral levels
             </div>
           </button>
         )}
@@ -9186,6 +9200,16 @@ const PAGE_INSTRUCTIONS = {
       'Build the complete tree from the main vessel down to the terminal branches.',
     ],
   },
+  artery_3d: {
+    title: '3D Arteries',
+    steps: [
+      'Drag to orbit the model, scroll to zoom, shift-drag to pan.',
+      'Click any vessel to see its name, its parent, its vertebral level and its clinical note.',
+      'Toggle Skeleton to check that a vessel sits where it should relative to the spine and ribs.',
+      'Toggle Vertebral levels to see the planes exams test: T12 coeliac, L1 SMA, L2 renal, L3 IMA, L4 bifurcation.',
+      'Faded vessels are stubs — origin placed and verified, full course still to come.',
+    ],
+  },
   timeline_game: {
     title: 'Embryology Timeline',
     steps: [
@@ -12459,6 +12483,8 @@ function App() {
             ? <VertebralRibGame onBack={handleBack} />
           : specialMode?.type === 'artery_assembly'
             ? <ArteryErrorBoundary><ArteryAssemblyGame onBack={handleBack} /></ArteryErrorBoundary>
+          : specialMode?.type === 'artery_3d'
+            ? <ArteryErrorBoundary><Artery3DAtlas onBack={handleBack} /></ArteryErrorBoundary>
           : specialMode?.type === 'vein_formation'
             ? <VeinFormationGame onBack={handleBack} />
           : specialMode?.type === 'timeline_game'

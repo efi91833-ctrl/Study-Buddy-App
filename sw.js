@@ -5,7 +5,7 @@
    - Cache-first strategy for all GET requests
    ============================================================ */
 
-const CACHE_NAME = 'study-buddy-v118';
+const CACHE_NAME = 'study-buddy-v119';
 
 /* All local files to pre-cache on install.
    IMPORTANT: this list must contain every <script src> in index.html. Seven
@@ -35,12 +35,16 @@ const LOCAL_ASSETS = [
   '/histology-slides-data.js',
   '/histology-slide-ids.js',
   '/hematopoiesis-map-data.js',
+  '/artery-3d-topology.js',
+  '/artery-3d-geometry.js',
+  '/artery-3d.js',
   /* Vendored scripts — fully offline, no CDN needed */
   '/vendor/react.min.js',
   '/vendor/react-dom.min.js',
   '/vendor/babel.min.js',
   '/vendor/pdf.min.js',
   '/vendor/pdf.worker.min.js',
+  '/vendor/three.min.js',
   '/images/muscles/obliquus-capitis-inferior-gilroy-crop.png',
   '/images/muscles/pelvic-floor.jpg',
   '/images/muscles/gluteal-region.jpg',
