@@ -278,55 +278,53 @@
       margin-bottom: 12px;
       padding-left: 4px;
     }
-    .bookshelf-shelf {
+    .sb-shelf {
+      margin: 0 4px 14px;
+    }
+    .sb-shelf-row {
       display: flex;
       align-items: flex-end;
-      gap: 8px;
-      margin: 0 4px 12px;
-      min-height: 0;
-      padding: 0;
-      border-bottom: none;
-      flex-wrap: wrap;
+      gap: 2px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid rgba(0,0,0,.16);
     }
-    .book-spine {
-      width: 32px;
-      height: 44px;
-      border-radius: 4px;
-      border: none;
-      background: #2b2b28;
-      cursor: pointer;
+    .sb-book {
+      border-radius: 3px 1px 1px 3px;
+      box-shadow: inset -2px 0 3px -2px rgba(0,0,0,.45);
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
+      position: relative;
       flex-shrink: 0;
+      cursor: pointer;
+      overflow: hidden;
     }
-    .book-spine-title {
+    .sb-book span {
+      font-family: var(--sb-serif);
+      font-size: 7px;
+      font-weight: 400;
+      letter-spacing: .06em;
       writing-mode: vertical-rl;
-      transform: rotate(180deg);
-      font-family: var(--sb-sans);
-      font-size: 8px;
-      color: #e8e8e4;
-      letter-spacing: .04em;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-height: 38px;
-      padding: 0 2px;
     }
-    .book-add-btn {
-      width: 32px;
-      height: 44px;
-      border-radius: 4px;
-      border: 1px dashed rgba(0,0,0,.2);
-      background: transparent;
+    .sb-book-rule {
+      position: absolute;
+      left: 2px;
+      right: 2px;
+      height: 1px;
+      background: rgba(255,255,255,.3);
+    }
+    .sb-shelf-add {
+      font-family: var(--sb-sans);
+      font: 300 15px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      color: #a5a5a1;
+      background: none;
+      border: none;
+      padding: 0 0 4px;
+      margin-left: 9px;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: rgba(0,0,0,.35);
-      font-size: 16px;
-      font-weight: 300;
       flex-shrink: 0;
     }
     .book-processing {
@@ -4611,6 +4609,16 @@ function BookReader({ bookId, bookTitle, onClose }) {
 }
 
 
+const SHELF_SPINES = [
+  { w: 17, h: 66, bg: '#2b2b28', title: 'GILROY', color: '#e2ded4', rules: [{ top: 7 }, { bottom: 7 }] },
+  { w: 14, h: 60, bg: '#6E7268', title: 'Atlas',  color: '#f0f1ec', rules: [] },
+  { w: 19, h: 70, bg: '#4A4A45', title: 'Notes',  color: '#e8e6e0', rules: [{ top: 9 }] },
+  { w: 13, h: 58, bg: '#A9ABA2', title: null,     color: null,      rules: [] },
+  { w: 16, h: 64, bg: '#5B5F56', title: null,     color: null,      rules: [] },
+  { w: 12, h: 54, bg: '#C3C1B8', title: null,     color: null,      rules: [] },
+  { w: 15, h: 68, bg: '#37372F', title: null,     color: null,      rules: [] },
+];
+
 function BookShelf({ onBooksChange, onOpenBook }) {
   const [books, setBooks]           = useState([]);
   const [processing, setProcessing] = useState(false);
@@ -4673,20 +4681,27 @@ function BookShelf({ onBooksChange, onOpenBook }) {
   return (
     <div className="bookshelf-section">
       <div className="bookshelf-label">Library</div>
-      <div className="bookshelf-shelf">
-        {books.map(book => (
-          <div
-            key={book.id}
-            className="book-spine"
-            title={book.title + ' — click to open, right-click to remove'}
-            onClick={() => onOpenBook(book)}
-            onContextMenu={e => { e.preventDefault(); removeBook(book); }}
-          >
-            <span className="book-spine-title">{book.title}</span>
-          </div>
-        ))}
-        <button className="book-add-btn" title="Add PDF book" onClick={() => fileRef.current.click()}>+</button>
-        <input ref={fileRef} type="file" accept=".pdf" style={{ display:'none' }} onChange={handleFile} />
+      <div className="sb-shelf">
+        <div className="sb-shelf-row">
+          {SHELF_SPINES.map((sp, i) => {
+            const book = books[i];
+            return (
+              <div
+                key={i}
+                className="sb-book"
+                style={{ width: sp.w, height: sp.h, background: sp.bg }}
+                title={book ? book.title + ' — click to open, right-click to remove' : undefined}
+                onClick={() => book && onOpenBook(book)}
+                onContextMenu={e => { if (book) { e.preventDefault(); removeBook(book); } }}
+              >
+                {sp.rules.map((r, j) => <div key={j} className="sb-book-rule" style={r} />)}
+                {sp.title && <span style={{ color: sp.color }}>{sp.title}</span>}
+              </div>
+            );
+          })}
+          <button className="sb-shelf-add" title="Add PDF book" onClick={() => fileRef.current.click()}>+</button>
+          <input ref={fileRef} type="file" accept=".pdf" style={{ display:'none' }} onChange={handleFile} />
+        </div>
       </div>
       {processing && <div className="book-processing">{progress}</div>}
     </div>
