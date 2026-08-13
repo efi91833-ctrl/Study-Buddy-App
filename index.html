@@ -2500,6 +2500,49 @@ const SUBJECT_PAGES = {
     ],
     counter: () => VIRTUAL_SLIDES.length + ' virtual slides',
   },
+
+  Anatomy: {
+    groups: [
+      { label: 'Anatomy',    names: ['CNS Anatomy', 'Lymphatic System'] },
+      { label: 'Embryology', names: ['Skull & Cranial Development', 'Vertebral Column, Ribs & Sternum', 'Muscle Development',
+                                     'Limb Development', 'Heart Development', 'Vascular Development', 'GI Tract Development',
+                                     'Respiratory Development', 'Urinary & Reproductive Development', 'Neural Tube & CNS Development'] },
+    ],
+    tools: () => {
+      const diss = window.DISSECTION_QUESTIONS || {};
+      let dissN = 0;
+      const profs = new Set();
+      Object.values(diss).forEach(season => {
+        Object.entries(season || {}).forEach(([prof, qs]) => {
+          profs.add(prof);
+          dissN += (qs || []).length;
+        });
+      });
+      return [
+        { type: 'anatomy_slides',   name: 'Anatomy Slides',
+          meta: 'Your own photos · upload, label and swipe to practise' },
+        { type: 'muscle_lab',       name: 'Muscle Lab',
+          meta: (window.MUSCLE_BANK || []).length + ' muscles · origin, insertion, innervation' },
+        { type: 'artery_assembly',  name: 'Artery Assembly',
+          meta: 'Decision tree · place each vessel in its correct position' },
+        { type: 'artery_3d',        name: '3D Arteries',
+          meta: 'Rotatable arterial tree · click to identify, vertebral levels' },
+        { type: 'vein_formation',   name: 'Vein Formation',
+          meta: (window.VEIN_FORMATION_DATA || []).length + ' veins · fill in tributaries with search' },
+        { type: 'peritoneal_game',  name: 'Peritoneal Relations',
+          meta: '28 organs · drag into the correct peritoneal category' },
+        { type: 'vertebral_game',   name: 'Vertebral & Rib Levels',
+          meta: VERTEBRAL_RIB_LEVEL_ITEMS.length + ' landmarks · match to vertebral or rib level' },
+        { type: 'timeline_game',    name: 'Time-Line',
+          meta: Object.keys(window.TIMELINE_DATA || {}).length + ' systems · order developmental events in time' },
+        { type: 'dissection_bank',  name: 'Dissections Question Bank',
+          meta: dissN + ' questions · Summer and Winter, ' + profs.size + ' professors, oral exam prep' },
+        { type: 'brain_mri_quiz',   name: 'Brain MRI Quiz',
+          meta: (window.BRAIN_MRI_QUIZ_DATA || []).length + ' scans · identify structures from arrows, type-in answers' },
+      ];
+    },
+    counter: () => (window.MUSCLE_BANK || []).length + ' muscles',
+  },
 };
 
 const HX_LABEL = {
@@ -2591,7 +2634,9 @@ function SubjectPage({ subject, config, onSelectExam, onBack }) {
   const tools      = config.tools ? config.tools() : [];
   const links      = config.links || [];
 
-  const showWeak   = hasStats && weak.length > 0;
+  /* Shown as soon as there is any history: a subject can have attempts but no
+   * qualifying weak topic yet, and the practice button still needs a home. */
+  const showWeak   = hasStats;
   const showResume = resume.length > 0;
 
   return (
@@ -2643,13 +2688,17 @@ function SubjectPage({ subject, config, onSelectExam, onBack }) {
                 <span style={{ fontSize: 11.5, color: 'var(--sb-ink-4)' }}>last {stats.attempts} attempts</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                {weak.map(g => (
+                {weak.length > 0 ? weak.map(g => (
                   <div key={g.name} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: 'var(--sb-ink-2)',
                                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</span>
                     <HxAccuracyBar accuracy={g.accuracy} />
                   </div>
-                ))}
+                )) : (
+                  <span style={{ fontSize: 12.5, color: 'var(--sb-ink-3)', lineHeight: 1.5 }}>
+                    No weak topic yet — a topic needs a few answered questions before it shows here.
+                  </span>
+                )}
               </div>
               <button className="hx-cta" onClick={() => onSelectExam('weak')}
                 style={{ marginTop: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -2774,74 +2823,11 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
     transition: 'all .15s',
   };
 
-  const [embSidebar, setEmbSidebar] = React.useState(false);
-
   /* Subjects that have moved to the new layout render it instead of the card
    * grid below. Add an entry to SUBJECT_PAGES to move another one over. */
   if (SUBJECT_PAGES[subject]) {
     return <SubjectPage subject={subject} config={SUBJECT_PAGES[subject]}
                         onSelectExam={onSelectExam} onBack={onBack} />;
-  }
-
-  /* ── Embryology sidebar view ── */
-  if (embSidebar && subject === 'Anatomy') {
-    const EMB_TOPIC_NAMES = [
-      'Skull & Cranial Development',
-      'Vertebral Column, Ribs & Sternum',
-      'Muscle Development',
-      'Limb Development',
-      'Heart Development',
-      'Vascular Development',
-      'GI Tract Development',
-      'Respiratory Development',
-      'Urinary & Reproductive Development',
-      'Neural Tube & CNS Development',
-    ];
-    const regularExams = meta.exams.filter(e => e.type !== 'czech_subject' && e.type !== 'czech_credit');
-    const nameToExam   = Object.fromEntries(regularExams.map(e => [e.name, e]));
-    const embExams     = EMB_TOPIC_NAMES.map(n => nameToExam[n]).filter(Boolean);
-
-    return (
-      <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-
-        {/* ── Left sidebar: embryology topics ── */}
-        <div style={{
-          width: 178, borderRight: '1px solid #e0e0e0', overflowY: 'auto',
-          background: '#fafafa', flexShrink: 0, padding: '8px 0',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px 10px' }}>
-            <button onClick={() => setEmbSidebar(false)}
-              style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 18, color: '#888', padding: 0, lineHeight: 1 }}>
-              ←
-            </button>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#aaa',
-              letterSpacing: '0.08em', textTransform: 'uppercase', flex: 1 }}>Embryology</div>
-          </div>
-
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#bbb', padding: '4px 12px 6px',
-            letterSpacing: '0.08em', textTransform: 'uppercase' }}>Exams</div>
-
-          {embExams.map((exam, i) => (
-            <div key={'se-'+i} onClick={() => onSelectExam(meta.exams.indexOf(exam))}
-              style={{
-                padding: '9px 12px 9px 14px', cursor: 'pointer',
-                fontSize: 12, fontWeight: 400,
-                color: '#555',
-                borderLeft: '3px solid transparent',
-                lineHeight: 1.4, transition: 'background .12s',
-              }}>
-              {exam.name}
-            </div>
-          ))}
-        </div>
-
-        {/* ── Right: prompt ── */}
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#bbb', fontSize: 15, fontWeight: 400 }}>
-          Select a topic from the sidebar
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -2852,118 +2838,6 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
         <h1 className="exam-title">Choose an Exam</h1>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginTop: 24 }}>
-        {/* Anatomy Slides — hero card, full width */}
-        {subject === 'Anatomy' && (
-          <button onClick={() => onSelectExam({ type: 'anatomy_slides' })}
-            style={{ ...cardStyle, background: 'rgba(235,240,255,0.95)', gridColumn: '1 / -1',
-                     borderLeft: '4px solid #5c7cfa' }}>
-            Anatomy Slides
-            <div style={{ fontSize: 12, fontWeight: 400, color: '#888', marginTop: 4 }}>
-              Upload your own photos · swipe to practice
-            </div>
-          </button>
-        )}
-
-        {/* Section label for interactive tools */}
-        {subject === 'Anatomy' && (
-          <div style={{ gridColumn: '1 / -1', fontSize: 11, fontWeight: 700, color: '#bbb',
-                        textTransform: 'uppercase', letterSpacing: '.08em', marginTop: 6, marginBottom: -4 }}>
-            Interactive Tools
-          </div>
-        )}
-
-        {/* Muscle Lab */}
-        {subject === 'Anatomy' && (
-          <button onClick={() => onSelectExam({ type: 'muscle_lab' })}
-            style={{ ...cardStyle, background: 'rgba(245,245,245,0.95)', fontSize: 15 }}>
-            Muscle Lab
-            <div style={{ fontSize: 11, fontWeight: 400, color: '#888', marginTop: 4 }}>
-              {(window.MUSCLE_BANK || []).length} muscles · origin, insertion, innervation
-            </div>
-          </button>
-        )}
-        {/* Artery Assembly */}
-        {subject === 'Anatomy' && (
-          <button onClick={() => onSelectExam({ type: 'artery_assembly' })}
-            style={{ ...cardStyle, background: 'rgba(245,245,245,0.95)', fontSize: 15 }}>
-            Artery Assembly
-            <div style={{ fontSize: 11, fontWeight: 400, color: '#888', marginTop: 4 }}>
-              Decision-tree · place vessels in correct position
-            </div>
-          </button>
-        )}
-        {/* 3D Arteries */}
-        {subject === 'Anatomy' && (
-          <button onClick={() => onSelectExam({ type: 'artery_3d' })}
-            style={{ ...cardStyle, background: 'rgba(245,245,245,0.95)', fontSize: 15 }}>
-            3D Arteries
-            <div style={{ fontSize: 11, fontWeight: 400, color: '#888', marginTop: 4 }}>
-              Rotatable arterial tree · click to identify · vertebral levels
-            </div>
-          </button>
-        )}
-        {/* Vein Formation */}
-        {subject === 'Anatomy' && (
-          <button onClick={() => onSelectExam({ type: 'vein_formation' })}
-            style={{ ...cardStyle, background: 'rgba(245,245,245,0.95)', fontSize: 15 }}>
-            Vein Formation
-            <div style={{ fontSize: 11, fontWeight: 400, color: '#888', marginTop: 4 }}>
-              {(window.VEIN_FORMATION_DATA || []).length} veins · fill in tributaries with search
-            </div>
-          </button>
-        )}
-        {/* Peritoneal Game */}
-        {subject === 'Anatomy' && (
-          <button onClick={() => onSelectExam({ type: 'peritoneal_game' })}
-            style={{ ...cardStyle, background: 'rgba(245,245,245,0.95)', fontSize: 15 }}>
-            Peritoneal Relations
-            <div style={{ fontSize: 11, fontWeight: 400, color: '#888', marginTop: 4 }}>
-              28 organs · drag into correct peritoneal category
-            </div>
-          </button>
-        )}
-        {/* Vertebral & Rib Level Matcher */}
-        {subject === 'Anatomy' && (
-          <button onClick={() => onSelectExam({ type: 'vertebral_game' })}
-            style={{ ...cardStyle, background: 'rgba(245,245,245,0.95)', fontSize: 15 }}>
-            Vertebral & Rib Levels
-            <div style={{ fontSize: 11, fontWeight: 400, color: '#888', marginTop: 4 }}>
-              45 landmarks · match to vertebral/rib level
-            </div>
-          </button>
-        )}
-        {/* Time-Line game */}
-        {subject === 'Anatomy' && (
-          <button onClick={() => onSelectExam({ type: 'timeline_game' })}
-            style={{ ...cardStyle, background: 'rgba(245,245,245,0.95)', fontSize: 15 }}>
-            Time-Line
-            <div style={{ fontSize: 11, fontWeight: 400, color: '#888', marginTop: 4 }}>
-              Arrange developmental events in chronological order
-            </div>
-          </button>
-        )}
-        {/* Dissections Question Bank — full width */}
-        {subject === 'Anatomy' && (
-          <button onClick={() => onSelectExam({ type: 'dissection_bank' })}
-            style={{ ...cardStyle, background: 'rgba(230,245,255,0.95)', gridColumn: '1 / -1',
-                     borderLeft: '4px solid #1976d2', fontSize: 15 }}>
-            Dissections Question Bank
-            <div style={{ fontSize: 12, fontWeight: 400, color: '#888', marginTop: 4 }}>
-              121 questions · Summer &amp; Winter · 12 professors · oral exam prep
-            </div>
-          </button>
-        )}
-        {/* Brain MRI Quiz — full width */}
-        {subject === 'Anatomy' && (
-          <button onClick={() => onSelectExam({ type: 'brain_mri_quiz' })}
-            style={{ ...cardStyle, background: 'rgba(230,240,250,0.95)', gridColumn: '1 / -1',
-                     borderLeft: '4px solid #3d7ab5', fontSize: 15 }}>
-            Brain MRI Quiz
-            <div style={{ fontSize: 12, fontWeight: 400, color: '#888', marginTop: 4 }}>
-              44 scans · identify structures from arrows · type-in answers
-            </div>
-          </button>
-        )}
         {/* Group exams by type for cleaner layout */}
         {(() => {
           const subjectBanks = meta.exams.filter(e => e.type === 'czech_subject');
@@ -3010,99 +2884,8 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
                 </>
               )}
 
-              {/* Regular MCQ exams — grouped for Histology and Anatomy, flat for everything else */}
-              {subject === 'Anatomy' ? (() => {
-                const EMB_TOPIC_NAMES = [
-                  'Skull & Cranial Development',
-                  'Vertebral Column, Ribs & Sternum',
-                  'Muscle Development',
-                  'Limb Development',
-                  'Heart Development',
-                  'Vascular Development',
-                  'GI Tract Development',
-                  'Respiratory Development',
-                  'Urinary & Reproductive Development',
-                  'Neural Tube & CNS Development',
-                ];
-                const nameToExam = Object.fromEntries(regularExams.map(e => [e.name, e]));
-                const labelStyle = { gridColumn: '1 / -1', fontSize: 12, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '.07em', marginTop: 10, marginBottom: -2 };
-                const anatExams = regularExams.filter(e => !EMB_TOPIC_NAMES.includes(e.name));
-                const embExams  = EMB_TOPIC_NAMES.map(n => nameToExam[n]).filter(Boolean);
-                const totalEmbQ = embExams.reduce((s, e) => s + e.questions.length, 0);
-                return (
-                  <>
-                    {/* Anatomy section */}
-                    {anatExams.length > 0 && (
-                      <>
-                        <div style={labelStyle}>Anatomy</div>
-                        {anatExams.map((exam, i) => (
-                          <button key={'anat-'+i} onClick={() => onSelectExam(meta.exams.indexOf(exam))}
-                            style={{ ...cardStyle, background: 'rgba(255,255,255,0.85)' }}>
-                            {exam.name}
-                            <div style={{ fontSize: 12, fontWeight: 400, color: '#888', marginTop: 4 }}>
-                              {exam.questions.length === 0 ? 'Coming soon' : `${exam.questions.length} questions`}
-                            </div>
-                          </button>
-                        ))}
-                      </>
-                    )}
-                    {/* Embryology — opens sidebar */}
-                    {embExams.length > 0 && (
-                      <>
-                        <div style={labelStyle}>Embryology</div>
-                        <button
-                          onClick={() => setEmbSidebar(true)}
-                          style={{ ...cardStyle, gridColumn: '1 / -1', background: 'rgba(240,245,255,0.95)', borderLeft: '3px solid #5c6bc0' }}>
-                          Embryology
-                          <div style={{ fontSize: 12, fontWeight: 400, color: '#888', marginTop: 4 }}>
-                            {embExams.length} topics · {totalEmbQ} questions
-                          </div>
-                        </button>
-                      </>
-                    )}
-                  </>
-                );
-              })() : subject === 'Histology' ? (() => {
-                const HISTO_GROUPS = [
-                  {
-                    label: 'Fundamentals',
-                    names: ['Histological Techniques', 'Cell Biology', 'Epithelial Tissue', 'Epithelial Tissue 2023', 'Connective Tissue', 'Blood & Hematopoiesis', 'Nerve Tissue', 'Skin I', 'Skin II'],
-                  },
-                  {
-                    label: 'Systems',
-                    names: ['GIT I', 'GIT II', 'Cardiovascular', 'Respiratory I', 'Respiratory II', 'Urinary', 'Reproductive', 'Endocrine'],
-                  },
-                  {
-                    label: 'Embryology',
-                    names: ['General Embryology', 'Development: Cardiovascular', 'Placenta & Fetal Membranes'],
-                  },
-                  {
-                    label: 'Mixed & Mock Tests',
-                    names: ['Histo 1','Histo 2','Histo 3','Histo 4','Histo 5','Histo 6','Histo 7','Histo 8','Histo 9','Histo 10',
-                            'Mock Credit Test A', 'Mock Credit Test B', 'Mock Credit Test C', 'Mock Credit Test D'],
-                  },
-                ];
-                const nameToExam = Object.fromEntries(regularExams.map(e => [e.name, e]));
-                const labelStyle = { gridColumn: '1 / -1', fontSize: 12, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '.07em', marginTop: 10, marginBottom: -2 };
-                return HISTO_GROUPS.map(group => {
-                  const groupExams = group.names.map(n => nameToExam[n]).filter(Boolean);
-                  if (!groupExams.length) return null;
-                  return (
-                    <React.Fragment key={group.label}>
-                      <div style={labelStyle}>{group.label}</div>
-                      {groupExams.map((exam, i) => (
-                        <button key={group.label+i} onClick={() => onSelectExam(meta.exams.indexOf(exam))}
-                          style={{ ...cardStyle, background: 'rgba(255,255,255,0.85)' }}>
-                          {exam.name}
-                          <div style={{ fontSize: 12, fontWeight: 400, color: '#888', marginTop: 4 }}>
-                            {exam.questions.length === 0 ? 'Coming soon' : `${exam.questions.length} questions`}
-                          </div>
-                        </button>
-                      ))}
-                    </React.Fragment>
-                  );
-                });
-              })() : regularExams.map((exam, i) => (
+              {/* Regular MCQ exams */}
+              {regularExams.map((exam, i) => (
                 <button key={'reg-'+i} onClick={() => onSelectExam(meta.exams.indexOf(exam))}
                   style={{ ...cardStyle, background: 'rgba(255,255,255,0.85)' }}>
                   {exam.name}
@@ -3134,130 +2917,6 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
               111 questions · answer one at a time · see right/wrong immediately
             </div>
           </button>
-        </div>
-      )}
-
-      {/* ── Hematopoiesis Building Map — shown only in Histology ── */}
-      {subject === 'Histology' && (
-        <div style={{ marginTop: 20 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 8 }}>
-            Interactive Map
-          </div>
-          <button
-            onClick={() => onSelectExam({ type: 'hematopoiesis_map' })}
-            style={{
-              ...cardStyle,
-              background: 'linear-gradient(135deg, #fdf3ee 0%, #e8f5e9 100%)',
-              border: '2px solid #c87941',
-              width: '100%',
-              textAlign: 'left',
-            }}
-          >
-            Hematopoiesis Building Map
-            <div style={{ fontSize: 12, fontWeight: 400, color: '#7b3e28', marginTop: 4 }}>
-              All lineages — place cells in order · location zones · mitosis plugs · questions at structural changes
-            </div>
-          </button>
-        </div>
-      )}
-
-      {/* ── Virtual Slides Quiz — shown only in Histology ── */}
-      {subject === 'Histology' && (
-        <div style={{ marginTop: 20 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 8 }}>
-            Virtual Slides Quiz
-          </div>
-          <button
-            onClick={() => onSelectExam({ type: 'virtual_slides' })}
-            style={{
-              ...cardStyle,
-              background: 'linear-gradient(135deg, #e3f2fd 0%, #fce4ec 100%)',
-              border: '2px solid #90caf9',
-              width: '100%',
-              textAlign: 'left',
-            }}
-          >
-            Identify Virtual Slides
-            <div style={{ fontSize: 12, fontWeight: 400, color: '#1565c0', marginTop: 4 }}>
-              {VIRTUAL_SLIDES.length} slides from WikiSkripta · type-in answers · tracks weak slides
-            </div>
-          </button>
-        </div>
-      )}
-
-      {/* ── Epithelial Cell Types Game — shown only in Histology ── */}
-      {subject === 'Histology' && (
-        <div style={{ marginTop: 20 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 8 }}>
-            Cell Type Matcher
-          </div>
-          <button
-            onClick={() => onSelectExam({ type: 'epithelial_game' })}
-            style={{
-              ...cardStyle,
-              background: 'linear-gradient(135deg, #f3e5f5 0%, #e8f5e9 100%)',
-              border: '2px solid #ab47bc',
-              width: '100%',
-              textAlign: 'left',
-            }}
-          >
-            Epithelial Cell Types
-            <div style={{ fontSize: 12, fontWeight: 400, color: '#6a1b9a', marginTop: 4 }}>
-              {EPITHELIAL_ITEMS.length} cells &amp; tissues · pick the correct epithelial type &amp; additional structure · scored independently
-            </div>
-          </button>
-        </div>
-      )}
-
-      {/* ── Recommended Histology Slides — shown only in Histology ── */}
-      {subject === 'Histology' && (
-        <div style={{
-          margin: '20px 0 8px',
-          background: 'rgba(255,255,255,0.88)',
-          border: '1.5px solid #e0e0e0',
-          borderRadius: 14,
-          padding: '16px 18px',
-          backdropFilter: 'blur(6px)',
-        }}>
-          <div style={{
-            fontSize: 11, fontWeight: 700, color: '#888',
-            textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 12,
-          }}>
-            Recommended Histology Slides
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {[
-              { label: 'Histology Guide — Slidebox', url: 'https://histologyguide.com/slidebox/slidebox.html' },
-              { label: 'Mikroskop WikiSkripta', url: 'https://mikroskop.wikiskripta.eu/' },
-            ].map(({ label, url }) => (
-              <a
-                key={url}
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '10px 14px', borderRadius: 10,
-                  background: 'rgba(245,247,255,0.95)',
-                  border: '1px solid #dde3f5',
-                  textDecoration: 'none', color: '#1a1a1a',
-                  fontSize: 13, fontWeight: 600,
-                  transition: 'background .12s',
-                }}
-              >
-                <span style={{
-                  width: 28, height: 28, borderRadius: 8,
-                  background: '#1976d2', color: '#fff',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 14, flexShrink: 0,
-                }}>↗</span>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13 }}>{label}</div>
-                  <div style={{ fontSize: 11, color: '#aaa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{url}</div>
-                </div>
-              </a>
-            ))}
-          </div>
         </div>
       )}
 
