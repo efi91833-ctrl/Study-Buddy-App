@@ -301,9 +301,10 @@
     }
     .sb-book span {
       font-family: var(--sb-serif);
-      font-size: 7px;
+      font-size: 10px;
       font-weight: 400;
       letter-spacing: .06em;
+      padding: 6px 0;
       writing-mode: vertical-rl;
       white-space: nowrap;
       overflow: hidden;
@@ -4609,14 +4610,15 @@ function BookReader({ bookId, bookTitle, onClose }) {
 }
 
 
+/* Spine looks, cycled across however many books are actually on the shelf */
 const SHELF_SPINES = [
-  { w: 17, h: 66, bg: '#2b2b28', title: 'GILROY', color: '#e2ded4', rules: [{ top: 7 }, { bottom: 7 }] },
-  { w: 14, h: 60, bg: '#6E7268', title: 'Atlas',  color: '#f0f1ec', rules: [] },
-  { w: 19, h: 70, bg: '#4A4A45', title: 'Notes',  color: '#e8e6e0', rules: [{ top: 9 }] },
-  { w: 13, h: 58, bg: '#A9ABA2', title: null,     color: null,      rules: [] },
-  { w: 16, h: 64, bg: '#5B5F56', title: null,     color: null,      rules: [] },
-  { w: 12, h: 54, bg: '#C3C1B8', title: null,     color: null,      rules: [] },
-  { w: 15, h: 68, bg: '#37372F', title: null,     color: null,      rules: [] },
+  { w: 26, h: 99,  bg: '#2b2b28', color: '#e2ded4', rules: [{ top: 10 }, { bottom: 10 }] },
+  { w: 21, h: 90,  bg: '#6E7268', color: '#f0f1ec', rules: [] },
+  { w: 28, h: 105, bg: '#4A4A45', color: '#e8e6e0', rules: [{ top: 13 }] },
+  { w: 20, h: 87,  bg: '#A9ABA2', color: '#3a3a36', rules: [] },
+  { w: 24, h: 96,  bg: '#5B5F56', color: '#f0f1ec', rules: [] },
+  { w: 18, h: 81,  bg: '#C3C1B8', color: '#3a3a36', rules: [] },
+  { w: 23, h: 102, bg: '#37372F', color: '#e8e6e0', rules: [{ top: 10 }, { bottom: 10 }] },
 ];
 
 function BookShelf({ onBooksChange, onOpenBook }) {
@@ -4683,19 +4685,19 @@ function BookShelf({ onBooksChange, onOpenBook }) {
       <div className="bookshelf-label">Library</div>
       <div className="sb-shelf">
         <div className="sb-shelf-row">
-          {SHELF_SPINES.map((sp, i) => {
-            const book = books[i];
+          {books.map((book, i) => {
+            const sp = SHELF_SPINES[i % SHELF_SPINES.length];
             return (
               <div
-                key={i}
+                key={book.id}
                 className="sb-book"
                 style={{ width: sp.w, height: sp.h, background: sp.bg }}
-                title={book ? book.title + ' — click to open, right-click to remove' : undefined}
-                onClick={() => book && onOpenBook(book)}
-                onContextMenu={e => { if (book) { e.preventDefault(); removeBook(book); } }}
+                title={book.title + ' — click to open, right-click to remove'}
+                onClick={() => onOpenBook(book)}
+                onContextMenu={e => { e.preventDefault(); removeBook(book); }}
               >
                 {sp.rules.map((r, j) => <div key={j} className="sb-book-rule" style={r} />)}
-                {sp.title && <span style={{ color: sp.color }}>{sp.title}</span>}
+                <span style={{ color: sp.color }}>{book.title}</span>
               </div>
             );
           })}
