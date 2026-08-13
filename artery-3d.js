@@ -1103,7 +1103,7 @@
     }
 
     return e('div', { style: { display: 'flex', flexDirection: 'column', height: '100vh', background: '#efece7' } },
-      e('div', { style: { padding: '10px 14px', borderBottom: '1px solid #ddd', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, background: '#fff' } },
+      e('div', { style: { padding: '22px 60px 10px 14px', borderBottom: '1px solid #ddd', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, background: '#fff' } },
         e('button', { onClick: props.onBack, style: btn(false) }, '← Subjects'),
         e('button', {
           onClick: function () { setLook(LOOK_ORDER[(LOOK_ORDER.indexOf(look) + 1) % LOOK_ORDER.length]); },

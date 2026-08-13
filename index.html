@@ -93,7 +93,7 @@
 
     .topbar {
       display: flex; align-items: center; gap: 12px;
-      padding: 16px 28px;
+      padding: 26px 28px 16px;
       background: var(--sb-cream);
       border-bottom: 1px solid var(--sb-line-soft);
     }
@@ -6177,9 +6177,9 @@ function EpithelialGame({ onBack }) {
       {/* Header */}
       <div style={{
         position: 'sticky', top: 0, zIndex: 10,
-        background: 'rgba(250,250,250,0.97)',
-        paddingTop: 16, paddingBottom: 10, marginBottom: 14,
-        borderBottom: '1px solid #e8e8e8',
+        background: 'var(--sb-panel)',
+        paddingTop: 30, paddingBottom: 10, marginBottom: 14,
+        borderBottom: '1px solid var(--sb-line-soft)',
       }}>
         <button className="topbar-back" onClick={onBack}>← Histology</button>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
@@ -6410,8 +6410,8 @@ function VertebralRibGame({ onBack }) {
     <div style={{maxWidth:1100,margin:'0 auto',padding:'0 10px 60px'}}>
 
       {/* ── Sticky header ── */}
-      <div style={{position:'sticky',top:0,zIndex:10,background:'rgba(250,250,250,0.97)',
-        paddingTop:16,paddingBottom:10,marginBottom:14,borderBottom:'1px solid #e8e8e8'}}>
+      <div style={{position:'sticky',top:0,zIndex:10,background:'var(--sb-panel)',
+        paddingTop:30,paddingBottom:10,marginBottom:14,borderBottom:'1px solid var(--sb-line-soft)'}}>
         <button className="topbar-back" onClick={onBack}>← Anatomy</button>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:8}}>
           <h2 style={{fontSize:19,fontWeight:700,color:'#1a1a1a'}}>Vertebral & Rib Level Matcher</h2>
@@ -6741,7 +6741,7 @@ function PeriotonealGame({ onBack }) {
       <div style={{ flex: 1, minWidth: 0 }}>
 
         {/* Sticky header */}
-        <div style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--sb-panel)', paddingTop: 16, paddingBottom: 12, marginBottom: 18, marginLeft: -12, marginRight: -12, paddingLeft: 12, paddingRight: 12, borderBottom: '1px solid var(--sb-line-soft)' }}>
+        <div style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--sb-panel)', paddingTop: 30, paddingBottom: 12, marginBottom: 18, marginLeft: -12, marginRight: -12, paddingLeft: 12, paddingRight: 12, borderBottom: '1px solid var(--sb-line-soft)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <button className="topbar-back" onClick={onBack}>← Anatomy</button>
             <ZoomControl zoom={gameZoom} setZoom={setGameZoom} />
@@ -6877,7 +6877,7 @@ function PeriotonealGame({ onBack }) {
       </div>
 
       {/* ── Reference image ── */}
-      <div style={narrow ? { width: '100%', order: -1, marginBottom: 8 } : { width: 300, flexShrink: 0, position: 'sticky', top: 16 }}>
+      <div style={narrow ? { width: '100%', order: -1, marginBottom: 8 } : { width: 300, flexShrink: 0, position: 'sticky', top: 30 }}>
         {!narrow && <div style={{ fontSize: 12, fontWeight: 800, color: '#9b9b98', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Reference image</div>}
         {refImg}
       </div>
@@ -7135,7 +7135,7 @@ function VeinFormationGame({ onBack }) {
       }}>
         {/* Sidebar header */}
         <div style={{
-          padding: '12px 14px',
+          padding: '26px 14px 12px',
           borderBottom: '1px solid #e0e0e0',
           display: 'flex', flexDirection: 'column', gap: 8
         }}>
@@ -9173,7 +9173,7 @@ function TimelineGame({ onBack }) {
                     overflow: 'hidden', background: 'transparent' }}>
 
         {/* ── Header — frosted glass matching topbar ── */}
-        <div style={{ ...glass, padding: '13px 20px', paddingRight: 56,
+        <div style={{ ...glass, padding: '26px 20px 13px', paddingRight: 56,
                       borderBottom: '1px solid rgba(0,0,0,0.08)', flexShrink: 0,
                       display: 'flex', alignItems: 'center', gap: 12 }}>
           <button onClick={() => { setPhase('pick'); setSystem(null); }}
@@ -9400,7 +9400,7 @@ function TimelineGame({ onBack }) {
 
       {/* ── Frosted header ── */}
       <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center',
-                    padding: '10px 18px', gap: 12,
+                    padding: '24px 18px 10px', gap: 12,
                     background: 'rgba(255,255,255,0.82)',
                     backdropFilter: 'blur(10px)',
                     borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
@@ -9645,7 +9645,7 @@ function DissectionBank({ onBack }) {
   /* ── Semester picker ── */
   if (!semester) return (
     <div style={{ minHeight: '100vh', background: '#f7f6f3', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '18px 20px 12px', borderBottom: '1px solid #eee', background: '#fff' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '28px 20px 12px', borderBottom: '1px solid #eee', background: '#fff' }}>
         <button onClick={onBack} style={{ border: 'none', background: 'none', fontSize: 18, cursor: 'pointer', color: '#888' }}>←</button>
         <div style={{ fontWeight: 700, fontSize: 16, color: '#1a1a1a' }}>Dissections Question Bank</div>
       </div>
@@ -9677,7 +9677,7 @@ function DissectionBank({ onBack }) {
   /* ── Professor picker ── */
   if (!professor) return (
     <div style={{ minHeight: '100vh', background: '#f7f6f3', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '18px 20px 12px', borderBottom: '1px solid #eee', background: '#fff' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '28px 20px 12px', borderBottom: '1px solid #eee', background: '#fff' }}>
         <button onClick={() => setSemester(null)} style={{ border: 'none', background: 'none', fontSize: 18, cursor: 'pointer', color: '#888' }}>←</button>
         <div style={{ fontWeight: 700, fontSize: 16, color: '#1a1a1a' }}>{semester} Semester</div>
       </div>
@@ -9708,7 +9708,7 @@ function DissectionBank({ onBack }) {
   /* ── Question list view ── */
   if (semester && professor) return (
     <div style={{ minHeight: '100vh', background: '#f7f6f3', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '18px 20px 12px', borderBottom: '1px solid #eee', background: '#fff', flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '28px 20px 12px', borderBottom: '1px solid #eee', background: '#fff', flexShrink: 0 }}>
         <button onClick={() => setProfessor(null)} style={{ border: 'none', background: 'none', fontSize: 18, cursor: 'pointer', color: '#888' }}>←</button>
         <div>
           <div style={{ fontWeight: 700, fontSize: 16, color: '#1a1a1a' }}>Prof. {professor}</div>
@@ -10791,7 +10791,7 @@ function BrainAtlas({ onBack }) {
                   display:'flex', flexDirection:'column', zIndex:100 }}>
 
       {/* Header */}
-      <div style={{ display:'flex', alignItems:'center', gap:12, padding:'8px 16px',
+      <div style={{ display:'flex', alignItems:'center', gap:12, padding:'20px 16px 8px',
                     background:'rgba(255,255,255,0.04)',
                     borderBottom:'1px solid rgba(255,255,255,0.07)', flexShrink:0, flexWrap:'wrap' }}>
         <button onClick={quizMode ? exitQuiz : onBack}
@@ -11311,7 +11311,7 @@ function BrainMriQuiz({ onBack }) {
   };
   const topbar = {
     display: 'flex', alignItems: 'center', gap: 12,
-    padding: '14px 28px',
+    padding: '26px 60px 14px 28px',
     background: '#F6F3EC',
     borderBottom: '1px solid #ccc',
   };
@@ -11815,10 +11815,10 @@ function VirtualSlidesQuiz({ onBack }) {
     const resultColor = result === 'correct' ? '#2e7d32' : result === 'incorrect' ? '#c62828' : '#555';
     const microscopeUrl = 'https://mikroskop.wikiskripta.eu/?idx=' + currentSlide.idx;
     return (
-      <div style={{ padding: '10px 16px', height: '100vh', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
+      <div style={{ padding: '24px 16px 10px', height: '100vh', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexShrink: 0, paddingRight: 44 }}>
           <button onClick={() => setStarted(false)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#555', padding: 4 }}>←</button>
           <span style={{ fontSize: 13, color: '#888' }}>{qIdx + 1} / {queue.length}</span>
           <span style={{ flex: 1 }} />
@@ -12531,7 +12531,7 @@ function HematopoiesisMap({ onBack }) {
     <div style={{display:'flex',flexDirection:'column',height:'100vh',background:'#f2f2f2',fontFamily:'system-ui,sans-serif',overflow:'hidden'}}>
 
       {/* top bar */}
-      <div style={{display:'flex',alignItems:'center',gap:12,padding:'7px 16px',background:'#fff',borderBottom:'1px solid #e0e0e0',flexShrink:0}}>
+      <div style={{display:'flex',alignItems:'center',gap:12,padding:'22px 60px 7px 16px',background:'#fff',borderBottom:'1px solid #e0e0e0',flexShrink:0}}>
         <button onClick={onBack} style={{background:'none',border:'none',cursor:'pointer',fontSize:20,color:'#555',lineHeight:1}}>
           &#8592;
         </button>
