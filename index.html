@@ -852,10 +852,30 @@
       background: var(--bk-paper);
       min-width: 0;
     }
+    .bk-spread {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;               /* keep in sync with SPREAD_GUTTER in BookReader */
+      width: 100%;
+      height: 100%;
+    }
     .bk-page canvas {
       display: block;
       max-width: 100%;
       max-height: 100%;
+    }
+    /* Mode + pairing controls read as labels, not buttons, until hovered */
+    .bk-mode {
+      font-size: 10px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--bk-muted);
+    }
+    .bk-shift {
+      font-size: 12px;
+      color: var(--bk-muted);
+      margin-left: 6px;
     }
     .bk-placeholder {
       width: 100%;
@@ -4499,9 +4519,22 @@ function BookReader({ bookId, bookTitle, onClose }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searchOpen, setSearchOpen]   = useState(false);
+
+  // Two-page spread. `spread` is a global preference; `pairOffset` is per book,
+  // because whether page 1 stands alone like a cover depends on how the PDF was scanned.
+  const [spread, setSpread] = useState(() => {
+    try { return localStorage.getItem('sb-reader-spread') !== 'single'; }
+    catch (e) { return true; }
+  });
+  const [pairOffset, setPairOffset] = useState(() => {
+    try { return localStorage.getItem('sb-reader-offset-' + bookId) === '0' ? 0 : 1; }
+    catch (e) { return 1; }
+  });
+
   const canvasRef  = useRef(null);
+  const canvasRef2 = useRef(null);
   const frameRef   = useRef(null);
-  const renderTask = useRef(null);
+  const renderTasks = useRef([]);
   const versionRef = useRef(0);
   const searchRef  = useRef(null);
 
@@ -4514,16 +4547,51 @@ function BookReader({ bookId, bookTitle, onClose }) {
     });
   }
 
-  // Last chapter whose page <= current page. Drives both the header crumb
-  // and the rail highlight, so there is no second source of truth.
+  function toggleSpread() {
+    setSpread(v => {
+      const val = !v;
+      try { localStorage.setItem('sb-reader-spread', val ? 'two' : 'single'); } catch (e) {}
+      return val;
+    });
+  }
+
+  function shiftPairing() {
+    setPairOffset(v => {
+      const val = v === 1 ? 0 : 1;
+      try { localStorage.setItem('sb-reader-offset-' + bookId, String(val)); } catch (e) {}
+      return val;
+    });
+  }
+
+  // The pair of pages on screen. offset 1 = page 1 stands alone (2|3, 4|5),
+  // offset 0 = straight pairs (1|2, 3|4). Single-page mode is just [pageNum].
+  const visiblePages = React.useMemo(() => {
+    if (!total) return [pageNum];
+    if (!spread) return [pageNum];
+    if (pairOffset === 1 && pageNum <= 1) return [1];
+    const base = pairOffset === 1 ? 2 : 1;
+    const left = base + 2 * Math.floor((pageNum - base) / 2);
+    const right = left + 1;
+    return right <= total ? [left, right] : [left];
+  }, [pageNum, total, spread, pairOffset]);
+
+  // Last chapter whose page <= the last page on screen. Drives both the header
+  // crumb and the rail highlight, so there is no second source of truth. Using the
+  // last visible page means a chapter opening on the right-hand page of a spread
+  // registers as soon as you can actually see it.
+  const lastVisible = visiblePages[visiblePages.length - 1];
   const currentChapter = React.useMemo(() => {
     if (!toc.length) return null;
     let found = null;
     for (const item of toc) {
-      if (item.page <= pageNum && (!found || item.page >= found.page)) found = item;
+      if (item.page <= lastVisible && (!found || item.page >= found.page)) found = item;
     }
     return found;
-  }, [toc, pageNum]);
+  }, [toc, lastVisible]);
+
+  const pageLabel = visiblePages.length > 1
+    ? `${visiblePages[0]}–${visiblePages[1]}`
+    : `${visiblePages[0]}`;
 
   // ── Load PDF + index + TOC ──
   useEffect(() => {
@@ -4700,34 +4768,51 @@ function BookReader({ bookId, bookTitle, onClose }) {
     return () => ro.disconnect();
   }, [loading]);
 
+  const SPREAD_GUTTER = 14;   // px between the two pages, matches .bk-spread gap
+
   useEffect(() => {
-    if (!pdfDoc || !canvasRef.current) return;
+    if (!pdfDoc) return;
     if (!frameSize.w || !frameSize.h) return;
+    const refs = [canvasRef, canvasRef2];
+    if (!canvasRef.current) return;
+
     const version = ++versionRef.current;
-    if (renderTask.current) { renderTask.current.cancel(); renderTask.current = null; }
+    renderTasks.current.forEach(t => { try { t.cancel(); } catch (e) {} });
+    renderTasks.current = [];
     setRendering(true);
-    pdfDoc.getPage(pageNum).then(page => {
+
+    (async () => {
+      const nums  = visiblePages;
+      const pages = await Promise.all(nums.map(n => pdfDoc.getPage(n)));
       if (version !== versionRef.current) return;
-      const canvas = canvasRef.current;
-      if (!canvas) return;
 
-      const base  = page.getViewport({ scale: 1 });
-      const fit   = Math.min(frameSize.w / base.width, frameSize.h / base.height);
-      const dpr   = window.devicePixelRatio || 1;
-      const viewport = page.getViewport({ scale: fit * dpr });
+      // One shared scale for both pages, so a spread never renders mismatched halves.
+      const bases    = pages.map(p => p.getViewport({ scale: 1 }));
+      const gutter   = pages.length > 1 ? SPREAD_GUTTER : 0;
+      const availW   = (frameSize.w - gutter) / pages.length;
+      const widest   = Math.max(...bases.map(b => b.width));
+      const tallest  = Math.max(...bases.map(b => b.height));
+      const fit      = Math.min(availW / widest, frameSize.h / tallest);
+      const dpr      = window.devicePixelRatio || 1;
 
-      canvas.width  = Math.floor(viewport.width);
-      canvas.height = Math.floor(viewport.height);
-      canvas.style.width  = Math.floor(base.width  * fit) + 'px';
-      canvas.style.height = Math.floor(base.height * fit) + 'px';
+      const tasks = [];
+      pages.forEach((page, i) => {
+        const canvas = refs[i].current;
+        if (!canvas) return;
+        const base     = bases[i];
+        const viewport = page.getViewport({ scale: fit * dpr });
+        canvas.width  = Math.floor(viewport.width);
+        canvas.height = Math.floor(viewport.height);
+        canvas.style.width  = Math.floor(base.width  * fit) + 'px';
+        canvas.style.height = Math.floor(base.height * fit) + 'px';
+        tasks.push(page.render({ canvasContext: canvas.getContext('2d'), viewport }));
+      });
+      renderTasks.current = tasks;
 
-      const task = page.render({ canvasContext: canvas.getContext('2d'), viewport });
-      renderTask.current = task;
-      task.promise
-        .then(() => { if (version === versionRef.current) setRendering(false); })
-        .catch(() => {});
-    });
-  }, [pdfDoc, pageNum, frameSize.w, frameSize.h]);
+      try { await Promise.all(tasks.map(t => t.promise)); } catch (e) { /* cancelled */ }
+      if (version === versionRef.current) setRendering(false);
+    })();
+  }, [pdfDoc, visiblePages, frameSize.w, frameSize.h]);
 
   // ── Search ──
   function handleSearch(val) {
@@ -4750,6 +4835,14 @@ function BookReader({ bookId, bookTitle, onClose }) {
     if (rendering) return;
     setPageNum(Math.max(1, Math.min(total, n)));
   }
+  // Step by a whole spread rather than a single page when two-up is on.
+  function stepView(dir) {
+    if (!spread) { goTo(pageNum + dir); return; }
+    const last = visiblePages[visiblePages.length - 1];
+    goTo(dir > 0 ? last + 1 : visiblePages[0] - 1);
+  }
+  const atStart = visiblePages[0] <= 1;
+  const atEnd   = visiblePages[visiblePages.length - 1] >= total;
   function jumpTo(page) {
     goTo(page);
     setSearchOpen(false);
@@ -4770,12 +4863,12 @@ function BookReader({ bookId, bookTitle, onClose }) {
       }
       if (editingPage) return;           // don't navigate while typing in page input
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); goTo(pageNum + 1); }
-      if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   { e.preventDefault(); goTo(pageNum - 1); }
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); stepView(1); }
+      if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   { e.preventDefault(); stepView(-1); }
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [pageNum, total, rendering, editingPage, showManualToc, searchOpen, searchQuery, onClose]);
+  }, [pageNum, total, rendering, editingPage, showManualToc, searchOpen, searchQuery, onClose, spread, visiblePages]);
 
   return (
     <>
@@ -4788,10 +4881,14 @@ function BookReader({ bookId, bookTitle, onClose }) {
             <button className="bk-icon-btn" title="Contents"
               onClick={() => toggleRail()}>☰</button>
 
+            <button className="bk-icon-btn bk-mode"
+              title={spread ? 'Switch to one page' : 'Switch to two pages'}
+              onClick={toggleSpread}>{spread ? '2 up' : '1 up'}</button>
+
             <span className="bk-title">{bookTitle}</span>
 
             <span className="bk-crumb">
-              {currentChapter ? `${currentChapter.title} · p. ${pageNum}` : `p. ${pageNum}`}
+              {currentChapter ? `${currentChapter.title} · p. ${pageLabel}` : `p. ${pageLabel}`}
             </span>
 
             <div className="bk-search">
@@ -4826,7 +4923,7 @@ function BookReader({ bookId, bookTitle, onClose }) {
           {/* ── Progress ── */}
           <div className="bk-progress">
             <div className="bk-progress-fill"
-              style={{ width: total ? `${(pageNum / total) * 100}%` : '0%' }} />
+              style={{ width: total ? `${(lastVisible / total) * 100}%` : '0%' }} />
           </div>
 
           {/* ── Body ── */}
@@ -4834,7 +4931,13 @@ function BookReader({ bookId, bookTitle, onClose }) {
             <div className="bk-page" ref={frameRef}>
               {loading
                 ? <div className="bk-placeholder"><span>Loading book</span></div>
-                : <canvas ref={canvasRef} />
+                : (
+                  <div className="bk-spread">
+                    <canvas ref={canvasRef} />
+                    <canvas ref={canvasRef2}
+                      style={{ display: visiblePages.length > 1 ? 'block' : 'none' }} />
+                  </div>
+                )
               }
             </div>
 
@@ -4875,8 +4978,8 @@ function BookReader({ bookId, bookTitle, onClose }) {
 
           {/* ── Footer ── */}
           <div className="bk-footer">
-            <button className="bk-icon-btn" onClick={() => goTo(pageNum - 1)}
-              disabled={pageNum <= 1 || rendering}>‹</button>
+            <button className="bk-icon-btn" onClick={() => stepView(-1)}
+              disabled={atStart || rendering}>‹</button>
 
             {editingPage ? (
               <input
@@ -4900,12 +5003,20 @@ function BookReader({ bookId, bookTitle, onClose }) {
               />
             ) : (
               <span className="bk-count" title="Click to jump to a page"
-                onClick={() => { setPageInput(String(pageNum)); setEditingPage(true); }}
-              >{pageNum} / {total}</span>
+                onClick={() => { setPageInput(String(visiblePages[0])); setEditingPage(true); }}
+              >
+                {pageLabel} / {total}
+              </span>
             )}
 
-            <button className="bk-icon-btn" onClick={() => goTo(pageNum + 1)}
-              disabled={pageNum >= total || rendering}>›</button>
+            <button className="bk-icon-btn" onClick={() => stepView(1)}
+              disabled={atEnd || rendering}>›</button>
+
+            {spread && (
+              <button className="bk-icon-btn bk-shift"
+                title="Shift the pairing by one page (remembered for this book)"
+                onClick={shiftPairing}>⇄</button>
+            )}
           </div>
 
           {/* ── Edit-chapters dialog ── */}
