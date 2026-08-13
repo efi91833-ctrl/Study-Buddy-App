@@ -2999,14 +2999,14 @@ async function photoDbGetByTopic(topicId) {
 /* ── Shared zoom control used by all content screens ── */
 function ZoomControl({ zoom, setZoom }) {
   const ZBTN = {
-    border: '1px solid #d0d0d0', borderRadius: 6, background: '#f5f5f5',
-    color: '#444', cursor: 'pointer', fontSize: 14, padding: '1px 9px',
+    border: '1px solid var(--sb-line)', borderRadius: 6, background: 'var(--sb-card)',
+    color: 'var(--sb-ink-2)', cursor: 'pointer', fontSize: 14, padding: '1px 9px',
     fontWeight: 700, lineHeight: 1.6, userSelect: 'none',
   };
   return (
     <div style={{ display:'flex', alignItems:'center', gap:3, flexShrink:0 }}>
       <button style={ZBTN} onClick={() => setZoom(z => Math.max(0.3, +(z - 0.2).toFixed(1)))}>-</button>
-      <span style={{ fontSize:10, color:'#999', minWidth:32, textAlign:'center', userSelect:'none' }}>
+      <span style={{ fontSize:10, color:'var(--sb-ink-4)', minWidth:32, textAlign:'center', userSelect:'none' }}>
         {Math.round(zoom * 100)}%
       </span>
       <button style={ZBTN} onClick={() => setZoom(z => Math.min(3.0, +(z + 0.2).toFixed(1)))}>+</button>
@@ -6115,15 +6115,15 @@ function PeriOrganCard({ o, selected, checked, placed, onDragStart, clickPlaced,
       style={{
         display: 'flex', alignItems: 'center', gap: 7,
         padding: '6px 10px 6px 7px', margin: '3px', borderRadius: 10,
-        background: correct ? '#d4edda' : wrong ? '#f8d7da' : isSel ? '#1a1a1a' : '#fff',
-        border: `1.5px solid ${correct ? '#b8dfc5' : wrong ? '#f0b8be' : isSel ? '#1a1a1a' : '#e0e0e0'}`,
-        boxShadow: isSel ? '0 2px 8px rgba(0,0,0,0.18)' : '0 1px 3px rgba(0,0,0,0.07)',
+        background: correct ? 'rgba(74,124,106,0.14)' : wrong ? 'rgba(124,74,74,0.12)' : isSel ? '#2b2b28' : 'var(--sb-card)',
+        border: `1.5px solid ${correct ? '#4a7c6a' : wrong ? '#7c4a4a' : isSel ? '#2b2b28' : 'var(--sb-line-soft)'}`,
+        boxShadow: isSel ? '0 2px 8px rgba(60,52,38,0.20)' : '0 1px 3px rgba(60,52,38,0.06)',
         cursor: 'grab', userSelect: 'none', transition: 'all 0.12s',
       }}
       title={placed[o.id] ? 'Click to return to bank' : 'Drag or tap to place'}
     >
       <OrganSticker type={o.sticker} inv={isSel} />
-      <span style={{ fontSize: 15, fontWeight: 500, color: isSel ? '#fff' : '#1a1a1a', lineHeight: 1.2 }}>{o.name}</span>
+      <span style={{ fontSize: 15, fontWeight: 500, color: isSel ? '#fff' : 'var(--sb-ink)', lineHeight: 1.2 }}>{o.name}</span>
     </div>
   );
 }
@@ -6131,8 +6131,8 @@ function PeriOrganCard({ o, selected, checked, placed, onDragStart, clickPlaced,
 function PeriZoneHeader({ cat }) {
   return (
     <div style={{ marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
-      <div style={{ fontWeight: 700, fontSize: 14, color: '#1a1a1a', textTransform: 'uppercase', letterSpacing: '.02em' }}>{cat.title}</div>
-      <div style={{ fontSize: 12, color: '#b0b0b0', marginTop: 3, lineHeight: 1.4 }}>{cat.explanation}</div>
+      <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--sb-ink)', textTransform: 'uppercase', letterSpacing: '.02em' }}>{cat.title}</div>
+      <div style={{ fontSize: 12, color: 'var(--sb-ink-3)', marginTop: 3, lineHeight: 1.4 }}>{cat.explanation}</div>
     </div>
   );
 }
@@ -6227,9 +6227,9 @@ function PeriotonealGame({ onBack }) {
     return {
       display: 'flex', alignItems: 'center', gap: 7,
       padding: '6px 10px 6px 7px', margin: '3px', borderRadius: 10,
-      background: correct ? '#d4edda' : wrong ? '#f8d7da' : isSel ? '#1a1a1a' : '#fff',
-      border: `1.5px solid ${correct ? '#b8dfc5' : wrong ? '#f0b8be' : isSel ? '#1a1a1a' : '#e0e0e0'}`,
-      boxShadow: isSel ? '0 2px 8px rgba(0,0,0,0.18)' : '0 1px 3px rgba(0,0,0,0.07)',
+      background: correct ? 'rgba(74,124,106,0.14)' : wrong ? 'rgba(124,74,74,0.12)' : isSel ? '#2b2b28' : 'var(--sb-card)',
+      border: `1.5px solid ${correct ? '#4a7c6a' : wrong ? '#7c4a4a' : isSel ? '#2b2b28' : 'var(--sb-line-soft)'}`,
+      boxShadow: isSel ? '0 2px 8px rgba(60,52,38,0.20)' : '0 1px 3px rgba(60,52,38,0.06)',
       cursor: 'grab', userSelect: 'none', transition: 'all 0.12s',
     };
   };
@@ -6237,12 +6237,12 @@ function PeriotonealGame({ onBack }) {
   /* Zone drop-area style */
   const zoneStyle = (active) => ({
     borderRadius: 14, padding: '16px 16px 14px',
-    border: `2px ${active ? 'dashed #888' : 'solid #e4e4e4'}`,
-    background: active ? 'rgba(0,0,0,0.025)' : '#fafafa',
+    border: `2px ${active ? 'dashed #9a958a' : 'solid var(--sb-line-soft)'}`,
+    background: active ? 'rgba(0,0,0,0.025)' : 'var(--sb-card)',
     cursor: active ? 'pointer' : 'default',
     transition: 'border 0.12s, background 0.12s',
     minHeight: 110,
-    boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+    boxShadow: '0 1px 4px rgba(60,52,38,0.05)',
   });
 
   /* Shared props for organ cards */
@@ -6252,27 +6252,27 @@ function PeriotonealGame({ onBack }) {
     <img
       src="Peritoneum/DAF36D83-A190-4AB5-9951-CA9DA4957481.png"
       alt="Peritoneal relations diagram"
-      style={{ width: '100%', borderRadius: 12, boxShadow: '0 3px 14px rgba(0,0,0,0.12)', display: 'block' }}
+      style={{ width: '100%', borderRadius: 12, boxShadow: '0 3px 14px rgba(60,52,38,0.12)', display: 'block' }}
     />
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: narrow ? 'column' : 'row', alignItems: 'flex-start', gap: 24, maxWidth: 1140, margin: '0 auto', padding: '0 12px 56px' }}>
+    <div style={{ display: 'flex', flexDirection: narrow ? 'column' : 'row', alignItems: 'flex-start', gap: 24, maxWidth: 1140, margin: '0 auto', padding: '0 20px 56px' }}>
 
       {/* ── Game panel ── */}
       <div style={{ flex: 1, minWidth: 0 }}>
 
         {/* Sticky header */}
-        <div style={{ position: 'sticky', top: 0, zIndex: 10, background: 'rgba(250,250,250,0.97)', paddingTop: 16, paddingBottom: 12, marginBottom: 18, borderBottom: '1px solid #e8e8e8' }}>
+        <div style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--sb-panel)', paddingTop: 16, paddingBottom: 12, marginBottom: 18, marginLeft: -12, marginRight: -12, paddingLeft: 12, paddingRight: 12, borderBottom: '1px solid var(--sb-line-soft)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <button className="topbar-back" onClick={onBack}>← Anatomy</button>
             <ZoomControl zoom={gameZoom} setZoom={setGameZoom} />
           </div>
-          <h2 style={{ margin: '8px 0 3px', fontSize: 20, fontWeight: 700, color: '#1a1a1a' }}>Match the Organ — Peritoneal Relations</h2>
-          <div style={{ fontSize: 15, color: '#999' }}>
+          <h2 style={{ margin: '8px 0 3px', fontSize: 20, fontWeight: 700, color: 'var(--sb-ink)' }}>Match the Organ — Peritoneal Relations</h2>
+          <div style={{ fontSize: 15, color: 'var(--sb-ink-3)' }}>
             {checked
-              ? <span style={{ fontWeight: 600, color: correctCount === ORGANS.length ? '#2a7a4a' : '#1a1a1a' }}>Correct: {correctCount} / {ORGANS.length}</span>
-              : <span>{totalPlaced} of {ORGANS.length} placed{selected ? <span style={{ color: '#555', fontWeight: 600 }}> — tap a zone to place</span> : ''}</span>}
+              ? <span style={{ fontWeight: 600, color: correctCount === ORGANS.length ? '#4a7c6a' : 'var(--sb-ink)' }}>Correct: {correctCount} / {ORGANS.length}</span>
+              : <span>{totalPlaced} of {ORGANS.length} placed{selected ? <span style={{ color: 'var(--sb-ink-2)', fontWeight: 600 }}> — tap a zone to place</span> : ''}</span>}
           </div>
         </div>
 
@@ -6283,9 +6283,9 @@ function PeriotonealGame({ onBack }) {
         <div
           onDragOver={onDragOver}
           onDrop={dropToBank}
-          style={{ background: '#f3f3f3', borderRadius: 14, padding: '12px 12px 10px', marginBottom: 20, minHeight: 60, boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.05)' }}
+          style={{ background: '#E9E5DB', borderRadius: 14, padding: '12px 12px 10px', marginBottom: 20, minHeight: 60, boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.05)' }}
         >
-          <div style={{ fontSize: 10, fontWeight: 800, color: '#bbb', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>
+          <div style={{ fontSize: 10, fontWeight: 800, color: '#9b9b98', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>
             {bankOrgans.length > 0 ? `Organ bank — ${bankOrgans.length} remaining` : 'All organs placed — drag here to return'}
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap' }}>
@@ -6294,28 +6294,28 @@ function PeriotonealGame({ onBack }) {
         </div>
 
         {/* ── Relation board ── */}
-        <div style={{ background: '#f0f0f0', borderRadius: 20, padding: '20px 18px', boxShadow: '0 3px 16px rgba(0,0,0,0.08)', border: '1px solid #e0e0e0' }}>
-          <div style={{ textAlign: 'center', fontSize: 12, fontWeight: 800, color: '#b8b8b8', textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: 18 }}>Peritoneal Relations Board</div>
+        <div style={{ background: 'var(--sb-cream)', borderRadius: 20, padding: '20px 18px', boxShadow: '0 3px 16px rgba(60,52,38,0.07)', border: '1px solid var(--sb-line-soft)' }}>
+          <div style={{ textAlign: 'center', fontSize: 12, fontWeight: 800, color: '#9b9b98', textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: 18 }}>Peritoneal Relations Board</div>
 
           {/* Intraperitoneal */}
           <div
             onDragOver={onDragOver}
             onDrop={e => dropIntoCat(e, 'intraperitoneal')}
             onClick={() => clickCat('intraperitoneal')}
-            style={{ ...zoneStyle(!!selected), background: selected ? 'rgba(60,120,220,0.05)' : '#eef1fa', border: `2px ${selected ? 'dashed #7799dd' : 'solid #ccd5ee'}` }}
+            style={{ ...zoneStyle(!!selected), background: selected ? 'rgba(0,0,0,0.035)' : '#FBF8F1', border: `2px ${selected ? 'dashed #9a958a' : 'solid #E2DCCD'}` }}
           >
             <PeriZoneHeader cat={CATEGORIES[0]} />
             <div style={{ display: 'flex', flexWrap: 'wrap', minHeight: 52 }}>
               {inCat('intraperitoneal').length === 0
-                ? <span style={{ color: '#b8c2d8', fontSize: 12, alignSelf: 'center' }}>Drop intraperitoneal organs here</span>
+                ? <span style={{ color: '#b3aea3', fontSize: 12, alignSelf: 'center' }}>Drop intraperitoneal organs here</span>
                 : inCat('intraperitoneal').map(o => <PeriOrganCard key={o.id} o={o} {...organCardProps} />)}
             </div>
           </div>
 
           {/* Peritoneum membrane divider */}
           <div style={{ position: 'relative', margin: '16px 4px', textAlign: 'center' }}>
-            <div style={{ borderTop: '2px dashed #c0c0c0', position: 'absolute', top: '50%', left: 0, right: 0 }}></div>
-            <span style={{ position: 'relative', background: '#f0f0f0', padding: '0 12px', fontSize: 11, fontWeight: 800, color: '#b0b0b0', textTransform: 'uppercase', letterSpacing: '.1em' }}>peritoneum</span>
+            <div style={{ borderTop: '2px dashed #cfc9bb', position: 'absolute', top: '50%', left: 0, right: 0 }}></div>
+            <span style={{ position: 'relative', background: 'var(--sb-cream)', padding: '0 12px', fontSize: 11, fontWeight: 800, color: '#9b9b98', textTransform: 'uppercase', letterSpacing: '.1em' }}>peritoneum</span>
           </div>
 
           {/* Retroperitoneal row */}
@@ -6325,12 +6325,12 @@ function PeriotonealGame({ onBack }) {
               onDragOver={onDragOver}
               onDrop={e => dropIntoCat(e, 'primary-retroperitoneal')}
               onClick={() => clickCat('primary-retroperitoneal')}
-              style={{ ...zoneStyle(!!selected), flex: 1, background: selected ? 'rgba(0,0,0,0.02)' : '#f3f2ef', border: `2px ${selected ? 'dashed #aaa' : 'solid #dbd8d2'}` }}
+              style={{ ...zoneStyle(!!selected), flex: 1, background: selected ? 'rgba(0,0,0,0.035)' : '#F3F0E7', border: `2px ${selected ? 'dashed #9a958a' : 'solid #DFD9C9'}` }}
             >
               <PeriZoneHeader cat={CATEGORIES[1]} />
               <div style={{ display: 'flex', flexWrap: 'wrap', minHeight: 52 }}>
                 {inCat('primary-retroperitoneal').length === 0
-                  ? <span style={{ color: '#c8c4bc', fontSize: 12, alignSelf: 'center' }}>Drop here</span>
+                  ? <span style={{ color: '#b3aea3', fontSize: 12, alignSelf: 'center' }}>Drop here</span>
                   : inCat('primary-retroperitoneal').map(o => <PeriOrganCard key={o.id} o={o} {...organCardProps} />)}
               </div>
             </div>
@@ -6339,12 +6339,12 @@ function PeriotonealGame({ onBack }) {
               onDragOver={onDragOver}
               onDrop={e => dropIntoCat(e, 'secondary-retroperitoneal')}
               onClick={() => clickCat('secondary-retroperitoneal')}
-              style={{ ...zoneStyle(!!selected), flex: 1, background: selected ? 'rgba(0,0,0,0.02)' : '#f3f2ef', border: `2px ${selected ? 'dashed #aaa' : 'solid #dbd8d2'}` }}
+              style={{ ...zoneStyle(!!selected), flex: 1, background: selected ? 'rgba(0,0,0,0.035)' : '#F3F0E7', border: `2px ${selected ? 'dashed #9a958a' : 'solid #DFD9C9'}` }}
             >
               <PeriZoneHeader cat={CATEGORIES[2]} />
               <div style={{ display: 'flex', flexWrap: 'wrap', minHeight: 52 }}>
                 {inCat('secondary-retroperitoneal').length === 0
-                  ? <span style={{ color: '#c8c4bc', fontSize: 12, alignSelf: 'center' }}>Drop here</span>
+                  ? <span style={{ color: '#b3aea3', fontSize: 12, alignSelf: 'center' }}>Drop here</span>
                   : inCat('secondary-retroperitoneal').map(o => <PeriOrganCard key={o.id} o={o} {...organCardProps} />)}
               </div>
             </div>
@@ -6352,8 +6352,8 @@ function PeriotonealGame({ onBack }) {
 
           {/* Pelvic divider */}
           <div style={{ position: 'relative', margin: '16px 4px', textAlign: 'center' }}>
-            <div style={{ borderTop: '2px dashed #c0c0c0', position: 'absolute', top: '50%', left: 0, right: 0 }}></div>
-            <span style={{ position: 'relative', background: '#f0f0f0', padding: '0 12px', fontSize: 11, fontWeight: 800, color: '#b0b0b0', textTransform: 'uppercase', letterSpacing: '.1em' }}>pelvic floor</span>
+            <div style={{ borderTop: '2px dashed #cfc9bb', position: 'absolute', top: '50%', left: 0, right: 0 }}></div>
+            <span style={{ position: 'relative', background: 'var(--sb-cream)', padding: '0 12px', fontSize: 11, fontWeight: 800, color: '#9b9b98', textTransform: 'uppercase', letterSpacing: '.1em' }}>pelvic floor</span>
           </div>
 
           {/* Subperitoneal */}
@@ -6361,12 +6361,12 @@ function PeriotonealGame({ onBack }) {
             onDragOver={onDragOver}
             onDrop={e => dropIntoCat(e, 'subperitoneal')}
             onClick={() => clickCat('subperitoneal')}
-            style={{ ...zoneStyle(!!selected), background: selected ? 'rgba(120,60,180,0.04)' : '#f2f0f8', border: `2px ${selected ? 'dashed #aa88cc' : 'solid #d8d0ec'}` }}
+            style={{ ...zoneStyle(!!selected), background: selected ? 'rgba(0,0,0,0.035)' : '#EDE9DE', border: `2px ${selected ? 'dashed #9a958a' : 'solid #D9D2C1'}` }}
           >
             <PeriZoneHeader cat={CATEGORIES[3]} />
             <div style={{ display: 'flex', flexWrap: 'wrap', minHeight: 52 }}>
               {inCat('subperitoneal').length === 0
-                ? <span style={{ color: '#c0b8d4', fontSize: 12, alignSelf: 'center' }}>Drop subperitoneal organs here</span>
+                ? <span style={{ color: '#b3aea3', fontSize: 12, alignSelf: 'center' }}>Drop subperitoneal organs here</span>
                 : inCat('subperitoneal').map(o => <PeriOrganCard key={o.id} o={o} {...organCardProps} />)}
             </div>
           </div>
@@ -6377,19 +6377,19 @@ function PeriotonealGame({ onBack }) {
           <button
             onClick={() => setChecked(true)}
             disabled={totalPlaced === 0}
-            style={{ flex: 1, padding: '12px 0', borderRadius: 11, border: 'none', background: '#1a1a1a', color: '#fff', fontWeight: 700, fontSize: 16, cursor: totalPlaced===0 ? 'not-allowed' : 'pointer', opacity: totalPlaced===0 ? 0.35 : 1, boxShadow: totalPlaced===0 ? 'none' : '0 2px 8px rgba(0,0,0,0.15)' }}
+            style={{ flex: 1, padding: '12px 0', borderRadius: 11, border: 'none', background: '#2b2b28', color: '#fff', fontWeight: 700, fontSize: 16, cursor: totalPlaced===0 ? 'not-allowed' : 'pointer', opacity: totalPlaced===0 ? 0.35 : 1, boxShadow: totalPlaced===0 ? 'none' : '0 2px 8px rgba(60,52,38,0.18)' }}
           >
             Check answers
           </button>
           <button
             onClick={reset}
-            style={{ padding: '12px 22px', borderRadius: 11, border: '1.5px solid #d0d0d0', background: '#fff', color: '#555', fontWeight: 600, fontSize: 16, cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+            style={{ padding: '12px 22px', borderRadius: 11, border: '1.5px solid var(--sb-line)', background: 'var(--sb-card)', color: 'var(--sb-ink-2)', fontWeight: 600, fontSize: 16, cursor: 'pointer', boxShadow: '0 1px 4px rgba(60,52,38,0.06)' }}
           >
             Reset
           </button>
         </div>
         {checked && (
-          <div style={{ marginTop: 12, padding: '12px 16px', borderRadius: 11, background: correctCount===ORGANS.length ? '#d4edda' : '#f5f5f5', border: `1.5px solid ${correctCount===ORGANS.length ? '#b8dfc5' : '#e8e8e8'}`, fontSize: 16, fontWeight: 600, color: '#1a1a1a' }}>
+          <div style={{ marginTop: 12, padding: '12px 16px', borderRadius: 11, background: correctCount===ORGANS.length ? 'rgba(74,124,106,0.14)' : 'var(--sb-cream)', border: `1.5px solid ${correctCount===ORGANS.length ? '#4a7c6a' : 'var(--sb-line-soft)'}`, fontSize: 16, fontWeight: 600, color: 'var(--sb-ink)' }}>
             {correctCount === ORGANS.length
               ? 'All organs correctly placed.'
               : `${correctCount} of ${ORGANS.length} correct — incorrect organs highlighted in red. Click them to return to the bank.`}
@@ -6400,7 +6400,7 @@ function PeriotonealGame({ onBack }) {
 
       {/* ── Reference image ── */}
       <div style={narrow ? { width: '100%', order: -1, marginBottom: 8 } : { width: 300, flexShrink: 0, position: 'sticky', top: 16 }}>
-        {!narrow && <div style={{ fontSize: 12, fontWeight: 800, color: '#bbb', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Reference image</div>}
+        {!narrow && <div style={{ fontSize: 12, fontWeight: 800, color: '#9b9b98', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Reference image</div>}
         {refImg}
       </div>
 
