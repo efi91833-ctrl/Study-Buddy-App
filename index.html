@@ -987,6 +987,20 @@
     .search-result-item:active { background: var(--sb-panel); }
     .cover-box:active { opacity: 0.7 !important; }
 
+    /* ── Subject page (new layout) ── */
+    .hx-row:hover  { background: rgba(0,0,0,.03); }
+    .hx-tool:hover { border-color: #3a3a36; }
+    .hx-cta:hover  { background: #2e2e2b; }
+    .hx-tab {
+      cursor: pointer; white-space: nowrap; padding: 9px 13px; font-size: 13.5px;
+      border: none; background: none; margin-bottom: -1px; font-family: inherit;
+    }
+    @media (max-width: 720px) {
+      .hx-two   { grid-template-columns: 1fr !important; }
+      .hx-three { grid-template-columns: 1fr !important; }
+      .hx-tabs  { overflow-x: auto; }
+    }
+
     /* ── Scroll smoothness ── */
     html { scroll-behavior: smooth; }
     *::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -2452,6 +2466,298 @@ function WeakAreaCard({ subject, onSelectExam, cardStyle }) {
   );
 }
 
+// ─────────────────────────────────────────────────────────────
+/* Subject page — new layout.
+ *
+ * Driven entirely by SUBJECT_PAGES below, so moving another subject onto this
+ * layout is a data change, not a new component. A subject with no entry here
+ * falls through to the older card grid further down in ExamPicker.
+ *
+ *   groups  — tabs over the MCQ exam list; names must match exam.name exactly
+ *   tools   — interactive tools; onSelectExam({ type }) fires on click
+ *   links   — external slide libraries shown at the bottom
+ */
+const SUBJECT_PAGES = {
+  Histology: {
+    groups: [
+      { label: 'Fundamentals', names: ['Histological Techniques', 'Cell Biology', 'Epithelial Tissue', 'Epithelial Tissue 2023', 'Connective Tissue', 'Blood & Hematopoiesis', 'Nerve Tissue', 'Skin I', 'Skin II'] },
+      { label: 'Systems',      names: ['GIT I', 'GIT II', 'Cardiovascular', 'Respiratory I', 'Respiratory II', 'Urinary', 'Reproductive', 'Endocrine'] },
+      { label: 'Embryology',   names: ['General Embryology', 'Development: Cardiovascular', 'Placenta & Fetal Membranes'] },
+      { label: 'Mixed & mocks', names: ['Histo 1','Histo 2','Histo 3','Histo 4','Histo 5','Histo 6','Histo 7','Histo 8','Histo 9','Histo 10',
+                                        'Mock Credit Test A','Mock Credit Test B','Mock Credit Test C','Mock Credit Test D','Moodle Revision Test'] },
+    ],
+    tools: () => [
+      { type: 'hematopoiesis_map', name: 'Hematopoiesis Building Map',
+        meta: 'All lineages · place cells in order, location zones, mitosis plugs' },
+      { type: 'virtual_slides',    name: 'Identify Virtual Slides',
+        meta: VIRTUAL_SLIDES.length + ' slides from WikiSkripta · type-in answers, tracks weak slides' },
+      { type: 'epithelial_game',   name: 'Epithelial Cell Types',
+        meta: EPITHELIAL_ITEMS.length + ' cells & tissues · pick type and additional structure' },
+    ],
+    links: [
+      { label: 'Histology Guide — Slidebox', url: 'https://histologyguide.com/slidebox/slidebox.html' },
+      { label: 'Mikroskop WikiSkripta',      url: 'https://mikroskop.wikiskripta.eu/' },
+    ],
+    counter: () => VIRTUAL_SLIDES.length + ' virtual slides',
+  },
+};
+
+const HX_LABEL = {
+  fontSize: 11, fontWeight: 700, letterSpacing: '.08em',
+  textTransform: 'uppercase', color: 'var(--sb-ink-3)',
+};
+const HX_CARD = {
+  background: 'var(--sb-card)', border: '1px solid rgba(0,0,0,.12)',
+  borderRadius: 13, padding: '16px 18px',
+};
+
+/* Monochrome accuracy bar — the colored AccuracyBar stays for exam results,
+ * where red/green carry meaning. */
+function HxAccuracyBar({ accuracy, width = 72 }) {
+  const pct = Math.round(accuracy * 100);
+  const color = pct >= 50 ? 'var(--sb-ink-2)' : 'var(--sb-ink)';
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+      <div style={{ width, height: 5, background: '#e6e3da', borderRadius: 3, overflow: 'hidden' }}>
+        <div style={{ width: pct + '%', height: '100%', background: color, borderRadius: 3 }} />
+      </div>
+      <span style={{ fontSize: 11.5, fontWeight: 700, color, minWidth: 30, textAlign: 'right' }}>{pct}%</span>
+    </div>
+  );
+}
+
+/* How far through one exam the user is, from the real progress store.
+ * done = questions with at least one recorded attempt. */
+function hxExamProgress(subject, exam) {
+  const total = exam.questions.length;
+  if (!window.Progress || !total) return { done: 0, total, last: 0 };
+  let done = 0, last = 0;
+  exam.questions.forEach(q => {
+    const rec = window.Progress.recordFor(subject, q);
+    if (rec && rec.a > 0) { done += 1; if (rec.t > last) last = rec.t; }
+  });
+  return { done, total, last };
+}
+
+function HxExamRow({ exam, started, onClick }) {
+  return (
+    <div className="hx-row" onClick={onClick}
+      style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '10px 6px',
+               borderBottom: '1px solid rgba(0,0,0,.06)', cursor: 'pointer', borderRadius: 4 }}>
+      <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+                     background: started ? 'var(--sb-ink)' : '#d9d6cd' }} />
+      <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, overflow: 'hidden',
+                     textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{exam.name}</span>
+      <span style={{ fontSize: 11.5, color: 'var(--sb-ink-4)', flexShrink: 0 }}>
+        {exam.questions.length ? exam.questions.length + ' q' : 'soon'}
+      </span>
+    </div>
+  );
+}
+
+function SubjectPage({ subject, config, onSelectExam, onBack }) {
+  const meta = QUESTION_BANK[subject];
+  const [tab, setTab] = useState(config.groups[0].label);
+  const [, force] = useState(0);
+
+  useEffect(() => {
+    if (!window.Progress) return;
+    return window.Progress.subscribe(() => force(n => n + 1));
+  }, []);
+
+  const stats    = window.Progress ? window.Progress.summary(subject) : null;
+  const hasStats = !!(stats && stats.attempts);
+  const weak     = hasStats ? window.Progress.weakAreas(subject, 4) : [];
+  const poolSize = poolFor(subject, null).length;
+
+  const listedExams = meta.exams.filter(e => e.type !== 'czech_subject' && e.type !== 'czech_credit');
+  const nameToExam  = Object.fromEntries(listedExams.map(e => [e.name, e]));
+
+  /* Per-exam progress, computed once per render and reused by both the
+   * resume card and the started/not-started dots. */
+  const progressByName = {};
+  listedExams.forEach(e => { progressByName[e.name] = hxExamProgress(subject, e); });
+
+  const resume = hasStats
+    ? listedExams
+        .filter(e => { const p = progressByName[e.name]; return p.done > 0 && p.done < p.total; })
+        .sort((a, b) => progressByName[b.name].last - progressByName[a.name].last)
+        .slice(0, 2)
+    : [];
+
+  const groups     = config.groups.filter(g => g.names.some(n => nameToExam[n]));
+  const group      = groups.find(g => g.label === tab) || groups[0];
+  const groupExams = group ? group.names.map(n => nameToExam[n]).filter(Boolean) : [];
+  const tools      = config.tools ? config.tools() : [];
+  const links      = config.links || [];
+
+  const showWeak   = hasStats && weak.length > 0;
+  const showResume = resume.length > 0;
+
+  return (
+    <div className="content" style={{ maxWidth: 860 }}>
+
+      {/* ── Header ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+        <button className="topbar-back" onClick={onBack}>← Subjects</button>
+        <span style={{ flex: 1 }} />
+        <span style={{ fontSize: 12.5, color: 'var(--sb-ink-4)' }}>
+          {poolSize.toLocaleString()} questions{config.counter ? ' · ' + config.counter() : ''}
+        </span>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+                    gap: 28, flexWrap: 'wrap', marginBottom: 22 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <span style={{ ...HX_LABEL, letterSpacing: '.11em', fontSize: 10.5, color: 'var(--sb-ink-4)' }}>{subject}</span>
+          <h1 style={{ margin: 0, fontFamily: 'var(--sb-serif)', fontSize: 31, fontWeight: 400,
+                       letterSpacing: '-.015em', lineHeight: 1.15 }}>{meta.description}</h1>
+        </div>
+        {hasStats && (
+          <div style={{ display: 'flex', gap: 28, paddingTop: 8 }}>
+            {[
+              [Math.round(stats.accuracy * 100) + '%', 'Overall'],
+              [stats.mastered, 'Mastered'],
+              [stats.exams, 'Exams taken'],
+            ].map(([value, label]) => (
+              <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-end' }}>
+                <span style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-.02em' }}>{value}</span>
+                <span style={{ ...HX_LABEL, fontSize: 10, letterSpacing: '.09em', color: 'var(--sb-ink-4)' }}>{label}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Weak areas + resume ── */}
+      {(showWeak || showResume) && (
+        <div className="hx-two"
+          style={{ display: 'grid',
+                   gridTemplateColumns: showWeak && showResume ? '1.35fr 1fr' : '1fr',
+                   gap: 12, marginBottom: 26 }}>
+
+          {showWeak && (
+            <div style={{ ...HX_CARD, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span style={HX_LABEL}>Weakest areas</span>
+                <span style={{ fontSize: 11.5, color: 'var(--sb-ink-4)' }}>last {stats.attempts} attempts</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                {weak.map(g => (
+                  <div key={g.name} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: 'var(--sb-ink-2)',
+                                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</span>
+                    <HxAccuracyBar accuracy={g.accuracy} />
+                  </div>
+                ))}
+              </div>
+              <button className="hx-cta" onClick={() => onSelectExam('weak')}
+                style={{ marginTop: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                         gap: 10, background: 'var(--sb-ink)', border: '1px solid var(--sb-ink)',
+                         borderRadius: 10, padding: '11px 14px', cursor: 'pointer', width: '100%',
+                         fontFamily: 'inherit', transition: 'background .15s' }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--sb-cream)' }}>Practise weak areas</span>
+                <span style={{ fontSize: 11.5, color: 'var(--sb-ink-4)' }}>{WEAK_FOCUS_SIZE} q →</span>
+              </button>
+            </div>
+          )}
+
+          {showResume && (
+            <div style={{ ...HX_CARD, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <span style={HX_LABEL}>Pick up again</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+                {resume.map(exam => {
+                  const p = progressByName[exam.name];
+                  const pct = Math.round((p.done / p.total) * 100);
+                  return (
+                    <div key={exam.name} onClick={() => onSelectExam(meta.exams.indexOf(exam))}
+                      style={{ display: 'flex', flexDirection: 'column', gap: 6, cursor: 'pointer' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
+                        <span style={{ fontSize: 13.5, fontWeight: 600, minWidth: 0, overflow: 'hidden',
+                                       textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{exam.name}</span>
+                        <span style={{ fontSize: 11.5, color: 'var(--sb-ink-4)', flexShrink: 0 }}>{p.done} / {p.total}</span>
+                      </div>
+                      <div style={{ height: 5, background: '#e6e3da', borderRadius: 3, overflow: 'hidden' }}>
+                        <div style={{ width: pct + '%', height: '100%', background: 'var(--sb-ink)', borderRadius: 3 }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Practice tools ── */}
+      {tools.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginBottom: 26 }}>
+          <span style={HX_LABEL}>Practice tools</span>
+          <div className="hx-three" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+            {tools.map(t => (
+              <button key={t.type} className="hx-tool" onClick={() => onSelectExam({ type: t.type })}
+                style={{ ...HX_CARD, padding: '15px 16px', minHeight: 104, display: 'flex',
+                         flexDirection: 'column', gap: 6, alignItems: 'flex-start', textAlign: 'left',
+                         cursor: 'pointer', fontFamily: 'inherit', color: 'var(--sb-ink)',
+                         transition: 'border-color .15s' }}>
+                <span style={{ fontSize: 14.5, fontWeight: 600, lineHeight: 1.25 }}>{t.name}</span>
+                <span style={{ fontSize: 11.5, color: 'var(--sb-ink-3)', lineHeight: 1.45 }}>{t.meta}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Question banks: tabs + compact rows ── */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 26 }}>
+        <div className="hx-tabs" style={{ display: 'flex', alignItems: 'center', gap: 4,
+                                          borderBottom: '1px solid rgba(0,0,0,.1)' }}>
+          {groups.map(g => {
+            const active = group && g.label === group.label;
+            const n = g.names.filter(x => nameToExam[x]).length;
+            return (
+              <button key={g.label} className="hx-tab" onClick={() => setTab(g.label)}
+                style={{ fontWeight: active ? 700 : 400,
+                         color: active ? 'var(--sb-ink)' : 'var(--sb-ink-3)',
+                         borderBottom: '2px solid ' + (active ? 'var(--sb-ink)' : 'transparent') }}>
+                {g.label}<span style={{ color: '#bdbdb8', fontWeight: 400 }}> {n}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="hx-two" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 28 }}>
+          {groupExams.map(exam => (
+            <HxExamRow key={exam.name} exam={exam}
+              started={(progressByName[exam.name] || {}).done > 0}
+              onClick={() => onSelectExam(meta.exams.indexOf(exam))} />
+          ))}
+        </div>
+      </div>
+
+      {/* ── Recommended slide libraries ── */}
+      {links.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10,
+                      borderTop: '1px solid rgba(0,0,0,.08)', paddingTop: 20 }}>
+          <span style={HX_LABEL}>Recommended slide libraries</span>
+          <div className="hx-two" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            {links.map(({ label, url }) => (
+              <a key={url} href={url} target="_blank" rel="noopener noreferrer" className="hx-tool"
+                style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8,
+                         fontSize: 13, fontWeight: 600, padding: '11px 14px',
+                         border: '1px solid rgba(0,0,0,.12)', borderRadius: 11,
+                         background: 'var(--sb-card)', textDecoration: 'none', color: 'var(--sb-ink)',
+                         transition: 'border-color .15s' }}>
+                {label}<span style={{ fontSize: 12, color: 'var(--sb-ink-4)', fontWeight: 400 }}>↗</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
+
 function ExamPicker({ subject, onSelectExam, onBack }) {
   const meta = QUESTION_BANK[subject];
   const cardStyle = {
@@ -2469,6 +2775,13 @@ function ExamPicker({ subject, onSelectExam, onBack }) {
   };
 
   const [embSidebar, setEmbSidebar] = React.useState(false);
+
+  /* Subjects that have moved to the new layout render it instead of the card
+   * grid below. Add an entry to SUBJECT_PAGES to move another one over. */
+  if (SUBJECT_PAGES[subject]) {
+    return <SubjectPage subject={subject} config={SUBJECT_PAGES[subject]}
+                        onSelectExam={onSelectExam} onBack={onBack} />;
+  }
 
   /* ── Embryology sidebar view ── */
   if (embSidebar && subject === 'Anatomy') {
