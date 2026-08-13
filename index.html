@@ -29,6 +29,28 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* ── Reader typefaces (vendored, offline-safe) ── */
+    @font-face {
+      font-family: 'EB Garamond';
+      font-style: normal; font-weight: 400; font-display: swap;
+      src: url('vendor/fonts/eb-garamond-400.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'EB Garamond';
+      font-style: normal; font-weight: 500; font-display: swap;
+      src: url('vendor/fonts/eb-garamond-500.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'IBM Plex Mono';
+      font-style: normal; font-weight: 400; font-display: swap;
+      src: url('vendor/fonts/ibm-plex-mono-400.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'IBM Plex Mono';
+      font-style: normal; font-weight: 500; font-display: swap;
+      src: url('vendor/fonts/ibm-plex-mono-500.woff2') format('woff2');
+    }
+
     :root {
       --sb-cream:     #F6F3EC;
       --sb-panel:     #EFECE3;
@@ -597,227 +619,497 @@
       text-align: center;
     }
 
-    /* ── Book Reader (fullscreen modal) ── */
+    /* ── Book Reader (floating sheet, near-fullscreen) ── */
     .book-reader-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.82);
+      background: #1b1a17;
       z-index: 1999;
     }
+    .book-reader-overlay::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: .14;
+      pointer-events: none;
+      background: repeating-linear-gradient(90deg,#f7f3ea 0 1px,transparent 1px 54px);
+    }
+
     .book-reader {
       position: fixed;
       inset: 0;
       z-index: 2000;
-      display: flex;
-      flex-direction: column;
       pointer-events: none;
+
+      --bk-backdrop:  #1b1a17;
+      --bk-sheet:     #f7f3ea;
+      --bk-rail:      #f2ede1;
+      --bk-active:    #e6dfd0;
+      --bk-hover:     #ece6d8;
+      --bk-line:      #e2dccd;
+      --bk-line-rail: #dcd5c4;
+      --bk-ink:       #1b1a17;
+      --bk-ink-2:     #3b382f;
+      --bk-ink-3:     #5d574c;
+      --bk-muted:     #8a8377;
+      --bk-muted-2:   #a49c8c;
+      --bk-paper:     #fffdf8;
+      --bk-serif: 'EB Garamond', Georgia, 'Times New Roman', serif;
+      --bk-mono:  'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
     }
-    .book-reader-inner {
-      margin: auto;
-      width: 780px;
-      max-width: 96vw;
-      max-height: 92vh;
-      background: var(--sb-cream);
-      border-radius: 12px;
-      box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+
+    /* The sheet: near-fullscreen with a small dark margin all round. */
+    .bk-sheet {
+      position: absolute;
+      inset: 22px;
+      background: var(--bk-sheet);
+      border-radius: 14px;
+      box-shadow: 0 40px 90px rgba(0,0,0,.55);
+      overflow: hidden;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
       pointer-events: all;
     }
-    .book-reader-header {
+
+    /* ── Header ── */
+    .bk-header {
+      flex: none;
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 12px 18px;
-      border-bottom: 1px solid var(--sb-line-soft);
-      background: var(--sb-panel);
-      flex-shrink: 0;
+      gap: 14px;
+      padding: 14px 20px;
     }
-    .book-reader-title {
+    .bk-icon-btn {
+      background: none;
+      border: none;
+      border-radius: 6px;
+      font-family: var(--bk-mono);
       font-size: 13px;
-      font-weight: 600;
-      color: #222;
-      flex: 1;
+      color: var(--bk-ink-3);
+      cursor: pointer;
+      padding: 5px 9px;
+      line-height: 1;
+      transition: background .15s ease, color .15s ease;
+    }
+    .bk-icon-btn:hover:not(:disabled) { background: var(--bk-hover); color: var(--bk-ink); }
+    .bk-icon-btn:disabled { opacity: .3; cursor: default; }
+
+    .bk-title {
+      font-family: var(--bk-serif);
+      font-size: 19px;
+      font-weight: 500;
+      color: var(--bk-ink);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      font-family: Georgia, serif;
-      letter-spacing: 0.02em;
+      max-width: 38vw;
     }
-    .book-reader-nav {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 13px;
-      color: #555;
-      flex-shrink: 0;
-    }
-    .book-reader-nav button {
-      background: none;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      width: 32px; height: 32px;
-      cursor: pointer;
-      font-size: 18px;
-      color: #444;
-      display: flex; align-items: center; justify-content: center;
-      transition: all .15s;
-    }
-    .book-reader-nav button:hover:not(:disabled) { border-color: #888; color: #000; }
-    .book-reader-nav button:disabled { opacity: .25; cursor: default; }
-    .book-reader-close {
-      background: none;
-      border: 1px solid #ddd;
-      cursor: pointer;
-      font-size: 14px;
-      color: #888;
-      padding: 4px 10px;
-      border-radius: 6px;
-      transition: all .15s;
-      flex-shrink: 0;
-    }
-    .book-reader-close:hover { color: #000; border-color: #888; }
-
-    .book-reader-body canvas {
-      box-shadow: 0 4px 24px rgba(0,0,0,0.2);
-      border-radius: 2px;
-      max-width: 100%;
-      height: auto;
-    }
-    .book-reader-loading {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      font-size: 14px;
-      color: #999;
-      font-style: italic;
+    .bk-crumb {
+      font-family: var(--bk-mono);
+      font-size: 10px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--bk-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .book-reader-search-btn {
-      background: none;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      width: 32px; height: 32px;
-      cursor: pointer;
-      font-size: 16px;
-      color: #666;
-      display: flex; align-items: center; justify-content: center;
-      transition: all .15s;
-      flex-shrink: 0;
+    .bk-search {
+      margin-left: auto;
+      position: relative;
+      width: 250px;
+      flex: none;
     }
-    .book-reader-search-btn:hover { border-color: #888; color: #000; }
-
-    .book-search-bar {
+    .bk-search-field {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 10px 18px;
-      border-bottom: 1px solid var(--sb-line-soft);
-      background: var(--sb-panel);
-      flex-shrink: 0;
+      gap: 8px;
+      border: 1px solid var(--bk-line-rail);
+      background: var(--bk-paper);
+      border-radius: 8px;
+      padding: 7px 12px;
+      transition: border-color .15s ease;
     }
-    .book-search-bar input {
+    .bk-search-field:hover,
+    .bk-search-field:focus-within { border-color: #c0b8a5; }
+    .bk-search-icon {
+      font-family: var(--bk-mono);
+      font-size: 12px;
+      color: var(--bk-muted-2);
+      line-height: 1;
+    }
+    .bk-search-field input {
       flex: 1;
       border: none;
-      border-bottom: 1px solid #ccc;
       outline: none;
       background: transparent;
-      font-size: 13px;
-      color: #222;
-      padding: 2px 0;
-    }
-    .book-search-bar input::placeholder { color: #bbb; font-style: italic; }
-    .book-search-count {
+      font-family: var(--bk-mono);
       font-size: 11px;
-      color: #aaa;
-      white-space: nowrap;
+      color: var(--bk-ink);
+      min-width: 0;
     }
-    .book-search-results {
-      max-height: 200px;
+    .bk-search-field input::placeholder { color: var(--bk-muted-2); }
+
+    .bk-results {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      width: 380px;
+      max-height: 320px;
       overflow-y: auto;
-      border-bottom: 1px solid #eee;
-      flex-shrink: 0;
+      background: var(--bk-paper);
+      border: 1px solid var(--bk-line-rail);
+      border-radius: 8px;
+      box-shadow: 0 18px 40px rgba(27,26,23,.18);
+      z-index: 5;
     }
-    .book-search-result {
+    .bk-result {
       display: flex;
       align-items: baseline;
       gap: 10px;
-      padding: 8px 18px;
+      padding: 9px 12px;
       cursor: pointer;
-      border-bottom: 1px solid #f5f5f5;
-      transition: background .1s;
+      border-bottom: 1px solid var(--bk-line);
+      text-align: left;
+      width: 100%;
+      background: none;
+      border-left: none; border-right: none; border-top: none;
+      transition: background .12s ease;
     }
-    .book-search-result:hover { background: var(--sb-panel); }
-    .book-search-page {
-      font-size: 11px;
-      font-weight: 700;
-      color: #888;
+    .bk-result:last-child { border-bottom: none; }
+    .bk-result:hover { background: var(--bk-hover); }
+    .bk-result-page {
+      font-family: var(--bk-mono);
+      font-size: 10px;
+      color: var(--bk-muted);
       white-space: nowrap;
-      flex-shrink: 0;
+      flex: none;
     }
-    .book-search-snippet {
-      font-size: 12px;
-      color: #555;
-      line-height: 1.4;
+    .bk-result-snippet {
+      font-family: var(--bk-serif);
+      font-size: 14px;
+      line-height: 1.45;
+      color: var(--bk-ink-2);
       overflow: hidden;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       line-clamp: 2;
       -webkit-box-orient: vertical;
     }
-    .book-search-empty {
-      padding: 12px 18px;
-      font-size: 12px;
-      color: #aaa;
-      font-style: italic;
-      border-bottom: 1px solid #eee;
+    .bk-result-empty {
+      padding: 12px;
+      font-family: var(--bk-mono);
+      font-size: 11px;
+      color: var(--bk-muted-2);
     }
 
-    .book-reader-toc-btn {
-      background: none; border: 1px solid #ddd; border-radius: 6px;
-      width: 32px; height: 32px; cursor: pointer; font-size: 14px; color: #666;
-      display: flex; align-items: center; justify-content: center;
-      transition: all .15s; flex-shrink: 0;
+    .bk-close {
+      flex: none;
+      background: none;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      font-family: var(--bk-mono);
+      font-size: 10px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--bk-ink-3);
+      cursor: pointer;
+      padding: 7px 12px;
+      transition: border-color .15s ease, color .15s ease;
     }
-    .book-reader-toc-btn:hover { border-color: #888; color: #000; }
+    .bk-close:hover { border-color: var(--bk-line-rail); color: var(--bk-ink); }
 
-    .book-reader-body {
-      flex: 1; display: flex; overflow: hidden; background: var(--sb-panel);
+    /* ── Progress line ── */
+    .bk-progress {
+      flex: none;
+      height: 2px;
+      background: var(--bk-line);
     }
-    .book-toc-sidebar {
-      width: 220px; flex-shrink: 0;
-      background: var(--sb-cream); border-right: 1px solid var(--sb-line-soft);
-      overflow-y: auto; padding: 12px 0;
+    .bk-progress-fill {
+      height: 100%;
+      background: var(--bk-ink);
+      border-radius: 0 2px 2px 0;
+      transition: width .2s ease;
     }
-    .book-toc-label {
-      font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
-      color: #aaa; padding: 0 14px 8px; border-bottom: 1px solid #f0f0f0;
+
+    /* ── Body ── */
+    .bk-body {
+      flex: 1;
+      position: relative;
+      display: flex;
+      min-height: 0;
+    }
+    .bk-page {
+      flex: 1;
+      margin: 16px;
+      border: 1px solid var(--bk-line);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bk-paper);
+      min-width: 0;
+    }
+    .bk-page canvas {
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+    }
+    .bk-placeholder {
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(135deg,#f1ece0 0 7px,#fffdf8 7px 14px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .bk-placeholder span {
+      font-family: var(--bk-mono);
+      font-size: 10px;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--bk-muted);
+      background: var(--bk-sheet);
+      padding: 6px 12px;
+      border-radius: 6px;
+    }
+
+    /* ── Contents rail: overlays the page, never squeezes it ── */
+    .bk-rail {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 230px;
+      background: var(--bk-rail);
+      border-right: 1px solid var(--bk-line-rail);
+      border-radius: 0 12px 12px 0;
+      box-shadow: 16px 0 30px rgba(27,26,23,.10);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform: translateX(0);
+      opacity: 1;
+      transition: transform .26s cubic-bezier(.32,.72,0,1), opacity .2s ease;
+      z-index: 3;
+    }
+    .bk-rail.closed {
+      transform: translateX(-100%);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .bk-rail-head {
+      flex: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .bk-rail-label {
+      font-family: var(--bk-mono);
+      font-size: 10px;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--bk-muted);
+    }
+    .bk-rail-x {
+      background: none;
+      border: none;
+      border-radius: 6px;
+      font-family: var(--bk-mono);
+      font-size: 11px;
+      color: var(--bk-muted);
+      cursor: pointer;
+      padding: 3px 6px;
+      line-height: 1;
+      transition: background .15s ease, color .15s ease;
+    }
+    .bk-rail-x:hover { background: var(--bk-active); color: var(--bk-ink); }
+
+    .bk-rail-list {
+      flex: 1;
+      overflow-y: auto;
+      margin: 0 -4px;
+      padding: 0 4px;
+    }
+    .bk-chapter {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+      width: 100%;
+      background: none;
+      border: none;
+      border-radius: 7px;
+      padding: 8px 10px;
+      cursor: pointer;
+      text-align: left;
+      color: var(--bk-ink-2);
+      transition: background .12s ease, color .12s ease;
+    }
+    .bk-chapter:hover { background: var(--bk-active); }
+    .bk-chapter.active { background: var(--bk-active); color: var(--bk-ink); }
+    .bk-chapter-title {
+      font-family: var(--bk-serif);
+      font-size: 16px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .bk-chapter.active .bk-chapter-title { font-weight: 500; }
+    .bk-chapter-page {
+      font-family: var(--bk-mono);
+      font-size: 11px;
+      color: var(--bk-muted);
+      flex: none;
+    }
+    .bk-rail-empty {
+      font-family: var(--bk-serif);
+      font-size: 15px;
+      line-height: 1.5;
+      color: var(--bk-muted);
+      padding: 8px 10px;
+      background: none;
+      border: none;
+      text-align: left;
+      cursor: pointer;
+      width: 100%;
+      border-radius: 7px;
+    }
+    .bk-rail-empty:hover { background: var(--bk-active); color: var(--bk-ink-2); }
+
+    .bk-rail-foot {
+      flex: none;
+      border-top: 1px solid var(--bk-line-rail);
+      margin-top: 12px;
+      padding-top: 10px;
+    }
+    .bk-rail-edit {
+      background: none;
+      border: none;
+      border-radius: 6px;
+      font-family: var(--bk-mono);
+      font-size: 10px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--bk-muted);
+      cursor: pointer;
+      padding: 5px 8px;
+      width: 100%;
+      text-align: left;
+      transition: background .15s ease, color .15s ease;
+    }
+    .bk-rail-edit:hover { background: var(--bk-active); color: var(--bk-ink); }
+
+    /* ── Footer ── */
+    .bk-footer {
+      flex: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border-top: 1px solid var(--bk-line);
+      padding: 12px;
+    }
+    .bk-count {
+      font-family: var(--bk-mono);
+      font-size: 11px;
+      color: var(--bk-ink-3);
+      min-width: 74px;
+      text-align: center;
+      cursor: pointer;
+      border-radius: 6px;
+      padding: 4px 2px;
+    }
+    .bk-count:hover { background: var(--bk-hover); color: var(--bk-ink); }
+    .bk-count-input {
+      font-family: var(--bk-mono);
+      font-size: 11px;
+      width: 74px;
+      text-align: center;
+      border: 1px solid var(--bk-line-rail);
+      background: var(--bk-paper);
+      border-radius: 6px;
+      padding: 3px 4px;
+      outline: none;
+      color: var(--bk-ink);
+    }
+
+    /* ── Edit-chapters dialog ── */
+    .bk-dialog-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(27,26,23,.32);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+    .bk-dialog {
+      width: 420px;
+      max-width: 88%;
+      background: var(--bk-sheet);
+      border: 1px solid var(--bk-line-rail);
+      border-radius: 12px;
+      box-shadow: 0 30px 60px rgba(27,26,23,.35);
+      padding: 20px;
+    }
+    .bk-dialog-title {
+      font-family: var(--bk-serif);
+      font-size: 19px;
+      color: var(--bk-ink);
       margin-bottom: 6px;
     }
-    .book-toc-item {
-      display: flex; align-items: baseline; justify-content: space-between;
-      gap: 6px; padding: 6px 14px 6px 12px;
-      cursor: pointer; transition: background .1s;
+    .bk-dialog-hint {
+      font-family: var(--bk-mono);
+      font-size: 10px;
+      letter-spacing: .06em;
+      line-height: 1.7;
+      color: var(--bk-muted);
+      margin-bottom: 12px;
     }
-    .book-toc-item:hover { background: var(--sb-panel); }
-    .book-toc-item.active { background: var(--sb-panel); }
-    .book-toc-title {
-      font-size: 12px; color: #333; flex: 1;
-      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    .bk-dialog textarea {
+      width: 100%;
+      min-height: 190px;
+      resize: vertical;
+      font-family: var(--bk-mono);
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--bk-ink);
+      background: var(--bk-paper);
+      border: 1px solid var(--bk-line-rail);
+      border-radius: 8px;
+      padding: 10px;
+      outline: none;
     }
-    .book-toc-item.active .book-toc-title { font-weight: 600; color: #111; }
-    .book-toc-page { font-size: 11px; color: #aaa; flex-shrink: 0; }
-
-    .book-canvas-wrap {
-      flex: 1; overflow-y: auto; overflow-x: hidden;
-      display: flex; justify-content: center; padding: 20px;
+    .bk-dialog textarea:focus { border-color: #c0b8a5; }
+    .bk-dialog-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 14px;
     }
-    .book-canvas-wrap canvas {
-      box-shadow: 0 4px 24px rgba(0,0,0,0.2);
-      border-radius: 2px; max-width: 100%; height: auto;
+    .bk-btn {
+      font-family: var(--bk-mono);
+      font-size: 10px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      border-radius: 8px;
+      padding: 8px 14px;
+      cursor: pointer;
+      border: 1px solid var(--bk-line-rail);
+      background: none;
+      color: var(--bk-ink-3);
+      transition: background .15s ease, color .15s ease;
     }
+    .bk-btn:hover { background: var(--bk-hover); color: var(--bk-ink); }
+    .bk-btn-primary {
+      background: var(--bk-ink);
+      border-color: var(--bk-ink);
+      color: var(--bk-sheet);
+    }
+    .bk-btn-primary:hover { background: #2e2c27; border-color: #2e2c27; color: var(--bk-sheet); }
 
     /* ── Anatomy Slide Test ── */
     .anatomy-slide-wrap {
@@ -4195,19 +4487,43 @@ function BookReader({ bookId, bookTitle, onClose }) {
   const [indexing, setIndexing]       = useState(false);
   const [textIndex, setTextIndex]     = useState([]);
   const [toc, setToc]                 = useState([]);
-  const [showToc, setShowToc]         = useState(true);
+  const [railOpen, setRailOpen]       = useState(() => {
+    try { return localStorage.getItem('sb-reader-rail') !== 'closed'; }
+    catch (e) { return true; }
+  });
   const POCKET_ATLAS_TOC = `Bones : 12\nSutures, Joints and Ligaments : 64\nMuscles : 84\nMuscles, Synovial bursae and sheaths : 110\nDigestive system : 118\nDigestive and Respiratory system : 144\nUrogenital system : 164\nPeritoneum : 186\nEndocrine glands : 192\nHeart : 194\nArteries : 200\nVeins : 240\nLymphatic system : 264\nSpleen, meninges : 278\nSpinal cord : 282\nBrain : 288\nCranial Nerves : 330\nSpinal Nerves : 344\nAutonomic nervous system : 358\nSense organs : 364\nSkin and its appendages : 400\nGeneral terms : 406\nReferences : 419\nIndex : 422`;
   const [manualTocInput, setManualTocInput] = useState(POCKET_ATLAS_TOC);
   const [showManualToc, setShowManualToc]   = useState(false);
   const [pageInput, setPageInput]     = useState('');
   const [editingPage, setEditingPage] = useState(false);
-  const [showSearch, setShowSearch]   = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  const [searchOpen, setSearchOpen]   = useState(false);
   const canvasRef  = useRef(null);
+  const frameRef   = useRef(null);
   const renderTask = useRef(null);
   const versionRef = useRef(0);
   const searchRef  = useRef(null);
+
+  // Persist rail state per user
+  function toggleRail(next) {
+    setRailOpen(v => {
+      const val = typeof next === 'boolean' ? next : !v;
+      try { localStorage.setItem('sb-reader-rail', val ? 'open' : 'closed'); } catch (e) {}
+      return val;
+    });
+  }
+
+  // Last chapter whose page <= current page. Drives both the header crumb
+  // and the rail highlight, so there is no second source of truth.
+  const currentChapter = React.useMemo(() => {
+    if (!toc.length) return null;
+    let found = null;
+    for (const item of toc) {
+      if (item.page <= pageNum && (!found || item.page >= found.page)) found = item;
+    }
+    return found;
+  }, [toc, pageNum]);
 
   // ── Load PDF + index + TOC ──
   useEffect(() => {
@@ -4330,13 +4646,11 @@ function BookReader({ bookId, bookTitle, onClose }) {
 
         if (alive && chapters.length > 0) {
           setToc(chapters);
-        } else if (alive) {
-          // Auto-extract failed — open manual entry panel so user can save in one click
-          setShowManualToc(true);
         }
+        // Auto-extract failed: leave the rail showing its single
+        // "No chapters detected — add them" line. Do not force the dialog open.
       } catch(e) {
         console.warn('TOC extraction failed:', e);
-        if (alive) setShowManualToc(true);
       }
 
       // ── Text index: use stored or re-extract ──
@@ -4361,26 +4675,59 @@ function BookReader({ bookId, bookTitle, onClose }) {
     return () => { alive = false; };
   }, [bookId]);
 
-  // ── Render current page ──
+  // ── Render current page, fitted to the page frame ──
+  // The frame size drives the scale, so the page is always fully visible and
+  // centred instead of the old fixed scale:1.5 that overflowed on small windows.
+  const [frameSize, setFrameSize] = useState({ w: 0, h: 0 });
+
+  useEffect(() => {
+    const el = frameRef.current;
+    if (!el) return;
+    const measure = () => {
+      const r = el.getBoundingClientRect();
+      setFrameSize(prev =>
+        Math.abs(prev.w - r.width) < 1 && Math.abs(prev.h - r.height) < 1
+          ? prev
+          : { w: r.width, h: r.height });
+    };
+    measure();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', measure);
+      return () => window.removeEventListener('resize', measure);
+    }
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [loading]);
+
   useEffect(() => {
     if (!pdfDoc || !canvasRef.current) return;
+    if (!frameSize.w || !frameSize.h) return;
     const version = ++versionRef.current;
     if (renderTask.current) { renderTask.current.cancel(); renderTask.current = null; }
     setRendering(true);
     pdfDoc.getPage(pageNum).then(page => {
       if (version !== versionRef.current) return;
-      const viewport = page.getViewport({ scale: 1.5 });
       const canvas = canvasRef.current;
       if (!canvas) return;
-      canvas.width  = viewport.width;
-      canvas.height = viewport.height;
+
+      const base  = page.getViewport({ scale: 1 });
+      const fit   = Math.min(frameSize.w / base.width, frameSize.h / base.height);
+      const dpr   = window.devicePixelRatio || 1;
+      const viewport = page.getViewport({ scale: fit * dpr });
+
+      canvas.width  = Math.floor(viewport.width);
+      canvas.height = Math.floor(viewport.height);
+      canvas.style.width  = Math.floor(base.width  * fit) + 'px';
+      canvas.style.height = Math.floor(base.height * fit) + 'px';
+
       const task = page.render({ canvasContext: canvas.getContext('2d'), viewport });
       renderTask.current = task;
       task.promise
         .then(() => { if (version === versionRef.current) setRendering(false); })
         .catch(() => {});
     });
-  }, [pdfDoc, pageNum]);
+  }, [pdfDoc, pageNum, frameSize.w, frameSize.h]);
 
   // ── Search ──
   function handleSearch(val) {
@@ -4405,14 +4752,22 @@ function BookReader({ bookId, bookTitle, onClose }) {
   }
   function jumpTo(page) {
     goTo(page);
-    setShowSearch(false);
+    setSearchOpen(false);
     setSearchQuery('');
     setSearchResults([]);
   }
 
-  // Keyboard navigation (left/right arrows)
+  // Keyboard: arrows page, Esc backs out one layer at a time
   React.useEffect(() => {
     function onKey(e) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (showManualToc)              { setShowManualToc(false); return; }
+        if (searchOpen || searchQuery)  { setSearchOpen(false); setSearchQuery(''); setSearchResults([]); return; }
+        if (editingPage)                { setEditingPage(false); return; }
+        onClose();
+        return;
+      }
       if (editingPage) return;           // don't navigate while typing in page input
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); goTo(pageNum + 1); }
@@ -4420,160 +4775,174 @@ function BookReader({ bookId, bookTitle, onClose }) {
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [pageNum, total, rendering, editingPage]);
+  }, [pageNum, total, rendering, editingPage, showManualToc, searchOpen, searchQuery, onClose]);
 
   return (
     <>
       <div className="book-reader-overlay" onClick={onClose} />
       <div className="book-reader">
-        <div className="book-reader-inner">
+        <div className="bk-sheet">
 
-          {/* Header */}
-          <div className="book-reader-header">
-            <button className="book-reader-toc-btn" title="Table of contents"
-              onClick={() => setShowToc(s => !s)}>TOC</button>
-            <span className="book-reader-title">{bookTitle}</span>
-            <div className="book-reader-nav">
-              <button onClick={() => goTo(pageNum - 1)} disabled={pageNum <= 1 || rendering}>‹</button>
-              {editingPage ? (
+          {/* ── Header ── */}
+          <div className="bk-header">
+            <button className="bk-icon-btn" title="Contents"
+              onClick={() => toggleRail()}>☰</button>
+
+            <span className="bk-title">{bookTitle}</span>
+
+            <span className="bk-crumb">
+              {currentChapter ? `${currentChapter.title} · p. ${pageNum}` : `p. ${pageNum}`}
+            </span>
+
+            <div className="bk-search">
+              <div className="bk-search-field">
+                <span className="bk-search-icon">⌕</span>
                 <input
-                  type="number" min="1" max={total}
-                  value={pageInput}
-                  autoFocus
-                  onChange={e => setPageInput(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') {
-                      const n = parseInt(pageInput);
-                      if (!isNaN(n)) goTo(n);
-                      setEditingPage(false);
-                    }
-                    if (e.key === 'Escape') setEditingPage(false);
-                  }}
-                  onBlur={() => {
-                    const n = parseInt(pageInput);
-                    if (!isNaN(n)) goTo(n);
-                    setEditingPage(false);
-                  }}
-                  style={{width:52,textAlign:'center',fontSize:13,border:'1px solid #ccc',borderRadius:6,padding:'2px 4px'}}
+                  ref={searchRef}
+                  type="text"
+                  placeholder={indexing ? 'Indexing…' : 'Search this book'}
+                  value={searchQuery}
+                  onFocus={() => setSearchOpen(true)}
+                  onChange={e => { setSearchOpen(true); handleSearch(e.target.value); }}
                 />
-              ) : (
-                <span
-                  title="Click to jump to page"
-                  style={{cursor:'pointer',borderBottom:'1px dashed #aaa',paddingBottom:1}}
-                  onClick={() => { setPageInput(String(pageNum)); setEditingPage(true); }}
-                >{pageNum} / {total}</span>
+              </div>
+              {searchOpen && searchQuery.trim().length >= 2 && (
+                <div className="bk-results">
+                  {searchResults.length > 0
+                    ? searchResults.map((r, i) => (
+                        <button key={i} className="bk-result" onClick={() => jumpTo(r.page)}>
+                          <span className="bk-result-page">p. {r.page}</span>
+                          <span className="bk-result-snippet">…{r.snippet}…</span>
+                        </button>
+                      ))
+                    : <div className="bk-result-empty">No results</div>}
+                </div>
               )}
-              <button onClick={() => goTo(pageNum + 1)} disabled={pageNum >= total || rendering}>›</button>
             </div>
-            {indexing && <span style={{fontSize:11,color:'#aaa',fontStyle:'italic'}}>Indexing…</span>}
-            <button className="book-reader-search-btn" title="Search in book"
-              onClick={() => { setShowSearch(s => !s); setTimeout(() => searchRef.current?.focus(), 50); }}>⌕</button>
-            <button className="book-reader-close" onClick={onClose}>Close</button>
+
+            <button className="bk-close" onClick={onClose}>Close</button>
           </div>
 
-          {/* Search bar */}
-          {showSearch && (
-            <div className="book-search-bar">
-              <input ref={searchRef} type="text" placeholder="Search in this book…"
-                value={searchQuery} onChange={e => handleSearch(e.target.value)} />
-              {searchQuery.length >= 2 && (
-                <div className="book-search-count">
-                  {searchResults.length > 0 ? `${searchResults.length} result${searchResults.length !== 1 ? 's' : ''}` : 'No results'}
-                </div>
-              )}
-            </div>
-          )}
+          {/* ── Progress ── */}
+          <div className="bk-progress">
+            <div className="bk-progress-fill"
+              style={{ width: total ? `${(pageNum / total) * 100}%` : '0%' }} />
+          </div>
 
-          {/* Search results */}
-          {showSearch && searchResults.length > 0 && (
-            <div className="book-search-results">
-              {searchResults.map((r, i) => (
-                <div key={i} className="book-search-result" onClick={() => jumpTo(r.page)}>
-                  <span className="book-search-page">p.{r.page}</span>
-                  <span className="book-search-snippet">…{r.snippet}…</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Body: TOC sidebar + canvas */}
-          <div className="book-reader-body">
-            {showToc && (
-              <div className="book-toc-sidebar">
-                <div className="book-toc-label">Contents</div>
-
-                {toc.length > 0 ? (
-                  <>
-                    {toc.map((item, i) => (
-                      <div key={i}
-                        className={`book-toc-item${item.page === pageNum ? ' active' : ''}`}
-                        style={{ paddingLeft: 12 + item.level * 14 }}
-                        onClick={() => jumpTo(item.page)}
-                      >
-                        <span className="book-toc-title">{item.title}</span>
-                        <span className="book-toc-page">{item.page}</span>
-                      </div>
-                    ))}
-                    <div style={{marginTop:12,paddingTop:10,borderTop:'1px solid rgba(0,0,0,0.1)'}}>
-                      <button
-                        style={{fontSize:11,color:'#888',background:'none',border:'1px solid #ccc',borderRadius:6,padding:'3px 8px',cursor:'pointer',width:'100%'}}
-                        onClick={()=>setShowManualToc(v=>!v)}
-                      >{showManualToc ? 'Cancel' : 'Edit chapters manually'}</button>
-                    </div>
-                  </>
-                ) : (
-                  <div style={{padding:'8px 0'}}>
-                    <div style={{fontSize:12,color:'#999',marginBottom:10,lineHeight:1.5}}>
-                      Couldn't auto-detect chapters. Enter them manually:
-                    </div>
-                    <button
-                      style={{fontSize:12,background:'#222',color:'#fff',border:'none',borderRadius:8,padding:'6px 14px',cursor:'pointer',width:'100%',marginBottom:8}}
-                      onClick={()=>setShowManualToc(v=>!v)}
-                    >{showManualToc ? 'Cancel' : '+ Add chapters'}</button>
-                  </div>
-                )}
-
-                {showManualToc && (
-                  <div style={{marginTop:8}}>
-                    <div style={{fontSize:11,color:'#888',marginBottom:6,lineHeight:1.5}}>
-                      One chapter per line:<br/>
-                      <code style={{background:'#f5f5f5',padding:'2px 4px',borderRadius:4}}>Title : PageNumber</code>
-                    </div>
-                    <textarea
-                      value={manualTocInput}
-                      onChange={e=>setManualTocInput(e.target.value)}
-                      placeholder={"bones : 2\nsutures and joints : 54\nmuscles : 80"}
-                      style={{width:'100%',minHeight:140,fontSize:12,padding:8,border:'1px solid #ccc',borderRadius:8,resize:'vertical',fontFamily:'monospace'}}
-                    />
-                    <button
-                      style={{marginTop:6,background:'#1a1a1a',color:'#fff',border:'none',borderRadius:8,padding:'7px 14px',cursor:'pointer',fontSize:13,width:'100%'}}
-                      onClick={()=>{
-                        const lines = manualTocInput.split('\n').map(l=>l.trim()).filter(Boolean);
-                        const entries = [];
-                        lines.forEach(ln => {
-                          const sep = ln.lastIndexOf(':');
-                          if (sep < 0) return;
-                          const title = ln.slice(0, sep).trim();
-                          const pg = parseInt(ln.slice(sep+1).trim());
-                          if (title && !isNaN(pg) && pg > 0) entries.push({ title, page: pg, level: 0 });
-                        });
-                        if (entries.length > 0) {
-                          setToc(entries.sort((a,b) => a.page - b.page));
-                          setShowManualToc(false);
-                        }
-                      }}
-                    >Save chapters</button>
-                  </div>
-                )}
-              </div>
-            )}
-            <div className="book-canvas-wrap">
+          {/* ── Body ── */}
+          <div className="bk-body">
+            <div className="bk-page" ref={frameRef}>
               {loading
-                ? <div className="book-reader-loading">Loading book…</div>
+                ? <div className="bk-placeholder"><span>Loading book</span></div>
                 : <canvas ref={canvasRef} />
               }
             </div>
+
+            {/* Contents rail — overlays the page, never squeezes it */}
+            <div className={`bk-rail${railOpen ? '' : ' closed'}`}>
+              <div className="bk-rail-head">
+                <span className="bk-rail-label">Contents</span>
+                <button className="bk-rail-x" title="Hide contents"
+                  onClick={() => toggleRail(false)}>✕</button>
+              </div>
+
+              <div className="bk-rail-list">
+                {toc.length > 0
+                  ? toc.map((item, i) => (
+                      <button key={i}
+                        className={`bk-chapter${currentChapter && currentChapter.page === item.page ? ' active' : ''}`}
+                        style={{ paddingLeft: 10 + item.level * 12 }}
+                        onClick={() => jumpTo(item.page)}
+                      >
+                        <span className="bk-chapter-title">{item.title}</span>
+                        <span className="bk-chapter-page">{item.page}</span>
+                      </button>
+                    ))
+                  : (
+                      <button className="bk-rail-empty" onClick={() => setShowManualToc(true)}>
+                        No chapters detected — add them
+                      </button>
+                    )}
+              </div>
+
+              <div className="bk-rail-foot">
+                <button className="bk-rail-edit" onClick={() => setShowManualToc(true)}>
+                  + Edit chapters
+                </button>
+              </div>
+            </div>
           </div>
+
+          {/* ── Footer ── */}
+          <div className="bk-footer">
+            <button className="bk-icon-btn" onClick={() => goTo(pageNum - 1)}
+              disabled={pageNum <= 1 || rendering}>‹</button>
+
+            {editingPage ? (
+              <input
+                className="bk-count-input"
+                type="number" min="1" max={total}
+                value={pageInput}
+                autoFocus
+                onChange={e => setPageInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    const n = parseInt(pageInput);
+                    if (!isNaN(n)) goTo(n);
+                    setEditingPage(false);
+                  }
+                }}
+                onBlur={() => {
+                  const n = parseInt(pageInput);
+                  if (!isNaN(n)) goTo(n);
+                  setEditingPage(false);
+                }}
+              />
+            ) : (
+              <span className="bk-count" title="Click to jump to a page"
+                onClick={() => { setPageInput(String(pageNum)); setEditingPage(true); }}
+              >{pageNum} / {total}</span>
+            )}
+
+            <button className="bk-icon-btn" onClick={() => goTo(pageNum + 1)}
+              disabled={pageNum >= total || rendering}>›</button>
+          </div>
+
+          {/* ── Edit-chapters dialog ── */}
+          {showManualToc && (
+            <div className="bk-dialog-backdrop" onClick={() => setShowManualToc(false)}>
+              <div className="bk-dialog" onClick={e => e.stopPropagation()}>
+                <div className="bk-dialog-title">Edit chapters</div>
+                <div className="bk-dialog-hint">One per line — Title : Page</div>
+                <textarea
+                  value={manualTocInput}
+                  autoFocus
+                  onChange={e => setManualTocInput(e.target.value)}
+                  placeholder={"bones : 2\nsutures and joints : 54\nmuscles : 80"}
+                />
+                <div className="bk-dialog-row">
+                  <button className="bk-btn" onClick={() => setShowManualToc(false)}>Cancel</button>
+                  <button className="bk-btn bk-btn-primary"
+                    onClick={() => {
+                      const lines = manualTocInput.split('\n').map(l => l.trim()).filter(Boolean);
+                      const entries = [];
+                      lines.forEach(ln => {
+                        const sep = ln.lastIndexOf(':');
+                        if (sep < 0) return;
+                        const title = ln.slice(0, sep).trim();
+                        const pg = parseInt(ln.slice(sep + 1).trim());
+                        if (title && !isNaN(pg) && pg > 0) entries.push({ title, page: pg, level: 0 });
+                      });
+                      if (entries.length > 0) {
+                        setToc(entries.sort((a, b) => a.page - b.page));
+                        setShowManualToc(false);
+                      }
+                    }}
+                  >Save chapters</button>
+                </div>
+              </div>
+            </div>
+          )}
 
         </div>
       </div>

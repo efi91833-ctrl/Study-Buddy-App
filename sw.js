@@ -5,7 +5,7 @@
    - Cache-first strategy for all GET requests
    ============================================================ */
 
-const CACHE_NAME = 'study-buddy-v119';
+const CACHE_NAME = 'study-buddy-v120';
 
 /* All local files to pre-cache on install.
    IMPORTANT: this list must contain every <script src> in index.html. Seven
@@ -45,6 +45,10 @@ const LOCAL_ASSETS = [
   '/vendor/pdf.min.js',
   '/vendor/pdf.worker.min.js',
   '/vendor/three.min.js',
+  '/vendor/fonts/eb-garamond-400.woff2',
+  '/vendor/fonts/eb-garamond-500.woff2',
+  '/vendor/fonts/ibm-plex-mono-400.woff2',
+  '/vendor/fonts/ibm-plex-mono-500.woff2',
   '/images/muscles/obliquus-capitis-inferior-gilroy-crop.png',
   '/images/muscles/pelvic-floor.jpg',
   '/images/muscles/gluteal-region.jpg',
