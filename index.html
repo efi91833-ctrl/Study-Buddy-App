@@ -218,6 +218,29 @@
       background: #3a3a36;
     }
 
+    .year-back {
+      align-self: flex-start;
+      background: none;
+      border: none;
+      padding: 0;
+      margin-bottom: 14px;
+      font-family: var(--sb-sans);
+      font-size: 11px;
+      font-weight: 400;
+      letter-spacing: .06em;
+      color: var(--sb-ink-3);
+      cursor: pointer;
+    }
+    .year-empty {
+      font-family: var(--sb-sans);
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--sb-ink-3);
+      border: 1px dashed var(--sb-line);
+      border-radius: 10px;
+      padding: 15px 16px;
+    }
+
     /* Library blocks (Brain Atlas / Clock) */
     .lib-blocks { display: flex; flex-direction: column; gap: 8px; }
     .lib-block {
@@ -1820,6 +1843,15 @@ const QUESTION_BANK = {
     },
   },
 };
+
+// ─────────────────────────────────────────────────────────────
+// YEARS  — subject folders shown on the home screen.
+// To file a subject under a year, add its QUESTION_BANK key below.
+// ─────────────────────────────────────────────────────────────
+const YEARS = [
+  { name: '1st Year', subjects: ['Histology', 'Anatomy', 'Czech', 'Medical Informatics'] },
+  { name: '2nd Year', subjects: [] },
+];
 
 // ─────────────────────────────────────────────────────────────
 // EXAM BUILDER
@@ -4059,6 +4091,25 @@ function HomeScreen({ onSelectSubject, onBooksChange, onOpenBook, onSpecialMode 
     return window.Progress.subscribe(() => bump(n => n + 1));
   }, []);
 
+  /* Which year folder is open in the sidebar (remembered between visits) */
+  const [openYear, setOpenYear] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sb_open_year');
+      return YEARS.some(y => y.name === saved) ? saved : null;
+    } catch (e) { return null; }
+  });
+  function chooseYear(name) {
+    setOpenYear(name);
+    try {
+      if (name) localStorage.setItem('sb_open_year', name);
+      else localStorage.removeItem('sb_open_year');
+    } catch (e) {}
+  }
+  const yearSubjects = name => {
+    const y = YEARS.find(v => v.name === name);
+    return (y ? y.subjects : []).filter(n => QUESTION_BANK[n]);
+  };
+
   function masteredPct(subject, totalQuestions) {
     if (!totalQuestions || !window.Progress || !window.Progress.summary) return 0;
     try {
@@ -4075,29 +4126,68 @@ function HomeScreen({ onSelectSubject, onBooksChange, onOpenBook, onSpecialMode 
       <div className="home-sidebar">
         <div className="home-wordmark">Study Buddy</div>
 
-        <div className="sidebar-label">Subjects</div>
-        <div className="subject-list">
-          {Object.entries(QUESTION_BANK).map(([name, meta]) => {
-            const totalCount = meta.questions.length;
-            const pct = masteredPct(name, totalCount);
-            return (
-              <div
-                key={name}
-                className="sidebar-subject-card"
-                onClick={() => onSelectSubject(name)}
-              >
-                <div className="sidebar-subject-head">
-                  <div className="sidebar-subject-name">{name}</div>
-                  <div className="sidebar-subject-count">{totalCount} Qs</div>
+        {!openYear && (
+          <React.Fragment>
+            <div className="sidebar-label">Years</div>
+            <div className="subject-list">
+              {YEARS.map(y => {
+                const subs = yearSubjects(y.name);
+                return (
+                  <div
+                    key={y.name}
+                    className="sidebar-subject-card"
+                    onClick={() => chooseYear(y.name)}
+                  >
+                    <div className="sidebar-subject-head">
+                      <div className="sidebar-subject-name">{y.name}</div>
+                      <div className="sidebar-subject-count">
+                        {subs.length ? subs.length + (subs.length === 1 ? ' subject' : ' subjects') : 'Empty'}
+                      </div>
+                    </div>
+                    <div className="sidebar-subject-desc">
+                      {subs.length ? subs.join(' · ') : 'No subjects yet'}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </React.Fragment>
+        )}
+
+        {openYear && (
+          <React.Fragment>
+            <button className="year-back" onClick={() => chooseYear(null)}>← Years</button>
+            <div className="sidebar-label">{openYear}</div>
+            <div className="subject-list">
+              {yearSubjects(openYear).map(name => {
+                const meta = QUESTION_BANK[name];
+                const totalCount = meta.questions.length;
+                const pct = masteredPct(name, totalCount);
+                return (
+                  <div
+                    key={name}
+                    className="sidebar-subject-card"
+                    onClick={() => onSelectSubject(name)}
+                  >
+                    <div className="sidebar-subject-head">
+                      <div className="sidebar-subject-name">{name}</div>
+                      <div className="sidebar-subject-count">{totalCount} Qs</div>
+                    </div>
+                    <div className="sidebar-subject-desc">{meta.description}</div>
+                    <div className="sb-progress">
+                      {pct > 0 && <i style={{ width: pct + '%' }} />}
+                    </div>
+                  </div>
+                );
+              })}
+              {yearSubjects(openYear).length === 0 && (
+                <div className="year-empty">
+                  No subjects yet. Add them here as the year starts.
                 </div>
-                <div className="sidebar-subject-desc">{meta.description}</div>
-                <div className="sb-progress">
-                  {pct > 0 && <i style={{ width: pct + '%' }} />}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              )}
+            </div>
+          </React.Fragment>
+        )}
 
         <BookShelf onBooksChange={onBooksChange} onOpenBook={onOpenBook} />
 
