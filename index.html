@@ -218,6 +218,47 @@
       background: #3a3a36;
     }
 
+    .year-card {
+      padding: 19px 18px 17px;
+    }
+    .year-headline {
+      font-family: var(--sb-serif);
+      font-size: 31px;
+      font-weight: 400;
+      line-height: 1.08;
+      letter-spacing: .055em;
+      text-transform: uppercase;
+      color: var(--sb-ink);
+    }
+    .year-headline sup {
+      font-size: .42em;
+      letter-spacing: .1em;
+      vertical-align: super;
+      margin-left: 2px;
+    }
+    .year-rule {
+      height: 1px;
+      background: var(--sb-line-soft);
+      margin: 13px 0 11px;
+    }
+    .year-meta {
+      font-family: var(--sb-sans);
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--sb-ink-4);
+    }
+    .year-subs {
+      font-family: var(--sb-sans);
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--sb-ink-3);
+      margin-top: 5px;
+    }
+    .year-open-head {
+      margin-bottom: 15px;
+    }
     .year-back {
       align-self: flex-start;
       background: none;
@@ -1848,6 +1889,17 @@ const QUESTION_BANK = {
 // YEARS  — subject folders shown on the home screen.
 // To file a subject under a year, add its QUESTION_BANK key below.
 // ─────────────────────────────────────────────────────────────
+/* Renders '1st Year' as a headline with a raised ordinal suffix. */
+function YearHeadline({ name, className }) {
+  const m = /^(\d+)(st|nd|rd|th)\s+(.*)$/i.exec(name);
+  if (!m) return <div className={'year-headline ' + (className || '')}>{name}</div>;
+  return (
+    <div className={'year-headline ' + (className || '')}>
+      {m[1]}<sup>{m[2].toUpperCase()}</sup> {m[3]}
+    </div>
+  );
+}
+
 const YEARS = [
   { name: '1st Year', subjects: ['Histology', 'Anatomy', 'Czech', 'Medical Informatics'] },
   { name: '2nd Year', subjects: [] },
@@ -4135,18 +4187,17 @@ function HomeScreen({ onSelectSubject, onBooksChange, onOpenBook, onSpecialMode 
                 return (
                   <div
                     key={y.name}
-                    className="sidebar-subject-card"
+                    className="sidebar-subject-card year-card"
                     onClick={() => chooseYear(y.name)}
                   >
-                    <div className="sidebar-subject-head">
-                      <div className="sidebar-subject-name">{y.name}</div>
-                      <div className="sidebar-subject-count">
-                        {subs.length ? subs.length + (subs.length === 1 ? ' subject' : ' subjects') : 'Empty'}
-                      </div>
+                    <YearHeadline name={y.name} />
+                    <div className="year-rule" />
+                    <div className="year-meta">
+                      {subs.length ? subs.length + (subs.length === 1 ? ' Subject' : ' Subjects') : 'No Subjects Yet'}
                     </div>
-                    <div className="sidebar-subject-desc">
-                      {subs.length ? subs.join(' · ') : 'No subjects yet'}
-                    </div>
+                    {subs.length > 0 && (
+                      <div className="year-subs">{subs.join(' · ')}</div>
+                    )}
                   </div>
                 );
               })}
@@ -4157,7 +4208,7 @@ function HomeScreen({ onSelectSubject, onBooksChange, onOpenBook, onSpecialMode 
         {openYear && (
           <React.Fragment>
             <button className="year-back" onClick={() => chooseYear(null)}>← Years</button>
-            <div className="sidebar-label">{openYear}</div>
+            <YearHeadline name={openYear} className="year-open-head" />
             <div className="subject-list">
               {yearSubjects(openYear).map(name => {
                 const meta = QUESTION_BANK[name];
