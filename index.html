@@ -5576,6 +5576,562 @@ function getInnervationGroup(innervation) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// MUSCLE LAB — EXAM MODE
+// Spaced-repetition flashcards, one card per muscle + aspect.
+// UI logic lives here; muscle data stays in muscle-bank.js.
+// ─────────────────────────────────────────────────────────────
+const MUSCLE_EXAM_ASPECTS = [
+  { key: 'origin',      label: 'Origin' },
+  { key: 'insertion',   label: 'Insertion' },
+  { key: 'innervation', label: 'Innervation' },
+  { key: 'function',    label: 'Function' },
+];
+const MUSCLE_SRS_KEY = 'sb_muscle_srs_v1';
+const MUSCLE_GRADES = [
+  { key: 'again', label: 'Again', hotkey: '1' },
+  { key: 'hard',  label: 'Hard',  hotkey: '2' },
+  { key: 'good',  label: 'Good',  hotkey: '3' },
+  { key: 'easy',  label: 'Easy',  hotkey: '4' },
+];
+
+/* ---- pure logic (no React) ---------------------------------- */
+const MX_MIN = 60 * 1000;
+const MX_DAY = 24 * 60 * MX_MIN;
+
+const MuscleSRS = {
+  _mem: null,
+  load() {
+    if (this._mem) return this._mem;
+    let data = {};
+    try { data = JSON.parse(localStorage.getItem(MUSCLE_SRS_KEY) || '{}') || {}; } catch (e) { data = {}; }
+    this._mem = data;
+    return data;
+  },
+  save() {
+    try { localStorage.setItem(MUSCLE_SRS_KEY, JSON.stringify(this._mem || {})); } catch (e) {}
+  },
+  get(id, aspect) { return this.load()[id + '|' + aspect] || null; },
+  set(id, aspect, st) { this.load()[id + '|' + aspect] = st; this.save(); },
+  reset() { this._mem = {}; this.save(); },
+};
+
+/* Returns the new card state after a grade. Does not write anything. */
+function muscleSchedule(prev, grade, now) {
+  const s = prev ? { ...prev } : { ease: 2.5, interval: 0, reps: 0, lapses: 0, seen: 0 };
+  s.seen = (s.seen || 0) + 1;
+  s.last = grade;
+  if (grade === 'again') {
+    s.lapses = (s.lapses || 0) + 1;
+    s.reps = 0;
+    s.interval = 0;
+    s.ease = Math.max(1.3, s.ease - 0.2);
+    s.dueAt = now + 10 * MX_MIN;
+    return s;
+  }
+  let days;
+  if (s.reps === 0) {
+    days = grade === 'hard' ? 0.5 : grade === 'good' ? 1 : 4;
+  } else {
+    const base = Math.max(s.interval, 1);
+    days = grade === 'hard' ? base * 1.2 : grade === 'good' ? base * s.ease : base * s.ease * 1.3;
+  }
+  if (grade === 'hard') s.ease = Math.max(1.3, s.ease - 0.15);
+  if (grade === 'easy') s.ease = Math.min(3.0, s.ease + 0.15);
+  s.reps += 1;
+  s.interval = days;
+  s.dueAt = now + days * MX_DAY;
+  return s;
+}
+
+function muscleFmtDelta(ms) {
+  if (ms < 60 * MX_MIN) return Math.max(1, Math.round(ms / MX_MIN)) + 'm';
+  if (ms < MX_DAY) return Math.round(ms / (60 * MX_MIN)) + 'h';
+  const d = ms / MX_DAY;
+  if (d < 30) return Math.round(d) + 'd';
+  return (d / 30).toFixed(1).replace(/\.0$/, '') + 'mo';
+}
+
+/* Picks the next card. Order: relearn queue, then due / new, then soonest-due.
+   Random within the bucket, avoids the same muscle twice in a row, and
+   favours aspects that have been asked less often this session. */
+function muscleExamPick(pool, sess, now) {
+  const qi = sess.queue.findIndex(q => q.showAt <= sess.counter);
+  if (qi >= 0) return sess.queue.splice(qi, 1)[0].card;
+
+  const waiting = new Set(sess.queue.map(q => q.card.key));
+  const due = [], fresh = [], later = [];
+  pool.forEach(c => {
+    if (waiting.has(c.key)) return;
+    const st = MuscleSRS.get(c.mid, c.aspect);
+    if (!st) fresh.push(c);
+    else if (st.dueAt <= now) due.push(c);
+    else later.push({ c, dueAt: st.dueAt });
+  });
+
+  let bucket;
+  if (due.length && fresh.length) bucket = Math.random() < 0.65 ? due : fresh;
+  else if (due.length) bucket = due;
+  else if (fresh.length) bucket = fresh;
+  else if (later.length) {
+    later.sort((a, b) => a.dueAt - b.dueAt);
+    bucket = later.slice(0, Math.max(5, Math.ceil(later.length * 0.2))).map(x => x.c);
+  } else if (sess.queue.length) {
+    return sess.queue.splice(0, 1)[0].card;
+  } else return null;
+
+  let cands = bucket.filter(c => c.mid !== sess.lastMuscle);
+  if (!cands.length) cands = bucket;
+  const weights = cands.map(c =>
+    (1 / (1 + (sess.aspectCount[c.aspect] || 0))) * (c.aspect === sess.lastAspect ? 0.4 : 1));
+  const total = weights.reduce((a, b) => a + b, 0);
+  let roll = Math.random() * total;
+  for (let i = 0; i < cands.length; i++) {
+    roll -= weights[i];
+    if (roll <= 0) return cands[i];
+  }
+  return cands[cands.length - 1];
+}
+/* ---- end pure logic ----------------------------------------- */
+
+function MxCheck({ state, onClick, label, sub, strong }) {
+  return (
+    <div onClick={onClick} style={{
+      display: 'flex', alignItems: 'center', gap: 10, padding: '6px 4px',
+      cursor: 'pointer', userSelect: 'none',
+    }}>
+      <span style={{
+        width: 16, height: 16, flexShrink: 0, borderRadius: 4,
+        border: '1.5px solid var(--sb-ink)',
+        background: state === 'on' ? 'var(--sb-ink)' : 'transparent',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        {state === 'part' && <span style={{ width: 8, height: 2, background: 'var(--sb-ink)' }} />}
+        {state === 'on' && <span style={{
+          width: 8, height: 4, borderLeft: '2px solid var(--sb-cream)',
+          borderBottom: '2px solid var(--sb-cream)', transform: 'rotate(-45deg) translate(1px,-1px)',
+        }} />}
+      </span>
+      <span style={{ fontSize: strong ? 13 : 14, fontWeight: strong ? 700 : 400, color: 'var(--sb-ink)', flex: 1, lineHeight: 1.3 }}>{label}</span>
+      {sub != null && <span style={{ fontSize: 12, color: 'var(--sb-ink-3)' }}>{sub}</span>}
+    </div>
+  );
+}
+
+function MuscleExam({ bank, onBack, onExit }) {
+  const [phase, setPhase] = React.useState('setup');           // setup | run | summary
+  const [selGroups, setSelGroups] = React.useState(() => new Set());
+  const [selNerves, setSelNerves] = React.useState(() => new Set());
+  const [onlyMissed, setOnlyMissed] = React.useState(false);
+  const [aspectsOn, setAspectsOn] = React.useState(() => new Set(MUSCLE_EXAM_ASPECTS.map(a => a.key)));
+  const [openRegions, setOpenRegions] = React.useState(() => new Set());
+  const [rev, setRev] = React.useState(0);                     // bumps when progress changes
+  const [cur, setCur] = React.useState(null);
+  const [flipped, setFlipped] = React.useState(false);
+  const [tally, setTally] = React.useState({ again: 0, hard: 0, good: 0, easy: 0 });
+  const sessRef = React.useRef(null);
+  const poolRef = React.useRef([]);
+
+  const midOf = m => String(m.id != null ? m.id : m.name);
+  const gKey = (r, g) => r + '||' + g;
+
+  const byId = React.useMemo(() => {
+    const o = {};
+    bank.forEach(m => { o[midOf(m)] = m; });
+    return o;
+  }, [bank]);
+
+  const regions = React.useMemo(() => {
+    const map = {};
+    bank.forEach(m => {
+      if (!map[m.region]) map[m.region] = {};
+      if (!map[m.region][m.group]) map[m.region][m.group] = [];
+      map[m.region][m.group].push(m);
+    });
+    const sorted = {};
+    const known = MUSCLE_REGION_ORDER.filter(r => map[r]);
+    const rest = Object.keys(map).filter(r => !MUSCLE_REGION_ORDER.includes(r));
+    [...known, ...rest].forEach(r => { sorted[r] = map[r]; });
+    return sorted;
+  }, [bank]);
+
+  const nerves = React.useMemo(() => {
+    const map = {};
+    bank.forEach(m => {
+      const g = getInnervationGroup(m.innervation);
+      map[g] = (map[g] || 0) + 1;
+    });
+    return Object.keys(map).sort((a, b) => a.localeCompare(b)).map(k => [k, map[k]]);
+  }, [bank]);
+
+  /* Region/group ticks OR nerve ticks; nothing ticked means the whole bank */
+  const selectedMuscles = React.useMemo(() => {
+    if (!selGroups.size && !selNerves.size) return bank;
+    return bank.filter(m =>
+      selGroups.has(gKey(m.region, m.group)) || selNerves.has(getInnervationGroup(m.innervation)));
+  }, [bank, selGroups, selNerves]);
+
+  const buildPool = (missedOnly) => {
+    const out = [];
+    selectedMuscles.forEach(m => {
+      MUSCLE_EXAM_ASPECTS.forEach(a => {
+        if (!aspectsOn.has(a.key)) return;
+        const txt = m[a.key];
+        if (!txt || !String(txt).trim()) return;
+        if (missedOnly) {
+          const st = MuscleSRS.get(midOf(m), a.key);
+          if (!st || !(st.lapses > 0)) return;
+        }
+        out.push({ key: midOf(m) + '|' + a.key, mid: midOf(m), aspect: a.key });
+      });
+    });
+    return out;
+  };
+
+  const stats = React.useMemo(() => {
+    const pool = buildPool(false);
+    const now = Date.now();
+    let due = 0, fresh = 0, missed = 0;
+    pool.forEach(c => {
+      const st = MuscleSRS.get(c.mid, c.aspect);
+      if (!st) fresh++;
+      else {
+        if (st.dueAt <= now) due++;
+        if (st.lapses > 0) missed++;
+      }
+    });
+    return { total: pool.length, due, fresh, missed };
+  }, [selectedMuscles, aspectsOn, rev]);
+
+  const startable = onlyMissed ? stats.missed : stats.total;
+
+  /* ---- session control ---- */
+  const showNext = () => {
+    const sess = sessRef.current;
+    const card = muscleExamPick(poolRef.current, sess, Date.now());
+    setFlipped(false);
+    if (card) {
+      sess.aspectCount[card.aspect] = (sess.aspectCount[card.aspect] || 0) + 1;
+      sess.lastMuscle = card.mid;
+      sess.lastAspect = card.aspect;
+    }
+    setCur(card);
+  };
+
+  const startSession = () => {
+    poolRef.current = buildPool(onlyMissed);
+    sessRef.current = { counter: 0, queue: [], aspectCount: {}, lastMuscle: null, lastAspect: null, log: [] };
+    setTally({ again: 0, hard: 0, good: 0, easy: 0 });
+    setPhase('run');
+    showNext();
+  };
+
+  const grade = (g) => {
+    if (!cur || !flipped) return;
+    const sess = sessRef.current;
+    const now = Date.now();
+    MuscleSRS.set(cur.mid, cur.aspect, muscleSchedule(MuscleSRS.get(cur.mid, cur.aspect), g, now));
+    sess.log.push({ key: cur.key, mid: cur.mid, aspect: cur.aspect, grade: g });
+    sess.counter += 1;
+    if (g === 'again') sess.queue.push({ card: cur, showAt: sess.counter + 4 });
+    setTally(t => ({ ...t, [g]: t[g] + 1 }));
+    setRev(r => r + 1);
+    showNext();
+  };
+
+  /* Keyboard: Space / Enter flips, 1-4 grades */
+  React.useEffect(() => {
+    if (phase !== 'run') return;
+    const onKey = (e) => {
+      if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+      if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (cur) setFlipped(f => !f); return; }
+      const hit = MUSCLE_GRADES.find(x => x.hotkey === e.key);
+      if (hit) grade(hit.key);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [phase, cur, flipped]);
+
+  /* ---- selection helpers ---- */
+  const toggleIn = (setter, key) => setter(prev => {
+    const next = new Set(prev);
+    if (next.has(key)) next.delete(key); else next.add(key);
+    return next;
+  });
+  const regionState = (r) => {
+    const keys = Object.keys(regions[r]).map(g => gKey(r, g));
+    const n = keys.filter(k => selGroups.has(k)).length;
+    return n === 0 ? 'off' : n === keys.length ? 'on' : 'part';
+  };
+  const toggleRegion = (r) => {
+    const keys = Object.keys(regions[r]).map(g => gKey(r, g));
+    const all = keys.every(k => selGroups.has(k));
+    setSelGroups(prev => {
+      const next = new Set(prev);
+      keys.forEach(k => { if (all) next.delete(k); else next.add(k); });
+      return next;
+    });
+  };
+
+  /* ---- shared styles ---- */
+  const LABEL = { fontSize: 11, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--sb-ink-3)' };
+  const PANEL = { background: 'var(--sb-card)', border: '1px solid var(--sb-line)', borderRadius: 13, padding: '16px 18px' };
+  const shell = {
+    minHeight: '100vh', background: 'var(--sb-panel)', color: 'var(--sb-ink)',
+    fontFamily: 'var(--sb-sans)', boxSizing: 'border-box',
+    padding: '30px 60px 48px 24px',
+  };
+  const wrap = { maxWidth: 860, margin: '0 auto' };
+  const darkBtn = (disabled) => ({
+    background: 'var(--sb-ink)', color: 'var(--sb-cream)', border: 'none', borderRadius: 10,
+    padding: '12px 24px', fontSize: 14, fontWeight: 700, cursor: disabled ? 'default' : 'pointer',
+    opacity: disabled ? 0.35 : 1, fontFamily: 'inherit',
+  });
+
+  /* ================= SETUP ================= */
+  if (phase === 'setup') {
+    return (
+      <div style={shell}>
+        <div style={wrap}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 22 }}>
+            <button className="topbar-back" onClick={onExit}>← Muscle Lab</button>
+            <button className="topbar-back" onClick={onBack}>← Anatomy</button>
+          </div>
+          <h1 style={{ fontFamily: 'var(--sb-serif)', fontWeight: 400, fontSize: 34, margin: '0 0 6px' }}>Muscle exam</h1>
+          <p style={{ color: 'var(--sb-ink-2)', fontSize: 14, margin: '0 0 22px', lineHeight: 1.5 }}>
+            Each card asks one aspect of one muscle. Tick regions, groups or nerves to narrow the pool; a muscle
+            counts if it matches any tick. Leave everything unticked to use the whole bank.
+          </p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 14 }}>
+            <div style={PANEL}>
+              <div style={{ ...LABEL, marginBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
+                <span>Regions and groups</span>
+                {selGroups.size > 0 && <span onClick={() => setSelGroups(new Set())} style={{ cursor: 'pointer', textDecoration: 'underline' }}>Clear</span>}
+              </div>
+              <div style={{ maxHeight: 420, overflowY: 'auto' }}>
+                {Object.keys(regions).map(r => {
+                  const open = openRegions.has(r);
+                  const count = Object.values(regions[r]).reduce((n, arr) => n + arr.length, 0);
+                  return (
+                    <div key={r} style={{ borderBottom: '1px solid var(--sb-line-soft)', paddingBottom: 2, marginBottom: 2 }}>
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <div style={{ flex: 1 }}>
+                          <MxCheck strong state={regionState(r)} label={r} sub={count} onClick={() => toggleRegion(r)} />
+                        </div>
+                        <span onClick={() => toggleIn(setOpenRegions, r)} style={{
+                          cursor: 'pointer', fontSize: 16, color: 'var(--sb-ink-3)', padding: '0 8px', userSelect: 'none',
+                        }}>{open ? '−' : '+'}</span>
+                      </div>
+                      {open && Object.keys(regions[r]).map(g => (
+                        <div key={g} style={{ paddingLeft: 26 }}>
+                          <MxCheck state={selGroups.has(gKey(r, g)) ? 'on' : 'off'} label={g}
+                            sub={regions[r][g].length} onClick={() => toggleIn(setSelGroups, gKey(r, g))} />
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div style={PANEL}>
+              <div style={{ ...LABEL, marginBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
+                <span>Innervating nerve</span>
+                {selNerves.size > 0 && <span onClick={() => setSelNerves(new Set())} style={{ cursor: 'pointer', textDecoration: 'underline' }}>Clear</span>}
+              </div>
+              <div style={{ maxHeight: 420, overflowY: 'auto' }}>
+                {nerves.map(([n, c]) => (
+                  <MxCheck key={n} state={selNerves.has(n) ? 'on' : 'off'} label={n} sub={c}
+                    onClick={() => toggleIn(setSelNerves, n)} />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ ...PANEL, marginTop: 14 }}>
+            <div style={{ ...LABEL, marginBottom: 10 }}>Ask about</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
+              {MUSCLE_EXAM_ASPECTS.map(a => {
+                const on = aspectsOn.has(a.key);
+                return (
+                  <span key={a.key} onClick={() => {
+                    if (on && aspectsOn.size === 1) return;
+                    toggleIn(setAspectsOn, a.key);
+                  }} style={{
+                    cursor: 'pointer', userSelect: 'none', fontSize: 13, fontWeight: 600,
+                    padding: '7px 14px', borderRadius: 999,
+                    border: '1px solid ' + (on ? 'var(--sb-ink)' : 'var(--sb-line)'),
+                    background: on ? 'var(--sb-ink)' : 'transparent',
+                    color: on ? 'var(--sb-cream)' : 'var(--sb-ink-2)',
+                  }}>{a.label}</span>
+                );
+              })}
+            </div>
+            <MxCheck state={onlyMissed ? 'on' : 'off'} label="Only cards I have missed before"
+              onClick={() => setOnlyMissed(v => !v)} />
+          </div>
+
+          <div style={{ ...PANEL, marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+            <div style={{ fontSize: 14, lineHeight: 1.6 }}>
+              <div><strong>{selectedMuscles.length}</strong> muscles selected, <strong>{stats.total}</strong> cards</div>
+              <div style={{ color: 'var(--sb-ink-2)', fontSize: 13 }}>
+                {stats.due} due · {stats.fresh} new · {stats.missed} missed before
+              </div>
+            </div>
+            <button style={darkBtn(startable === 0)} disabled={startable === 0} onClick={startSession}>
+              {startable === 0 && onlyMissed ? 'No missed cards here' : 'Start session'}
+            </button>
+          </div>
+
+          <div style={{ marginTop: 18, textAlign: 'right' }}>
+            <span onClick={() => {
+              if (window.confirm('Reset all Muscle Lab exam progress on this device?')) { MuscleSRS.reset(); setRev(r => r + 1); }
+            }} style={{ fontSize: 12, color: 'var(--sb-ink-3)', cursor: 'pointer', textDecoration: 'underline' }}>
+              Reset exam progress
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ================= SUMMARY ================= */
+  if (phase === 'summary') {
+    const log = sessRef.current ? sessRef.current.log : [];
+    const total = log.length;
+    const perAspect = MUSCLE_EXAM_ASPECTS.map(a => {
+      const rows = log.filter(l => l.aspect === a.key);
+      const good = rows.filter(l => l.grade === 'good' || l.grade === 'easy').length;
+      return { label: a.label, n: rows.length, pct: rows.length ? Math.round(100 * good / rows.length) : null };
+    });
+    const lastByKey = {};
+    log.forEach(l => { lastByKey[l.key] = l; });
+    const revisit = Object.values(lastByKey).filter(l => l.grade === 'again' || l.grade === 'hard');
+    return (
+      <div style={shell}>
+        <div style={wrap}>
+          <div style={{ display: 'flex', gap: 12, marginBottom: 22 }}>
+            <button className="topbar-back" onClick={() => { setRev(r => r + 1); setPhase('setup'); }}>← Setup</button>
+            <button className="topbar-back" onClick={onExit}>← Muscle Lab</button>
+          </div>
+          <h1 style={{ fontFamily: 'var(--sb-serif)', fontWeight: 400, fontSize: 34, margin: '0 0 18px' }}>Session summary</h1>
+          <div style={{ ...PANEL, display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 14 }}>
+            <div><div style={LABEL}>Cards</div><div style={{ fontSize: 26, fontFamily: 'var(--sb-serif)' }}>{total}</div></div>
+            {MUSCLE_GRADES.map(g => (
+              <div key={g.key}><div style={LABEL}>{g.label}</div><div style={{ fontSize: 26, fontFamily: 'var(--sb-serif)' }}>{tally[g.key]}</div></div>
+            ))}
+          </div>
+          <div style={{ ...PANEL, marginBottom: 14 }}>
+            <div style={{ ...LABEL, marginBottom: 10 }}>By aspect (Good or Easy)</div>
+            {perAspect.map(p => (
+              <div key={p.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '5px 0', fontSize: 14 }}>
+                <span style={{ width: 100 }}>{p.label}</span>
+                <div style={{ flex: 1, height: 6, background: 'var(--sb-line-soft)', borderRadius: 3, overflow: 'hidden' }}>
+                  <div style={{ width: (p.pct || 0) + '%', height: '100%', background: 'var(--sb-ink)' }} />
+                </div>
+                <span style={{ width: 90, textAlign: 'right', color: 'var(--sb-ink-2)', fontSize: 13 }}>
+                  {p.n ? p.pct + '% of ' + p.n : 'not asked'}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div style={{ ...PANEL, marginBottom: 18 }}>
+            <div style={{ ...LABEL, marginBottom: 10 }}>To revisit ({revisit.length})</div>
+            {revisit.length === 0 && <div style={{ fontSize: 14, color: 'var(--sb-ink-2)' }}>Nothing ended on Again or Hard.</div>}
+            {revisit.map(l => (
+              <div key={l.key} style={{ fontSize: 14, padding: '4px 0', display: 'flex', gap: 10 }}>
+                <span style={{ flex: 1 }}>{byId[l.mid] ? byId[l.mid].name : l.mid}</span>
+                <span style={{ color: 'var(--sb-ink-3)' }}>{MUSCLE_EXAM_ASPECTS.find(a => a.key === l.aspect).label}</span>
+              </div>
+            ))}
+          </div>
+          <button style={darkBtn(false)} onClick={startSession}>Start another session with this selection</button>
+        </div>
+      </div>
+    );
+  }
+
+  /* ================= RUN ================= */
+  const muscle = cur ? byId[cur.mid] : null;
+  const aspectLabel = cur ? MUSCLE_EXAM_ASPECTS.find(a => a.key === cur.aspect).label : '';
+  const prevState = cur ? MuscleSRS.get(cur.mid, cur.aspect) : null;
+  const nowTs = Date.now();
+  const face = {
+    gridArea: '1 / 1', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden',
+    borderRadius: 16, border: '1px solid var(--sb-line)', boxSizing: 'border-box',
+    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+    padding: '36px 28px', textAlign: 'center', minHeight: 300,
+  };
+  return (
+    <div style={shell}>
+      <div style={wrap}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 22, flexWrap: 'wrap' }}>
+          <button className="topbar-back" onClick={() => setPhase('summary')}>Stop session</button>
+          <div style={{ fontSize: 13, color: 'var(--sb-ink-2)' }}>
+            Seen {tally.again + tally.hard + tally.good + tally.easy}
+            {' · '}Again {tally.again}{' · '}Hard {tally.hard}{' · '}Good {tally.good}{' · '}Easy {tally.easy}
+          </div>
+        </div>
+
+        {!muscle && (
+          <div style={{ ...PANEL, textAlign: 'center', padding: 40 }}>
+            <p style={{ margin: '0 0 16px', color: 'var(--sb-ink-2)' }}>No cards available for this selection.</p>
+            <button style={darkBtn(false)} onClick={() => setPhase('summary')}>Finish</button>
+          </div>
+        )}
+
+        {muscle && (
+          <>
+            <div onClick={() => setFlipped(f => !f)} style={{ perspective: 1200, cursor: 'pointer', userSelect: 'none' }}>
+              <div style={{
+                display: 'grid', transformStyle: 'preserve-3d',
+                transition: 'transform .5s cubic-bezier(.4,.2,.2,1)',
+                transform: flipped ? 'rotateY(180deg)' : 'none',
+              }}>
+                <div style={{ ...face, background: 'var(--sb-card)' }}>
+                  <div style={{ ...LABEL, marginBottom: 14 }}>{aspectLabel} of</div>
+                  <div style={{ fontFamily: 'var(--sb-serif)', fontSize: 34, lineHeight: 1.2 }}>{muscle.name}</div>
+                  <div style={{ marginTop: 16, fontSize: 12, color: 'var(--sb-ink-3)' }}>{muscle.region} · {muscle.group}</div>
+                </div>
+                <div style={{ ...face, background: 'var(--sb-cream)', transform: 'rotateY(180deg)' }}>
+                  <div style={{ ...LABEL, marginBottom: 6 }}>{aspectLabel}</div>
+                  <div style={{ fontSize: 12, color: 'var(--sb-ink-3)', marginBottom: 16 }}>{muscle.name}</div>
+                  <div style={{ fontSize: 17, lineHeight: 1.55, maxWidth: 620 }}>{muscle[cur.aspect]}</div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ height: 22, marginTop: 14, textAlign: 'center', fontSize: 12, color: 'var(--sb-ink-3)' }}>
+              {!flipped && 'Tap the card or press Space to reveal'}
+            </div>
+
+            <div style={{
+              display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginTop: 6,
+              opacity: flipped ? 1 : 0.25, pointerEvents: flipped ? 'auto' : 'none', transition: 'opacity .2s',
+            }}>
+              {MUSCLE_GRADES.map(g => {
+                const nxt = muscleSchedule(prevState, g.key, nowTs);
+                return (
+                  <button key={g.key} onClick={() => grade(g.key)} style={{
+                    background: 'var(--sb-card)', border: '1px solid var(--sb-line)', borderRadius: 12,
+                    padding: '12px 6px', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--sb-ink)',
+                  }}>
+                    <div style={{ fontSize: 15, fontWeight: 700 }}>{g.label}</div>
+                    <div style={{ fontSize: 12, color: 'var(--sb-ink-3)', marginTop: 3 }}>
+                      {muscleFmtDelta(nxt.dueAt - nowTs)} · key {g.hotkey}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 // MUSCLE LAB
 // ─────────────────────────────────────────────────────────────
 function MuscleLab({ onBack }) {
@@ -5584,6 +6140,7 @@ function MuscleLab({ onBack }) {
   const [idx, setIdx] = React.useState(null);
   const [imageFlipped, setImageFlipped] = React.useState(false);
   const [byInnervation, setByInnervation] = React.useState(false);
+  const [examMode, setExamMode] = React.useState(false);
   const muscle = idx !== null ? bank[idx] : null;
 
   /* Reset to hide image whenever the selected muscle changes */
@@ -5627,6 +6184,8 @@ function MuscleLab({ onBack }) {
     if (muscle) setOpenRegions(prev => new Set([...prev, muscle.region]));
   }, [muscle?.region]);
 
+  if (examMode) return <MuscleExam bank={bank} onBack={onBack} onExit={() => setExamMode(false)} />;
+
   if (!muscle) {
     return (
       <div style={{ display: 'flex', minHeight: '100vh', background: '#fff' }}>
@@ -5639,6 +6198,11 @@ function MuscleLab({ onBack }) {
           display: 'flex', flexDirection: 'column',
         }}>
           <button className="topbar-back" onClick={onBack} style={{ margin: '0 16px 14px', display: 'block' }}>← Anatomy</button>
+          <button onClick={() => setExamMode(true)} style={{
+          margin: '0 16px 12px', display: 'block', width: 'calc(100% - 32px)', padding: '9px 12px',
+          background: 'var(--sb-ink)', color: 'var(--sb-cream)', border: 'none', borderRadius: 10,
+          fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer',
+        }}>Exam mode</button>
           {Object.entries(regions).map(([regionName, groups]) => {
             const isOpen = openRegions.has(regionName);
             const toggleRegion = () => setOpenRegions(prev => {
@@ -5698,6 +6262,11 @@ function MuscleLab({ onBack }) {
           onClick={onBack}
           style={{ margin: '0 16px 14px', display: 'block' }}
         >← Anatomy</button>
+        <button onClick={() => setExamMode(true)} style={{
+          margin: '0 16px 12px', display: 'block', width: 'calc(100% - 32px)', padding: '9px 12px',
+          background: 'var(--sb-ink)', color: 'var(--sb-cream)', border: 'none', borderRadius: 10,
+          fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer',
+        }}>Exam mode</button>
 
         {/* Innervation toggle */}
         <div style={{
