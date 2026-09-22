@@ -5,7 +5,7 @@
    - Cache-first strategy for all GET requests
    ============================================================ */
 
-const CACHE_NAME = 'study-buddy-v121';
+const CACHE_NAME = 'study-buddy-v122';
 
 /* All local files to pre-cache on install.
    IMPORTANT: this list must contain every <script src> in index.html. Seven
@@ -262,8 +262,24 @@ const LOCAL_ASSETS = [
   '/images/muscles/extraocular-muscles.jpg',
   /* Middle ear muscles */
   '/images/muscles/middle-ear-muscles.jpg',
-  /* Atlas Recall — Rohen Color Atlas, Upper & Lower Limb (135 plates) */
+  /* Atlas Recall — Rohen Color Atlas, Trunk, Upper & Lower Limb (183 plates) */
   '/atlas-recall/app_data.json',
+  '/atlas-recall/composites/p187_comp.jpg','/atlas-recall/composites/p188_comp.jpg','/atlas-recall/composites/p189_comp.jpg',
+  '/atlas-recall/composites/p190_comp.jpg','/atlas-recall/composites/p191_comp.jpg','/atlas-recall/composites/p192_comp.jpg',
+  '/atlas-recall/composites/p193_comp.jpg','/atlas-recall/composites/p194_comp.jpg','/atlas-recall/composites/p195_comp.jpg',
+  '/atlas-recall/composites/p196_comp.jpg','/atlas-recall/composites/p197_comp.jpg','/atlas-recall/composites/p198_comp.jpg',
+  '/atlas-recall/composites/p199_comp.jpg','/atlas-recall/composites/p200_comp.jpg','/atlas-recall/composites/p201_comp.jpg',
+  '/atlas-recall/composites/p202_comp.jpg','/atlas-recall/composites/p203_comp.jpg','/atlas-recall/composites/p204_comp.jpg',
+  '/atlas-recall/composites/p205_comp.jpg','/atlas-recall/composites/p206_comp.jpg','/atlas-recall/composites/p207_comp.jpg',
+  '/atlas-recall/composites/p208_comp.jpg','/atlas-recall/composites/p209_comp.jpg','/atlas-recall/composites/p210_comp.jpg',
+  '/atlas-recall/composites/p211_comp.jpg','/atlas-recall/composites/p212_comp.jpg','/atlas-recall/composites/p213_comp.jpg',
+  '/atlas-recall/composites/p214_comp.jpg','/atlas-recall/composites/p215_comp.jpg','/atlas-recall/composites/p216_comp.jpg',
+  '/atlas-recall/composites/p217_comp.jpg','/atlas-recall/composites/p218_comp.jpg','/atlas-recall/composites/p219_comp.jpg',
+  '/atlas-recall/composites/p220_comp.jpg','/atlas-recall/composites/p221_comp.jpg','/atlas-recall/composites/p222_comp.jpg',
+  '/atlas-recall/composites/p223_comp.jpg','/atlas-recall/composites/p224_comp.jpg','/atlas-recall/composites/p225_comp.jpg',
+  '/atlas-recall/composites/p226_comp.jpg','/atlas-recall/composites/p227_comp.jpg','/atlas-recall/composites/p228_comp.jpg',
+  '/atlas-recall/composites/p229_comp.jpg','/atlas-recall/composites/p230_comp.jpg','/atlas-recall/composites/p231_comp.jpg',
+  '/atlas-recall/composites/p232_comp.jpg','/atlas-recall/composites/p233_comp.jpg','/atlas-recall/composites/p234_comp.jpg',
   '/atlas-recall/composites/p368_comp.jpg','/atlas-recall/composites/p369_comp.jpg','/atlas-recall/composites/p370_comp.jpg',
   '/atlas-recall/composites/p371_comp.jpg','/atlas-recall/composites/p372_comp.jpg','/atlas-recall/composites/p373_comp.jpg',
   '/atlas-recall/composites/p374_comp.jpg','/atlas-recall/composites/p375_comp.jpg','/atlas-recall/composites/p376_comp.jpg',

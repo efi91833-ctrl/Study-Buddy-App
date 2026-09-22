@@ -77,7 +77,7 @@ function flush(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
   check(root.querySelector('.ar-shell') != null, 'AtlasRecall shell rendered');
   check(root.querySelector('.ar-find-num') != null, 'quiz prompt rendered after data load');
-  check(root.querySelectorAll('.ar-chip').length === 3, 'scope chips rendered (All/Upper/Lower)');
+  check(root.querySelectorAll('.ar-chip').length === 4, 'scope chips rendered (All/Trunk/Upper/Lower)');
 
   const revealBtn = [...root.querySelectorAll('button')].find(b => b.textContent === 'Reveal answer');
   check(!!revealBtn, 'reveal button present');

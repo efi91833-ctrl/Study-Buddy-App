@@ -3018,7 +3018,7 @@ const SUBJECT_PAGES = {
         { type: 'brain_mri_quiz',   name: 'Brain MRI Quiz',
           meta: (window.BRAIN_MRI_QUIZ_DATA || []).length + ' scans · identify structures from arrows, type-in answers' },
         { type: 'atlas_recall',     name: 'Atlas Recall',
-          meta: 'Rohen Atlas · 135 plates, upper & lower limb · recall numbered structures' },
+          meta: 'Rohen Atlas · 183 plates, trunk, upper & lower limb · recall numbered structures' },
       ];
     },
     counter: () => (window.MUSCLE_BANK || []).length + ' muscles',
@@ -10650,7 +10650,7 @@ const PAGE_INSTRUCTIONS = {
   atlas_recall: {
     title: 'Atlas Recall',
     steps: [
-      'Choose All, Upper Limb, or Lower Limb, or jump straight to a page.',
+      'Choose All, Trunk, Upper Limb, or Lower Limb, or jump straight to a page.',
       'A number on the plate is circled — recall the structure before revealing the answer.',
       'Tap "Reveal answer" to check yourself, then "Next" to continue.',
       'Use "Show again later" to defer a plate you want another pass at this session.',
@@ -12366,11 +12366,12 @@ function AtlasRecall({ onBack }) {
   }, []);
 
   const bySec = React.useMemo(() => ({
+    'Trunk':      data.filter(p => p.sec === 'Trunk'),
     'Upper Limb': data.filter(p => p.sec === 'Upper Limb'),
     'Lower Limb': data.filter(p => p.sec === 'Lower Limb'),
   }), [data]);
 
-  const [scope, setScope]         = useState('All'); // 'All' | 'Upper Limb' | 'Lower Limb' | book page number
+  const [scope, setScope]         = useState('All'); // 'All' | 'Trunk' | 'Upper Limb' | 'Lower Limb' | book page number
   const [shuffleOn, setShuffleOn] = useState(true);
   const [queue, setQueue]         = useState([]);
   const [qi, setQi]               = useState(0);
@@ -12380,7 +12381,7 @@ function AtlasRecall({ onBack }) {
 
   function scopedPages() {
     if (scope === 'All') return data;
-    if (scope === 'Upper Limb' || scope === 'Lower Limb') return bySec[scope];
+    if (scope === 'Trunk' || scope === 'Upper Limb' || scope === 'Lower Limb') return bySec[scope];
     return data.filter(p => p.p === scope);
   }
 
@@ -12444,10 +12445,10 @@ function AtlasRecall({ onBack }) {
       <div className="ar-topbar">
         <div className="ar-heading">
           <button className="ar-back" type="button" onClick={onBack}>Back to Study Buddy</button>
-          <div className="ar-wordmark">Atlas Recall<small>Rohen — Upper and Lower Limb</small></div>
+          <div className="ar-wordmark">Atlas Recall<small>Rohen — Trunk, Upper &amp; Lower Limb</small></div>
         </div>
         <div className="ar-scope-picker">
-          {['All', 'Upper Limb', 'Lower Limb'].map(opt => (
+          {['All', 'Trunk', 'Upper Limb', 'Lower Limb'].map(opt => (
             <div
               key={opt}
               className={'ar-chip' + (opt === scope ? ' active' : '')}
@@ -12467,7 +12468,7 @@ function AtlasRecall({ onBack }) {
             onChange={e => { if (e.target.value) setScope(parseInt(e.target.value, 10)); }}
           >
             <option value="">Jump to a page...</option>
-            {['Upper Limb', 'Lower Limb'].map(sec => (
+            {['Trunk', 'Upper Limb', 'Lower Limb'].map(sec => (
               bySec[sec] && bySec[sec].length ? (
                 <optgroup key={sec} label={sec}>
                   {bySec[sec].map(p => (
