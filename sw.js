@@ -5,7 +5,7 @@
    - Cache-first strategy for all GET requests
    ============================================================ */
 
-const CACHE_NAME = 'study-buddy-v124';
+const CACHE_NAME = 'study-buddy-v133';
 
 /* All local files to pre-cache on install.
    IMPORTANT: this list must contain every <script src> in index.html. Seven
