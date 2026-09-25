@@ -110,6 +110,55 @@ function flush(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
     check(root.querySelector('.ar-shell') != null, 'still rendered after Show again later');
   }
 
+  // ── category bar ──
+  const upperChip = [...root.querySelectorAll('.ar-chip')].find(c => c.textContent === 'Upper Limb');
+  upperChip.dispatchEvent(new w.Event('click', { bubbles: true }));
+  await flush(20);
+  const catEls = () => [...root.querySelectorAll('.ar-cat')];
+  check(catEls().length >= 6, 'category bar rendered under region chips (' + catEls().length + ')');
+  const musclesCat = catEls().find(c => c.textContent.startsWith('Muscles'));
+  check(!!musclesCat, 'Muscles category present');
+  musclesCat.dispatchEvent(new w.Event('click', { bubbles: true }));
+  await flush(20);
+  const crumbText = () => (root.querySelector('.ar-crumb') || {}).textContent || '';
+  check(/Upper Limb/.test(crumbText()) && /Muscles/.test(crumbText()), 'Muscles filter shows an Upper Limb muscle plate (' + crumbText() + ')');
+  const optCount = root.querySelectorAll('.ar-jump option').length - 1;
+  check(optCount === 14, 'page menu narrowed to 14 Upper Limb muscle plates (got ' + optCount + ')');
+
+  // ── page focus + shuffle ──
+  const before = crumbText();
+  const focusBtn = [...root.querySelectorAll('button')].find(b => b.textContent === 'Focus this page');
+  check(!!focusBtn, 'Focus this page button present');
+  focusBtn.dispatchEvent(new w.Event('click', { bubbles: true }));
+  await flush(20);
+  check(root.querySelector('.ar-focusbar') != null, 'focus bar shown in page focus');
+  const pageNum = (before.match(/p\. (\d+)/) || [])[1];
+  let samePage = true;
+  for (let k = 0; k < 12; k++) {
+    if (!new RegExp('p\\. ' + pageNum + '\\b').test(crumbText())) samePage = false;
+    const nb = [...root.querySelectorAll('button')].find(b => b.textContent === 'Reveal answer');
+    nb.dispatchEvent(new w.Event('click', { bubbles: true })); await flush(5);
+    const nx = [...root.querySelectorAll('button')].find(b => b.textContent === 'Next');
+    nx.dispatchEvent(new w.Event('click', { bubbles: true })); await flush(5);
+  }
+  check(samePage, 'page focus stays on p. ' + pageNum + ' across 12 cards');
+  const inOrder = [...root.querySelectorAll('.ar-seg-btn')].find(b => b.textContent === 'In order');
+  inOrder.dispatchEvent(new w.Event('click', { bubbles: true }));
+  await flush(20);
+  check(/No\. 1$/.test(root.querySelector('.ar-find-num').textContent), 'In order starts at No. 1 (' + root.querySelector('.ar-find-num').textContent + ')');
+  const mixed = [...root.querySelectorAll('.ar-seg-btn')].find(b => b.textContent === 'Mixed');
+  mixed.dispatchEvent(new w.Event('click', { bubbles: true }));
+  await flush(20);
+  const reshuffle = [...root.querySelectorAll('button')].find(b => b.textContent === 'Reshuffle');
+  check(!!reshuffle, 'Reshuffle button present in Mixed mode');
+  reshuffle.dispatchEvent(new w.Event('click', { bubbles: true }));
+  await flush(20);
+  const exitBtn = [...root.querySelectorAll('button')].find(b => b.textContent === 'Exit page focus');
+  exitBtn.dispatchEvent(new w.Event('click', { bubbles: true }));
+  await flush(20);
+  check(root.querySelector('.ar-focusbar') == null, 'focus bar gone after exit');
+  check(crumbText() === before, 'exit returns to the same card as before focus');
+
   const backBtn = root.querySelector('.ar-back');
   backBtn.dispatchEvent(new w.Event('click', { bubbles: true }));
   await flush(20);

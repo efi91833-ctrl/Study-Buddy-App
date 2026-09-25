@@ -1413,7 +1413,8 @@
     .ar-body { max-width: 640px; margin: 0 auto; padding: 24px; }
     .ar-jumprow { display: flex; gap: 8px; margin-bottom: 18px; }
     .ar-jump {
-      flex: 1; font-family: var(--sb-sans); font-size: 13px; color: var(--sb-ink);
+      flex: 1; min-width: 0; width: 100%; text-overflow: ellipsis;
+      font-family: var(--sb-sans); font-size: 13px; color: var(--sb-ink);
       background: var(--sb-card); border: 1px solid var(--sb-line); border-radius: 9px;
       padding: 9px 10px; cursor: pointer;
     }
@@ -1465,6 +1466,47 @@
     .ar-foot-left b { color: var(--sb-ink-2); }
     .ar-toggle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--sb-ink-2); cursor: pointer; user-select: none; }
     .ar-toggle input { accent-color: var(--sb-good); }
+    .ar-card-top-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .ar-catbar { background: var(--sb-cream); border-bottom: 1px solid var(--sb-line-soft); }
+    .ar-catbar-inner {
+      max-width: 640px; margin: 0 auto; padding: 10px 24px;
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    }
+    .ar-catbar-label {
+      font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--sb-ink-3); margin-right: 4px;
+    }
+    .ar-cat {
+      font-family: var(--sb-sans); font-size: 12px; padding: 4px 10px; border-radius: 100px;
+      border: 1px solid var(--sb-line-soft); background: transparent; color: var(--sb-ink-2);
+      cursor: pointer; user-select: none; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .ar-cat.active { background: var(--sb-card); border-color: var(--sb-ink-2); color: var(--sb-ink); }
+    .ar-cat-count { font-size: 10.5px; color: var(--sb-ink-4); }
+    .ar-cat.active .ar-cat-count { color: var(--sb-ink-3); }
+    .ar-focusbar {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+      background: var(--sb-cream); border: 1px solid var(--sb-line); border-radius: 11px;
+      padding: 10px 12px; margin-bottom: 14px;
+    }
+    .ar-focus-text { font-size: 12.5px; color: var(--sb-ink-2); line-height: 1.5; }
+    .ar-focus-label {
+      font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--sb-ink-3); margin-right: 8px;
+    }
+    .ar-focus-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .ar-seg { display: inline-flex; border: 1px solid var(--sb-line); border-radius: 8px; overflow: hidden; }
+    .ar-seg-btn {
+      font-family: var(--sb-sans); font-size: 12px; padding: 5px 10px; border: none;
+      background: var(--sb-card); color: var(--sb-ink-2); cursor: pointer;
+    }
+    .ar-seg-btn + .ar-seg-btn { border-left: 1px solid var(--sb-line); }
+    .ar-seg-btn.active { background: var(--sb-ink); color: var(--sb-cream); }
+    .ar-mini {
+      font-family: var(--sb-sans); font-size: 12px; padding: 5px 10px; border-radius: 8px;
+      border: 1px solid var(--sb-line); background: var(--sb-card); color: var(--sb-ink-2);
+      cursor: pointer; white-space: nowrap;
+    }
   </style>
 </head>
 <body>
@@ -10650,7 +10692,8 @@ const PAGE_INSTRUCTIONS = {
   atlas_recall: {
     title: 'Atlas Recall',
     steps: [
-      'Choose All, Trunk, Upper Limb, or Lower Limb, or jump straight to a page.',
+      'Choose All, Trunk, Upper Limb, or Lower Limb, then use the bar below it to focus on Skeleton, Joints & Ligaments, Muscles, Vessels, Nerves, or Regions (pick several to combine).',
+      'Tap "Focus this page" on any plate, or pick one from the page menu, to drill just that page. Mixed shuffles its numbers, In order goes 1, 2, 3; Exit page focus returns you to where you were.',
       'A number on the plate is circled — recall the structure before revealing the answer.',
       'Tap "Reveal answer" to check yourself, then "Next" to continue.',
       'Use "Show again later" to defer a plate you want another pass at this session.',
@@ -12349,13 +12392,43 @@ function shuffleAtlasRecall(arr) {
   return a;
 }
 
+// System categories for the filter bar under the region chips. Derived from
+// the plate title rather than stored in app_data.json, so re-generating the
+// data never drops them. A plate can sit in more than one category (e.g.
+// "Costovertebral Joints and Intercostal Muscles"); anything that matches no
+// system (chapter openings, surface anatomy, regional dissections, sections)
+// falls into "Regions & Sections".
+const AR_CATEGORIES = [
+  { key: 'skeleton', label: 'Skeleton' },
+  { key: 'joints',   label: 'Joints & Ligaments' },
+  { key: 'muscles',  label: 'Muscles' },
+  { key: 'vessels',  label: 'Vessels' },
+  { key: 'nerves',   label: 'Nerves' },
+  { key: 'regions',  label: 'Regions & Sections' },
+];
+
+function atlasRecallCategories(page) {
+  const t = page.t || '';
+  const cats = [];
+  const isBones = /\b(skeleton|bones?|vertebrae|scapula|humerus|femur)\b/i.test(t)
+    || /^Vertebral Column and Thorax$/i.test(t)
+    || /Vertebral Column of the Neck/i.test(t);
+  if (isBones) cats.push('skeleton');
+  if (!isBones && /\b(joints?|ligaments?)\b/i.test(t)) cats.push('joints');
+  if (/\bmuscles?\b/i.test(t)) cats.push('muscles');
+  if (/\b(arter\w*|veins?|vessels?)\b/i.test(t)) cats.push('vessels');
+  if (/\b(nerves?|plexus|spinal cord)\b/i.test(t)) cats.push('nerves');
+  if (!cats.length) cats.push('regions');
+  return cats;
+}
+
 function AtlasRecall({ onBack }) {
   const [data, setData] = useState([]);
 
-  // Legend + highlight-position data for all 135 plates. Kept as a fetched
+  // Legend + highlight-position data for all plates. Kept as a fetched
   // JSON file (not a vendored window.* data.js like the other question
   // banks) since it is positional/legend data rather than a question bank,
-  // and 260KB is cheap to fetch and cache via the service worker.
+  // and it is cheap to fetch and cache via the service worker.
   useEffect(() => {
     let alive = true;
     fetch('atlas-recall/app_data.json')
@@ -12371,30 +12444,58 @@ function AtlasRecall({ onBack }) {
     'Lower Limb': data.filter(p => p.sec === 'Lower Limb'),
   }), [data]);
 
-  const [scope, setScope]         = useState('All'); // 'All' | 'Trunk' | 'Upper Limb' | 'Lower Limb' | book page number
-  const [shuffleOn, setShuffleOn] = useState(true);
-  const [queue, setQueue]         = useState([]);
-  const [qi, setQi]               = useState(0);
-  const [deferred, setDeferred]   = useState([]);
-  const [answered, setAnswered]   = useState(0);
-  const [revealed, setRevealed]   = useState(false);
+  const catsOf = React.useMemo(() => {
+    const m = new Map();
+    data.forEach(p => m.set(p.p, atlasRecallCategories(p)));
+    return m;
+  }, [data]);
 
-  function scopedPages() {
-    if (scope === 'All') return data;
-    if (scope === 'Trunk' || scope === 'Upper Limb' || scope === 'Lower Limb') return bySec[scope];
-    return data.filter(p => p.p === scope);
-  }
+  const [region, setRegion]           = useState('All'); // 'All' | 'Trunk' | 'Upper Limb' | 'Lower Limb'
+  const [cats, setCats]               = useState([]);    // selected category keys; empty = every system
+  const [focusPage, setFocusPage]     = useState(null);  // book page number while in page focus
+  const [shuffleOn, setShuffleOn]     = useState(true);  // shuffle for the region/category queue
+  const [pageShuffle, setPageShuffle] = useState(true);  // shuffle inside page focus
+  const [shuffleNonce, setShuffleNonce] = useState(0);   // bump to reshuffle on demand
+  const [queue, setQueue]             = useState([]);
+  const [qi, setQi]                   = useState(0);
+  const [deferred, setDeferred]       = useState([]);
+  const [answered, setAnswered]       = useState(0);
+  const [revealed, setRevealed]       = useState(false);
 
-  // Rebuild the queue whenever the scope, shuffle preference, or the data
-  // itself changes (data starts empty until the fetch above resolves).
+  // Where the region/category run was when page focus started, so leaving
+  // focus drops you back on the same card instead of restarting the queue.
+  const stashRef = React.useRef(null);
+
+  const regionPages = region === 'All' ? data : (bySec[region] || []);
+  const filteredPages = React.useMemo(() => (
+    cats.length
+      ? regionPages.filter(p => (catsOf.get(p.p) || []).some(c => cats.includes(c)))
+      : regionPages
+  ), [regionPages, cats, catsOf]);
+
+  const focusedPage = focusPage != null ? data.find(p => p.p === focusPage) || null : null;
+  const scopePages = focusedPage ? [focusedPage] : filteredPages;
+  const effectiveShuffle = focusPage != null ? pageShuffle : shuffleOn;
+
+  // Rebuild the queue whenever the filters, focus, shuffle preference, or the
+  // data itself changes (data starts empty until the fetch above resolves).
   useEffect(() => {
-    let list = buildAtlasRecallQueue(scopedPages());
-    if (shuffleOn) list = shuffleAtlasRecall(list);
+    if (focusPage == null && stashRef.current) {
+      const s = stashRef.current;
+      stashRef.current = null;
+      setQueue(s.queue);
+      setQi(s.qi);
+      setDeferred(s.deferred);
+      setRevealed(false);
+      return;
+    }
+    let list = buildAtlasRecallQueue(scopePages);
+    if (effectiveShuffle) list = shuffleAtlasRecall(list);
     setQueue(list);
     setQi(0);
     setDeferred([]);
     setRevealed(false);
-  }, [scope, shuffleOn, data]);
+  }, [region, cats, focusPage, effectiveShuffle, shuffleNonce, data]);
 
   // When the queue is exhausted, recycle deferred plates first ("Show again
   // later"); otherwise wrap back to the start, reshuffling if shuffle is on.
@@ -12405,11 +12506,37 @@ function AtlasRecall({ onBack }) {
       setDeferred([]);
     } else {
       setQi(0);
-      if (shuffleOn) setQueue(q => shuffleAtlasRecall(q));
+      if (effectiveShuffle) setQueue(q => shuffleAtlasRecall(q));
     }
-  }, [qi, queue, deferred, shuffleOn]);
+  }, [qi, queue, deferred, effectiveShuffle]);
 
   const q = queue.length && qi < queue.length ? queue[qi] : null;
+
+  function chooseRegion(r) {
+    stashRef.current = null;
+    setFocusPage(null);
+    setRegion(r);
+  }
+  function toggleCat(key) {
+    stashRef.current = null;
+    setFocusPage(null);
+    setCats(cs => cs.includes(key) ? cs.filter(c => c !== key) : cs.concat(key));
+  }
+  function clearCats() {
+    stashRef.current = null;
+    setFocusPage(null);
+    setCats([]);
+  }
+  function focusOn(pageNum) {
+    if (focusPage == null && queue.length) {
+      stashRef.current = { queue, qi, deferred };
+    }
+    setPageShuffle(true);
+    setFocusPage(pageNum);
+  }
+  function exitFocus() {
+    setFocusPage(null);
+  }
 
   function handleReveal() {
     setRevealed(true);
@@ -12426,6 +12553,7 @@ function AtlasRecall({ onBack }) {
 
   useEffect(() => {
     function onKey(e) {
+      if (e.target && (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT')) return;
       if (e.code === 'Space' || e.code === 'Enter') {
         e.preventDefault();
         if (!q) return;
@@ -12437,8 +12565,14 @@ function AtlasRecall({ onBack }) {
     return () => document.removeEventListener('keydown', onKey);
   }, [revealed, q]);
 
-  const scopePages = scopedPages();
   const singlePage = scopePages.length === 1 ? scopePages[0] : null;
+  const focusCount = focusedPage ? buildAtlasRecallQueue([focusedPage]).length : 0;
+
+  // Plate counts per category inside the current region; empty categories
+  // are hidden so the bar only offers choices that lead somewhere.
+  const catCounts = {};
+  AR_CATEGORIES.forEach(c => { catCounts[c.key] = 0; });
+  regionPages.forEach(p => (catsOf.get(p.p) || []).forEach(c => { catCounts[c] = (catCounts[c] || 0) + 1; }));
 
   return (
     <div className="ar-shell">
@@ -12451,10 +12585,31 @@ function AtlasRecall({ onBack }) {
           {['All', 'Trunk', 'Upper Limb', 'Lower Limb'].map(opt => (
             <div
               key={opt}
-              className={'ar-chip' + (opt === scope ? ' active' : '')}
-              onClick={() => setScope(opt)}
+              className={'ar-chip' + (opt === region ? ' active' : '')}
+              onClick={() => chooseRegion(opt)}
             >
               {opt}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="ar-catbar">
+        <div className="ar-catbar-inner">
+          <span className="ar-catbar-label">{region === 'All' ? 'Focus on' : `${region} — focus on`}</span>
+          <div
+            className={'ar-cat' + (cats.length === 0 ? ' active' : '')}
+            onClick={clearCats}
+          >
+            Everything
+          </div>
+          {AR_CATEGORIES.filter(c => catCounts[c.key] > 0).map(c => (
+            <div
+              key={c.key}
+              className={'ar-cat' + (cats.includes(c.key) ? ' active' : '')}
+              onClick={() => toggleCat(c.key)}
+            >
+              {c.label}<span className="ar-cat-count">{catCounts[c.key]}</span>
             </div>
           ))}
         </div>
@@ -12464,21 +12619,41 @@ function AtlasRecall({ onBack }) {
         <div className="ar-jumprow">
           <select
             className="ar-jump"
-            value={typeof scope === 'number' ? String(scope) : ''}
-            onChange={e => { if (e.target.value) setScope(parseInt(e.target.value, 10)); }}
+            value={focusPage != null ? String(focusPage) : ''}
+            onChange={e => { if (e.target.value) focusOn(parseInt(e.target.value, 10)); }}
           >
-            <option value="">Jump to a page...</option>
-            {['Trunk', 'Upper Limb', 'Lower Limb'].map(sec => (
-              bySec[sec] && bySec[sec].length ? (
+            <option value="">{`Focus on one page... (${filteredPages.length} plates in this filter)`}</option>
+            {['Trunk', 'Upper Limb', 'Lower Limb'].map(sec => {
+              const pages = filteredPages.filter(p => p.sec === sec);
+              return pages.length ? (
                 <optgroup key={sec} label={sec}>
-                  {bySec[sec].map(p => (
+                  {pages.map(p => (
                     <option key={p.p} value={p.p}>{`p.${p.p} - ${p.t || '(untitled)'}`}</option>
                   ))}
                 </optgroup>
-              ) : null
-            ))}
+              ) : null;
+            })}
           </select>
         </div>
+
+        {focusedPage && (
+          <div className="ar-focusbar">
+            <div className="ar-focus-text">
+              <span className="ar-focus-label">Page focus</span>
+              p. {focusedPage.p} &nbsp;&middot;&nbsp; {focusedPage.t} &nbsp;&middot;&nbsp; {focusCount} numbers
+            </div>
+            <div className="ar-focus-actions">
+              <div className="ar-seg">
+                <button type="button" className={'ar-seg-btn' + (pageShuffle ? ' active' : '')} onClick={() => setPageShuffle(true)}>Mixed</button>
+                <button type="button" className={'ar-seg-btn' + (!pageShuffle ? ' active' : '')} onClick={() => setPageShuffle(false)}>In order</button>
+              </div>
+              {pageShuffle && (
+                <button type="button" className="ar-mini" onClick={() => setShuffleNonce(n => n + 1)}>Reshuffle</button>
+              )}
+              <button type="button" className="ar-mini" onClick={exitFocus}>Exit page focus</button>
+            </div>
+          </div>
+        )}
 
         <div className="ar-card">
           {!queue.length ? (
@@ -12491,13 +12666,15 @@ function AtlasRecall({ onBack }) {
                 </div>
                 <div className="ar-progress-track"><div className="ar-progress-fill" style={{ width: '0%' }} /></div>
               </div>
-              <div className="ar-stage">
-                {singlePage && singlePage.comp && (
+              {singlePage && singlePage.comp && (
+                <div className="ar-stage">
                   <img src={`atlas-recall/composites/${singlePage.comp}`} alt={singlePage.t} />
-                )}
-              </div>
+                </div>
+              )}
               <div className="ar-empty-note">
-                No digitized legend for this plate yet. Refer to the printed book for this page's labels.
+                {singlePage
+                  ? "No digitized legend for this plate yet. Refer to the printed book for this page's labels."
+                  : (data.length ? 'No plates match this filter.' : 'Loading plates...')}
               </div>
             </React.Fragment>
           ) : q && (
@@ -12506,8 +12683,13 @@ function AtlasRecall({ onBack }) {
                 <div className="ar-crumb">
                   <b>{q.page.sec}</b> &nbsp;&middot;&nbsp; p. {q.page.p} &nbsp;&middot;&nbsp; {q.page.t}
                 </div>
-                <div className="ar-progress-track">
-                  <div className="ar-progress-fill" style={{ width: `${Math.round(((qi % queue.length) + 1) / queue.length * 100)}%` }} />
+                <div className="ar-card-top-right">
+                  {focusPage == null && (
+                    <button type="button" className="ar-mini" onClick={() => focusOn(q.page.p)}>Focus this page</button>
+                  )}
+                  <div className="ar-progress-track">
+                    <div className="ar-progress-fill" style={{ width: `${Math.round(((qi % queue.length) + 1) / queue.length * 100)}%` }} />
+                  </div>
                 </div>
               </div>
 
@@ -12548,11 +12730,16 @@ function AtlasRecall({ onBack }) {
         </div>
 
         <div className="ar-foot">
-          <div className="ar-foot-left"><b>{answered}</b> reviewed this session</div>
-          <label className="ar-toggle">
-            <input type="checkbox" checked={shuffleOn} onChange={e => setShuffleOn(e.target.checked)} />
-            Shuffle
-          </label>
+          <div className="ar-foot-left">
+            <b>{answered}</b> reviewed this session
+            {queue.length > 0 && <React.Fragment> &nbsp;&middot;&nbsp; card {(qi % queue.length) + 1} of {queue.length}</React.Fragment>}
+          </div>
+          {focusPage == null && (
+            <label className="ar-toggle">
+              <input type="checkbox" checked={shuffleOn} onChange={e => setShuffleOn(e.target.checked)} />
+              Shuffle
+            </label>
+          )}
         </div>
       </div>
     </div>
