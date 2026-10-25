@@ -64,14 +64,16 @@ run(read('progress.js'), 'progress.js');
   'muscle-bank.js', 'artery-game.js', 'artery-assembly-data.js', 'timeline-data.js',
   'dissection-questions.js', 'brain-atlas-data.js', 'brain-labels.js',
   'brain-mri-quiz-data.js', 'vein-formation-data.js', 'histology-slides-data.js',
-  'histology-slide-ids.js', 'hematopoiesis-map-data.js',
+  'histology-slide-ids.js', 'hematopoiesis-map-data.js', 'physiology-tf.js', 'physiology-formulas.js', 'physiology-ranges.js',
 ].forEach(f => run(read(f), f));
 
 // Expose the internals the test needs, then evaluate the app.
 run(
   code + '\n;window.__test = { buildExam, poolFor, shuffleOptions, isCorrect, hasAnswer, ' +
   'QUESTION_BANK, dedupeByStem, sessionBreakdown, WEAK_FOCUS_SIZE, ' +
-  'ExamScreen, ResultsBanner, WeakAreaCard, QuestionCard };',
+  'ExamScreen, ResultsBanner, WeakAreaCard, QuestionCard, YEARS, ' +
+  'isTfSelection, tfGroupByStem, TrueFalseExam, FormulaBuilder, fbCanon, fbIsCorrect, ' +
+  'fbCalcCorrect, fbParseNumber, SUBJECT_PAGES, RangesGame, rgGrade, rgMakeScale };',
   'app'
 );
 
@@ -208,6 +210,75 @@ check('breakdown covers answered questions only',
       bd.reduce((s, g) => s + g.n, 0) === 2, JSON.stringify(bd.map(g => [g.name, g.n])));
 check('breakdown sorted worst first', bd.length < 2 || bd[0].accuracy <= bd[bd.length - 1].accuracy);
 
+console.log('\n=== physiology true/false ===');
+P.reset();
+const PH = 'Physiology';
+const phys = T.QUESTION_BANK[PH];
+check('Physiology subject exists', !!phys);
+check('Physiology filed under 2nd Year', T.YEARS.some(y => y.name === '2nd Year' && y.subjects.includes(PH)));
+check('two T/F banks: Blood and Cardiovascular',
+      phys.exams.map(e => e.name + ':' + e.type).join(',') === 'Blood:tf,Cardiovascular:tf');
+const allSt = phys.questions;
+check('482 statements across 94 stems', allSt.length === 482 && T.tfGroupByStem(allSt).length === 94,
+      allSt.length + ' / ' + T.tfGroupByStem(allSt).length);
+const norm = x => String(x).toLowerCase().replace(/[^a-z0-9]/g, '');
+check('every statement has a unique progress key', new Set(allSt.map(q => norm(q.question))).size === allSt.length);
+check('every statement is topic/subtopic tagged', allSt.every(q => q.topic && q.subtopic));
+check('only the illegible Q94 is unscored', allSt.filter(q => !q.correct).map(q => q.stemNum).join() === '94,94,94,94,94');
+check('T/F routing: single bank', T.isTfSelection(PH, 0) && T.isTfSelection(PH, 1));
+check('T/F routing: weak-area session', T.isTfSelection(PH, 'weak'));
+check('T/F routing leaves other subjects alone', !T.isTfSelection(SUBJ, 0) && !T.isTfSelection(SUBJ, 'weak'));
+const blood = T.buildExam(PH, 0).questions;
+const firstStem = blood.filter(q => q.stemNum === blood[0].stemNum);
+const tfAns = {};
+firstStem.forEach((q, k) => { tfAns[q.id] = k === 0 ? (q.correct === 'T' ? 'F' : 'T') : q.correct; });
+const tfRes = P.recordExam(PH, 'tf test', firstStem, tfAns, { isCorrect: T.isCorrect, hasAnswer: T.hasAnswer });
+check('per-statement scoring', tfRes.answered === firstStem.length && tfRes.correct === firstStem.length - 1, JSON.stringify(tfRes));
+const bloodAfter = T.buildExam(PH, 0).questions;
+check('correct statements are hidden next time, wrong one stays',
+      bloodAfter.length === blood.length - (firstStem.length - 1) && bloodAfter.some(q => q.id === firstStem[0].id));
+check('weak areas tracked by subtopic', P.weakAreas(PH).length === 0 && P.summary(PH).attempts === firstStem.length);
+
+console.log('\n=== formula builder ===');
+const FB = w.PHYSIO_FORMULAS || [];
+check('formula data loaded', FB.length === 20, 'n=' + FB.length);
+check('every formula accepts its own answers', FB.every(f => f.answers.every(a => T.fbIsCorrect(f, a))));
+check('every answer tile is in the pool', FB.every(f => f.answers.every(a => a.every(t => f.tiles.includes(t)))));
+check('every formula has a calculation', FB.every(f => f.calcs.length > 0));
+const byId = Object.fromEntries(FB.map(f => [f.id, f]));
+check('order of × does not matter', T.fbIsCorrect(byId.co, ['HR', '×', 'SV']));
+check('order of − does matter', !T.fbIsCorrect(byId.pp, ['DP', '−', 'SP']));
+check('both MAP forms accepted', T.fbIsCorrect(byId.map, ['DP', '+', '⅓', '×', 'PP']) && T.fbIsCorrect(byId.map, ['0.4', '×', 'SP', '+', '0.6', '×', 'DP']));
+check('brackets matter in TPR', !T.fbIsCorrect(byId.tpr, ['MAP', '−', 'RAP', '÷', 'CO']));
+check('unfinished expression is wrong', !T.fbIsCorrect(byId.co, ['SV', '×']));
+check('calc answers graded by range', FB.every(f => f.calcs.every(c => T.fbCalcCorrect(c, c.accept[0]) && !T.fbCalcCorrect(c, c.accept[1] * 1.5 + 1))));
+check('comma decimals parsed', T.fbParseNumber('5,04') === 5.04);
+check('Formula Builder is a Physiology tool', T.SUBJECT_PAGES.Physiology.tools().some(t => t.type === 'formula_builder'));
+
+console.log('\n=== ranges game ===');
+const RG = w.PHYSIO_RANGES || {};
+check('range data loaded', (RG.labs || []).length === 37 && (RG.map || []).length === 12);
+check('every range has lo < hi and a source', RG.labs.every(it => it.lo < it.hi && it.source));
+const na = RG.labs.find(it => it.id === 'na');
+check('exact range is spot on', T.rgGrade(na, 135, 145) === 'spot');
+check('slightly off is still spot on', T.rgGrade(na, 134, 146) === 'spot');
+check('a few units off is close', T.rgGrade(na, 132, 148) === 'close');
+check('far off is off', T.rgGrade(na, 120, 160) === 'off');
+const pha = RG.labs.find(it => it.id === 'ph_a');
+check('both arterial pH ranges accepted', T.rgGrade(pha, 7.35, 7.45) === 'spot' && T.rgGrade(pha, 7.25, 7.45) === 'spot');
+let scaleOk = true, centers = new Set();
+for (let k = 0; k < 40; k++) RG.labs.forEach(it => {
+  const sc = T.rgMakeScale(it);
+  if (!(sc.min <= it.lo && sc.max >= it.hi)) scaleOk = false;
+  if (it.floor != null && sc.min < it.floor) scaleOk = false;
+  if (it.ceil != null && sc.max > it.ceil) scaleOk = false;
+  if (it.id === 'na') centers.add(sc.min);
+});
+check('scale always contains the normal range and respects limits', scaleOk);
+check('scale position varies between rounds', centers.size > 2, 'distinct mins ' + centers.size);
+check('pressure map fields have accept ranges', RG.map.every(n => n.fields.every(f => f.accept[0] <= f.accept[1])));
+check('Ranges is a Physiology tool', T.SUBJECT_PAGES.Physiology.tools().some(t => t.type === 'ranges_game'));
+
 console.log('\n=== render ===');
 /* Mount the real components so a JSX/prop mistake in the new UI shows up as a
  * failure here rather than a blank screen on the iPad. */
@@ -226,12 +297,29 @@ let examHost, bannerHost, weakHost;
 try {
   examHost = mount(R.createElement(w.__test.ExamScreen, { subject: SUBJ, examIndex: 0, onBack() {} }));
 } catch (e) { renderErr = e; }
+let tfHost, tfErr = null, fbHost, fbErr = null;
+try { fbHost = mount(R.createElement(w.__test.FormulaBuilder, { onBack() {} })); } catch (e) { fbErr = e; }
+let rgHost, rgErr = null;
+try { rgHost = mount(R.createElement(w.__test.RangesGame, { onBack() {} })); } catch (e) { rgErr = e; }
+try {
+  tfHost = mount(R.createElement(w.__test.TrueFalseExam, { subject: 'Physiology', examIndex: 1, onBack() {} }));
+} catch (e) { tfErr = e; }
 // createRoot renders asynchronously; give React a tick before asserting.
 setTimeout(() => {
   check('ExamScreen renders without throwing', !renderErr, renderErr && renderErr.message);
   const txt = examHost ? examHost.textContent : '';
   check('exam shows questions', /Question 1/.test(txt), txt.slice(0, 120));
   check('option letters render A-D', /A[\s\S]{0,400}B/.test(txt));
+  check('TrueFalseExam renders without throwing', !tfErr, tfErr && tfErr.message);
+  check('FormulaBuilder renders without throwing', !fbErr, fbErr && fbErr.message);
+  check('RangesGame renders without throwing', !rgErr, rgErr && rgErr.message);
+  const rgt = rgHost ? rgHost.textContent : '';
+  check('Ranges home shows both tabs', /Normal ranges/.test(rgt) && /Pressure map/.test(rgt) && /Sodium/.test(rgt), rgt.slice(0, 160));
+  const fbt = fbHost ? fbHost.textContent : '';
+  check('Formula Builder home lists formulas', /Start a round/.test(fbt) && /Cardiac output/.test(fbt), fbt.slice(0, 160));
+  const tft = tfHost ? tfHost.textContent : '';
+  check('T/F exam shows stem, statements and True/False choices',
+        /True \/ False/.test(tft) && /Question 1/.test(tft) && /TrueFalse/.test(tft), tft.slice(0, 160));
 
   let bErr = null;
   try {

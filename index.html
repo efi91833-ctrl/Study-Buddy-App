@@ -529,6 +529,155 @@
     }
     .explanation-box strong { color: var(--sb-ink); }
 
+    /* ── True / False rows (TrueFalseExam) ── */
+    .tf-list { display: flex; flex-direction: column; gap: 8px; }
+    .tf-row {
+      display: grid; grid-template-columns: 28px 1fr auto; gap: 8px 12px; align-items: center;
+      background: var(--sb-card); border: 1.5px solid var(--sb-line); border-radius: 10px;
+      padding: 10px 12px 10px 14px;
+    }
+    .tf-text { font-size: 15.5px; line-height: 1.45; color: var(--sb-ink); }
+    .tf-choices { display: flex; gap: 6px; }
+    .tf-choice {
+      font-family: inherit; font-size: 13px; font-weight: 600; min-width: 66px;
+      padding: 7px 12px; border-radius: 8px; cursor: pointer;
+      border: 1.5px solid var(--sb-line); background: var(--sb-card); color: var(--sb-ink-2);
+      transition: all .15s;
+    }
+    .tf-choice:hover:not(:disabled) { border-color: rgba(0,0,0,.3); color: var(--sb-ink); }
+    .tf-choice:disabled { cursor: default; }
+    .tf-choice.selected { background: #3a3a36; border-color: #3a3a36; color: #fff; }
+    .tf-choice.correct { background: #4a7c6a; border-color: #4a7c6a; color: #fff; }
+    .tf-choice.wrong { background: #7c4a4a; border-color: #7c4a4a; color: #fff; }
+    .tf-choice.reveal-correct { background: rgba(74,124,106,0.1); border-color: #4a7c6a; color: #4a7c6a; }
+    .tf-choice.revealed { background: #d8d3ca; border-color: #d8d3ca; color: var(--sb-ink-2); }
+    .tf-row.correct { border-color: rgba(74,124,106,.55); background: rgba(74,124,106,.06); }
+    .tf-row.wrong { border-color: rgba(124,74,74,.55); background: rgba(124,74,74,.06); }
+    .tf-row.revealed, .tf-row.unscored { border-color: var(--sb-line-soft); background: rgba(0,0,0,.03); }
+    .tf-why { grid-column: 2 / -1; font-size: 14px; line-height: 1.55; color: var(--sb-ink-2); }
+    .tf-flag { grid-column: 2 / -1; font-size: 12px; color: var(--sb-ink-4); font-style: italic; }
+    .tf-banner {
+      margin-top: 10px; padding: 10px 14px; border-radius: 10px; font-size: 13px;
+      background: var(--sb-cream); border: 1px solid var(--sb-line-soft); color: var(--sb-ink-2);
+    }
+    /* ── Formula Builder ── */
+    .fb-wrap { width: 100%; max-width: 860px; margin: 0 auto; padding: 0 24px 60px; box-sizing: border-box; }
+    .fb-head {
+      position: sticky; top: 0; z-index: 10; background: var(--sb-panel);
+      padding: 30px 60px 12px 0; margin-bottom: 18px; border-bottom: 1px solid var(--sb-line-soft);
+    }
+    .fb-head-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
+    .fb-title { font-family: var(--sb-serif); font-size: 26px; font-weight: 400; letter-spacing: -.01em; color: var(--sb-ink); margin: 0; }
+    .fb-head-meta { font-size: 12.5px; color: var(--sb-ink-4); }
+    .fb-name { font-family: var(--sb-serif); font-size: 24px; font-weight: 400; color: var(--sb-ink); margin: 4px 0 18px; }
+    .fb-step { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--sb-ink-3); margin-bottom: 10px; }
+    .fb-eq {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 7px; min-height: 64px;
+      padding: 12px 14px; border-radius: 12px; background: var(--sb-cream);
+      border: 1.5px dashed var(--sb-line);
+    }
+    .fb-eq.correct { border-style: solid; border-color: #4a7c6a; background: rgba(74,124,106,.08); }
+    .fb-eq.wrong { border-style: solid; border-color: #7c4a4a; background: rgba(124,74,74,.07); }
+    .fb-lhs { font-family: var(--sb-serif); font-size: 21px; color: var(--sb-ink); margin-right: 4px; white-space: nowrap; }
+    .fb-placeholder { font-size: 13px; color: var(--sb-ink-4); font-style: italic; }
+    .fb-pool { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .fb-tile {
+      font-family: inherit; font-size: 16px; font-weight: 600; min-width: 44px; padding: 9px 13px;
+      border-radius: 9px; border: 1.5px solid var(--sb-line); background: var(--sb-card); color: var(--sb-ink);
+      cursor: pointer; transition: all .12s;
+    }
+    .fb-tile.op { color: var(--sb-ink-2); font-weight: 500; background: #f3f0e8; }
+    .fb-tile:hover:not(:disabled) { border-color: rgba(0,0,0,.32); }
+    .fb-tile:disabled { cursor: default; }
+    .fb-tile.used { opacity: .25; }
+    .fb-link { background: none; border: none; padding: 0; font: inherit; font-size: 12.5px; color: var(--sb-ink-3); text-decoration: underline; cursor: pointer; }
+    .fb-key { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; font-size: 12.5px; color: var(--sb-ink-3); }
+    .fb-key strong { color: var(--sb-ink); font-weight: 600; margin-right: 3px; }
+    .fb-reveal { margin-top: 16px; border-radius: 10px; padding: 14px 16px; border: 1px solid var(--sb-line-soft); background: rgba(0,0,0,.035); display: flex; flex-direction: column; gap: 6px; }
+    .fb-reveal.ok { border-color: rgba(74,124,106,.45); }
+    .fb-reveal.bad { border-color: rgba(124,74,74,.45); }
+    .fb-reveal-head { font-size: 13px; font-weight: 700; }
+    .fb-reveal.ok .fb-reveal-head { color: #4a7c6a; }
+    .fb-reveal.bad .fb-reveal-head { color: #7c4a4a; }
+    .fb-formula { font-size: 16px; font-weight: 600; color: var(--sb-ink); line-height: 1.5; }
+    .fb-why { font-size: 14.5px; color: var(--sb-ink-2); line-height: 1.6; }
+    .fb-source { font-size: 12px; color: var(--sb-ink-4); line-height: 1.5; }
+    .fb-input {
+      font-family: inherit; font-size: 17px; padding: 10px 14px; width: 170px; border-radius: 10px;
+      border: 1.5px solid var(--sb-line); background: var(--sb-card); color: var(--sb-ink);
+    }
+    .fb-input:focus { outline: none; border-color: #3a3a36; }
+    /* ── Ranges game ── */
+    .rg-scale { user-select: none; -webkit-user-select: none; }
+    .rg-values { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; margin-bottom: 18px; }
+    .rg-val { display: flex; align-items: center; gap: 8px; }
+    .rg-val-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--sb-ink-3); width: 34px; }
+    .rg-val-num { font-size: 20px; font-weight: 700; min-width: 54px; text-align: center; color: var(--sb-ink); font-variant-numeric: tabular-nums; }
+    .rg-nudge {
+      width: 32px; height: 32px; border-radius: 8px; border: 1.5px solid var(--sb-line); background: var(--sb-card);
+      color: var(--sb-ink-2); font-size: 17px; font-family: inherit; cursor: pointer; line-height: 1;
+    }
+    .rg-nudge:disabled { opacity: .4; cursor: default; }
+    .rg-unit { font-size: 13px; color: var(--sb-ink-3); }
+    .rg-track-wrap { position: relative; height: 44px; cursor: pointer; touch-action: none; margin: 0 11px; }
+    .rg-track-wrap.locked { cursor: default; }
+    .rg-track { position: absolute; left: 0; right: 0; top: 19px; height: 6px; border-radius: 3px; background: #e2ded4; }
+    .rg-band { position: absolute; top: 17px; height: 10px; border-radius: 5px; background: #3a3a36; }
+    .rg-band.ok { background: #4a7c6a; }
+    .rg-band.bad { background: #7c4a4a; }
+    .rg-handle {
+      position: absolute; top: 11px; width: 22px; height: 22px; margin-left: -11px; border-radius: 50%;
+      background: var(--sb-card); border: 2.5px solid #3a3a36; cursor: grab; padding: 0; box-shadow: 0 1px 3px rgba(0,0,0,.15);
+    }
+    .rg-handle.ok { border-color: #4a7c6a; }
+    .rg-handle.bad { border-color: #7c4a4a; }
+    .rg-handle:focus-visible { outline: 2px solid #3a3a36; outline-offset: 2px; }
+    .rg-true-wrap { position: relative; height: 30px; margin: 2px 11px 0; }
+    .rg-true { position: absolute; top: 2px; height: 8px; border-radius: 4px; background: rgba(74,124,106,.35); border: 1.5px solid #4a7c6a; }
+    .rg-typical { position: absolute; top: -1px; width: 2px; height: 14px; margin-left: -1px; background: #4a7c6a; }
+    .rg-true-label { position: absolute; top: 13px; font-size: 11px; font-weight: 600; color: #4a7c6a; }
+    .rg-ticks { position: relative; height: 18px; margin: 4px 11px 0; border-top: 1px solid var(--sb-line-soft); }
+    .rg-ticks span { position: absolute; top: 4px; transform: translateX(-50%); font-size: 11px; color: var(--sb-ink-4); font-variant-numeric: tabular-nums; }
+    .pm-svg-wrap { background: var(--sb-card); border: 1px solid var(--sb-line-soft); border-radius: 16px; padding: 14px 10px; }
+    .pm-svg { width: 100%; height: auto; display: block; }
+    .pm-caption { font-size: 12px; fill: var(--sb-ink-4); letter-spacing: .08em; text-transform: uppercase; font-family: var(--sb-sans); }
+    .pm-edge { stroke: #b9b5ab; stroke-width: 1.6; }
+    .pm-edge.dashed { stroke-dasharray: 5 4; }
+    .pm-arrowhead { fill: #b9b5ab; }
+    .pm-node { cursor: pointer; }
+    .pm-node rect { fill: var(--sb-cream); stroke: var(--sb-line); stroke-width: 1.5; }
+    .pm-node text { font-size: 14px; fill: var(--sb-ink); font-family: var(--sb-sans); font-weight: 600; pointer-events: none; }
+    .pm-node:hover rect { stroke: rgba(0,0,0,.35); }
+    .pm-node.sel rect { stroke: #3a3a36; stroke-width: 2.5; }
+    .pm-node.ok rect { fill: rgba(74,124,106,.12); stroke: #4a7c6a; }
+    .pm-node.bad rect { fill: rgba(124,74,74,.1); stroke: #7c4a4a; }
+    .pm-list { display: none; }
+    .pm-list .question-card { margin-top: 0 !important; padding: 18px; }
+    .pm-row {
+      display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; text-align: left;
+      font-family: inherit; font-size: 14px; color: var(--sb-ink); padding: 11px 14px; border-radius: 10px;
+      border: 1.5px solid var(--sb-line); background: var(--sb-card); cursor: pointer;
+    }
+    .pm-row.sel { border-color: #3a3a36; }
+    .pm-row.ok { border-color: #4a7c6a; background: rgba(74,124,106,.08); }
+    .pm-row.bad { border-color: #7c4a4a; background: rgba(124,74,74,.07); }
+    .pm-row-state { font-size: 11.5px; color: var(--sb-ink-4); }
+    .pm-field { display: flex; flex-direction: column; gap: 6px; }
+    .pm-field-label { font-size: 12px; font-weight: 600; color: var(--sb-ink-3); }
+    .pm-field.ok .fb-input { border-color: #4a7c6a; background: rgba(74,124,106,.08); }
+    .pm-field.bad .fb-input { border-color: #7c4a4a; background: rgba(124,74,74,.07); }
+    .pm-field-answer { font-size: 12.5px; color: var(--sb-ink-2); }
+    @media (max-width: 600px) {
+      .pm-svg-wrap, .pm-panel-wide { display: none; }
+      .pm-list { display: block; }
+      .rg-val-num { font-size: 18px; min-width: 46px; }
+      .fb-wrap { padding: 0 14px 60px; }
+      .fb-tile { font-size: 15px; padding: 8px 11px; }
+      .tf-row { grid-template-columns: 24px 1fr; padding: 10px 12px; }
+      .tf-choices { grid-column: 2; }
+      .tf-choice { flex: 1; }
+    }
+
     .unanswered-note {
       margin-top: 10px;
       font-size: 12px;
@@ -1534,6 +1683,9 @@
 <script src="histology-slides-data.js"></script>
 <script src="histology-slide-ids.js"></script>
 <script src="hematopoiesis-map-data.js"></script>
+<script src="physiology-tf.js"></script>
+<script src="physiology-formulas.js"></script>
+<script src="physiology-ranges.js"></script>
 <script src="vendor/three.min.js"></script>
 <script>if(!window.THREE){document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');}</script>
 <script src="artery-3d-topology.js"></script>
@@ -1630,6 +1782,41 @@ function getLabelsForSlide(slideId) {
 // ─────────────────────────────────────────────────────────────
 // QUESTION BANK  (add new subjects/questions here only)
 // ─────────────────────────────────────────────────────────────
+/* True/False banks (physiology-tf.js) store one stem with lettered statements.
+ * The progress store, weak-area tracking and the subject page all work on flat
+ * question objects, so each statement becomes its own question here. The stem
+ * travels with it so TrueFalseExam can regroup statements under their stem.
+ * `question` (stem + letter + statement) is what progress.js hashes into the key. */
+function tfStatements(stems) {
+  const out = [];
+  (stems || []).forEach(s => {
+    (s.statements || []).forEach(st => {
+      out.push({
+        id: 'tf' + s.num + '-' + st.l,
+        type: 'tf',
+        topic: s.topic,
+        subtopic: s.subtopic,
+        stemNum: s.num,
+        stem: s.stem,
+        ref: s.ref,
+        note: s.note || '',
+        letter: st.l,
+        statement: st.text,
+        question: s.stem + ' — ' + st.l + '. ' + st.text,
+        options: { T: 'True', F: 'False' },
+        correct: st.answer === true ? 'T' : st.answer === false ? 'F' : null,
+        explanation: st.why || '',
+      });
+    });
+  });
+  return out;
+}
+
+function tfExam(name, stems) {
+  const list = stems || [];
+  return { name, type: 'tf', questions: tfStatements(list), countLabel: list.length + ' q' };
+}
+
 const QUESTION_BANK = {
   Histology: {
     color: '#888',
@@ -2007,6 +2194,16 @@ const QUESTION_BANK = {
       return (window.medinfoExams || []).flatMap(e => e.questions);
     },
   },
+  Physiology: {
+    color: '#888',
+    icon: '',
+    description: 'Function of the human body',
+    exams: [
+      tfExam('Blood',          (window.PHYSIO_TF || {}).Blood),
+      tfExam('Cardiovascular', (window.PHYSIO_TF || {}).Cardiovascular),
+    ],
+    get questions() { return this.exams.flatMap(e => e.questions); },
+  },
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -2026,7 +2223,7 @@ function YearHeadline({ name, className }) {
 
 const YEARS = [
   { name: '1st Year', subjects: ['Histology', 'Anatomy', 'Czech', 'Medical Informatics'] },
-  { name: '2nd Year', subjects: [] },
+  { name: '2nd Year', subjects: ['Physiology'] },
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -2473,6 +2670,1149 @@ function ExamScreen({ subject, examIndex, onBack, onFocusWeak }) {
           onHome={onBack}
         />
       )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// TRUE / FALSE EXAM  (Physiology T/F banks)
+// ─────────────────────────────────────────────────────────────
+/* True when the selection should open TrueFalseExam: a single exam of type
+ * 'tf', or a weak-area / all session in a subject whose banks are all T/F. */
+function isTfSelection(subject, examIndex) {
+  const meta = subject && QUESTION_BANK[subject];
+  if (!meta || !meta.exams || !meta.exams.length) return false;
+  if (typeof examIndex === 'number') return (meta.exams[examIndex] || {}).type === 'tf';
+  return meta.exams.every(e => e.type === 'tf');
+}
+
+/* Statements back under their stem, in stem order then letter order. */
+function tfGroupByStem(statements) {
+  const groups = [];
+  const byNum = {};
+  statements.forEach(s => {
+    let g = byNum[s.stemNum];
+    if (!g) {
+      g = byNum[s.stemNum] = { num: s.stemNum, stem: s.stem, ref: s.ref, note: s.note,
+                               topic: s.topic, subtopic: s.subtopic, items: [] };
+      groups.push(g);
+    }
+    g.items.push(s);
+  });
+  groups.forEach(g => g.items.sort((a, b) => a.letter.localeCompare(b.letter)));
+  return groups;
+}
+
+function TfStatementRow({ item, answer, submitted, onChoose }) {
+  const scored = !!item.correct;
+  let rowState = '';
+  if (submitted) {
+    if (!scored) rowState = 'unscored';
+    else if (!answer) rowState = 'revealed';
+    else rowState = answer === item.correct ? 'correct' : 'wrong';
+  }
+
+  function btnState(v) {
+    if (!submitted) return answer === v ? 'selected' : '';
+    if (!scored) return answer === v ? 'selected' : '';
+    if (v === item.correct) return answer ? (answer === v ? 'correct' : 'reveal-correct') : 'revealed';
+    if (v === answer) return 'wrong';
+    return '';
+  }
+
+  return (
+    <div className={'tf-row ' + rowState}>
+      <span className="option-letter">{item.letter}</span>
+      <span className="tf-text">{item.statement}</span>
+      <div className="tf-choices">
+        {[['T', 'True'], ['F', 'False']].map(([v, label]) => (
+          <button key={v} className={'tf-choice ' + btnState(v)} disabled={submitted}
+            onClick={() => onChoose(item.id, v)}>{label}</button>
+        ))}
+      </div>
+      {submitted && rowState === 'revealed' && (
+        <div className="tf-flag">Not answered. The answer is shown, and it is not counted as wrong.</div>
+      )}
+      {submitted && !scored && (
+        <div className="tf-flag">No answer key: it is unreadable on the photographed slide, so this statement is not scored.</div>
+      )}
+      {submitted && item.explanation && <div className="tf-why">{item.explanation}</div>}
+    </div>
+  );
+}
+
+function TrueFalseExam({ subject, examIndex, onBack, onFocusWeak }) {
+  // Built once per mount, like ExamScreen: remounting picks up new mastery.
+  const [built] = useState(() => buildExam(subject, examIndex));
+  const statements = built.questions;
+  const groups = useMemo(() => tfGroupByStem(statements), [statements]);
+  // Statements without a legible key are shown but never scored or recorded.
+  const scored = useMemo(() => statements.filter(s => s.correct), [statements]);
+  const [answers, setAnswers] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+
+  const meta = QUESTION_BANK[subject];
+  const examName = examIndex === 'weak'
+    ? 'Weak Areas'
+    : (typeof examIndex === 'number' && meta.exams[examIndex] ? meta.exams[examIndex].name : '');
+
+  function choose(id, v) {
+    if (submitted) return;
+    setAnswers(prev => {
+      const next = { ...prev };
+      if (next[id] === v) delete next[id]; else next[id] = v;
+      return next;
+    });
+  }
+
+  function handleSubmit() {
+    setSubmitted(true);
+    if (window.Progress) {
+      window.Progress.recordExam(subject, examName, scored, answers, { isCorrect, hasAnswer });
+    }
+    window.scrollTo(0, 0);
+  }
+
+  const answeredCount = statements.filter(s => hasAnswer(answers[s.id])).length;
+
+  return (
+    <div className="content">
+      <div className="exam-header">
+        <button className="topbar-back" style={{ marginBottom: 16 }} onClick={onBack}>← {subject}</button>
+        <div className="exam-subject-label">
+          <span>{subject}{examName ? ` · ${examName}` : ''}</span>
+        </div>
+        <h1 className="exam-title">{built.focused ? 'Weak Areas' : 'True / False'}</h1>
+        <p className="exam-meta">
+          {groups.length} question{groups.length !== 1 ? 's' : ''} · {statements.length} statements
+          {!submitted && answeredCount > 0 && ` · ${answeredCount} answered`}
+          {!submitted && built.hidden > 0 && ` · ${built.hidden} mastered, hidden`}
+        </p>
+        {built.exhausted && !submitted && (
+          <p className="tf-banner">
+            You have already answered everything here correctly. Showing the full set for review.
+            These answers still count toward your progress.
+          </p>
+        )}
+      </div>
+
+      {submitted && (
+        <ResultsBanner
+          questions={scored}
+          answers={answers}
+          subject={subject}
+          onNext={onBack}
+          onFocusWeak={onFocusWeak || onBack}
+          onHome={onBack}
+        />
+      )}
+
+      <div className="question-list" style={submitted ? { marginTop: 28 } : null}>
+        {groups.map((g, i) => (
+          <div key={g.num} className="question-card">
+            <div className="question-num">Question {i + 1}</div>
+            <div className="question-topic-tag">{g.topic} › {g.subtopic}</div>
+            <p className="question-text">{g.stem}</p>
+            <div className="tf-list">
+              {g.items.map(item => (
+                <TfStatementRow key={item.id} item={item} answer={answers[item.id]}
+                  submitted={submitted} onChoose={choose} />
+              ))}
+            </div>
+            {submitted && g.note && (
+              <div className="explanation-box"><strong>Note: </strong>{g.note}</div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {!submitted && (
+        <div className="exam-actions">
+          <button className="btn-primary" onClick={handleSubmit}>Submit Exam</button>
+          <span style={{ fontSize: 13, color: 'var(--sb-ink-3)' }}>
+            {answeredCount}/{statements.length} answered
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// FORMULA BUILDER  (Physiology · physiology-formulas.js)
+// ─────────────────────────────────────────────────────────────
+/* Progress lives under its own subject key so formula and calculation weak
+ * spots never mix into the Physiology T/F weak-area practice. */
+const FB_SUBJECT = 'Physiology · Formulas';
+const FB_ROUND_SIZE = 8;
+const FB_OPS = ['+', '−', '×', '÷', '(', ')'];
+
+/* Canonical string for a tile sequence, or null if it is not a valid
+ * expression. Sums and products are sorted, so "HR × SV" equals "SV × HR" and
+ * "0.4 × SP + 0.6 × DP" equals "0.6 × DP + 0.4 × SP". Dividing by a bracketed
+ * product is flattened, so "a ÷ (b × c)" equals "a ÷ b ÷ c". */
+function fbCanon(tokens) {
+  let i = 0;
+  const peek = () => tokens[i];
+  const flip = sg => (sg === '+' ? '-' : '+');
+  // Returns an array of signed terms [{ sign, t }], or null.
+  function parseExpr() {
+    const terms = [];
+    let sign = '+';
+    if (peek() === '−') { sign = '-'; i++; }
+    for (;;) {
+      const t = parseTerm();
+      if (t == null) return null;
+      if (t.sumTerms) t.sumTerms.forEach(x => terms.push({ sign: sign === '+' ? x.sign : flip(x.sign), t: x.t }));
+      else terms.push({ sign, t });
+      if (peek() === '+' || peek() === '−') { sign = peek() === '+' ? '+' : '-'; i++; continue; }
+      break;
+    }
+    return terms;
+  }
+  const sumStr = terms => terms.map(x => x.sign + x.t.str).sort().join('');
+  function parseTerm() {
+    const num = [], den = [];
+    let div = false, count = 0, lastSum = null;
+    for (;;) {
+      const f = parseFactor();
+      if (f == null) return null;
+      count += 1;
+      lastSum = f.sumTerms || null;
+      if (f.term) {
+        (div ? den : num).push(...f.term.num);
+        (div ? num : den).push(...f.term.den);
+      } else {
+        (div ? den : num).push(f.str);
+      }
+      if (peek() === '×' || peek() === '÷') { div = peek() === '÷'; i++; continue; }
+      break;
+    }
+    // A bracketed sum standing alone, e.g. "(EDV − ESV)", merges into the outer sum.
+    if (count === 1 && lastSum) return { sumTerms: lastSum };
+    num.sort(); den.sort();
+    return { num, den, str: num.join('*') + (den.length ? '/' + den.join('/') : '') };
+  }
+  function parseFactor() {
+    const t = peek();
+    if (t == null) return null;
+    if (t === '(') {
+      i++;
+      const e = parseExpr();
+      if (e == null || peek() !== ')') return null;
+      i++;
+      if (e.length === 1 && e[0].sign === '+') return { term: e[0].t };
+      return { str: '(' + sumStr(e) + ')', sumTerms: e };
+    }
+    if (FB_OPS.includes(t)) return null;
+    i++;
+    return { str: t };
+  }
+  const e = parseExpr();
+  if (e == null || i !== tokens.length) return null;
+  return (e.length === 1 && e[0].sign === '+') ? e[0].t.str : sumStr(e);
+}
+
+function fbIsCorrect(formula, tokens) {
+  const c = fbCanon(tokens);
+  return c != null && formula.answers.some(a => fbCanon(a) === c);
+}
+
+function fbParseNumber(text) {
+  const s = String(text || '').trim().replace(/\s+/g, '').replace(',', '.').replace(/^[≈~]/, '');
+  if (!/^-?\d*\.?\d+(e-?\d+)?$/i.test(s)) return null;
+  return parseFloat(s);
+}
+
+function fbCalcCorrect(calc, value) {
+  if (value == null) return false;
+  const [lo, hi] = calc.accept;
+  const eps = Math.max(Math.abs(hi), 1) * 1e-9;
+  return value >= lo - eps && value <= hi + eps;
+}
+
+const fbBuildKey = f => ({ question: 'Formula Builder: build ' + f.name, topic: 'Formulas', subtopic: f.name });
+const fbCalcKey  = (f, c) => ({ question: 'Formula Builder calc: ' + c.q, topic: 'Calculations', subtopic: f.name });
+
+function fbShuffle(arr) {
+  const a = [...arr];
+  for (let k = a.length - 1; k > 0; k--) {
+    const j = Math.floor(Math.random() * (k + 1));
+    [a[k], a[j]] = [a[j], a[k]];
+  }
+  return a;
+}
+
+/* Formulas not yet built correctly come first, weighted toward the ones that
+ * keep going wrong; once everything is mastered the round reviews all. */
+function fbPickRound(all, size) {
+  const P = window.Progress;
+  if (!P) return fbShuffle(all).slice(0, size);
+  const fresh = all.filter(f => !P.isMastered(FB_SUBJECT, fbBuildKey(f)));
+  const pool = (fresh.length ? fresh : all).map(f => ({ f, w: P.weightFor(FB_SUBJECT, fbBuildKey(f)) }));
+  const out = [];
+  while (out.length < size && pool.length) {
+    let r = Math.random() * pool.reduce((s, x) => s + x.w, 0);
+    let k = 0;
+    for (; k < pool.length - 1; k++) { r -= pool[k].w; if (r <= 0) break; }
+    out.push(pool[k].f);
+    pool.splice(k, 1);
+  }
+  return out;
+}
+
+function fbPickCalc(f) {
+  const P = window.Progress;
+  if (!f.calcs || !f.calcs.length) return null;
+  if (!P) return f.calcs[Math.floor(Math.random() * f.calcs.length)];
+  const scored = f.calcs.map(c => ({ c, w: P.weightFor(FB_SUBJECT, fbCalcKey(f, c)) + Math.random() * 0.01 }));
+  scored.sort((a, b) => b.w - a.w);
+  return scored[0].c;
+}
+
+function FbTile({ label, onClick, state, disabled }) {
+  const isOp = FB_OPS.includes(label);
+  return (
+    <button className={'fb-tile' + (isOp ? ' op' : '') + (state ? ' ' + state : '')}
+      onClick={onClick} disabled={disabled}>{label}</button>
+  );
+}
+
+function FbReveal({ ok, title, children }) {
+  return (
+    <div className={'fb-reveal ' + (ok ? 'ok' : 'bad')}>
+      <div className="fb-reveal-head">{title}</div>
+      {children}
+    </div>
+  );
+}
+
+function FormulaBuilder({ onBack }) {
+  const ALL = window.PHYSIO_FORMULAS || [];
+  const [view, setView] = useState('home');          // home | play | done
+  const [round, setRound] = useState([]);
+  const [pos, setPos] = useState(0);
+  const [stage, setStage] = useState('build');       // build | calc
+  const [pool, setPool] = useState([]);              // shuffled tiles for this formula
+  const [placed, setPlaced] = useState([]);          // indices into pool
+  const [buildOk, setBuildOk] = useState(null);      // null until checked
+  const [calc, setCalc] = useState(null);
+  const [calcText, setCalcText] = useState('');
+  const [calcOk, setCalcOk] = useState(null);
+  const [showKey, setShowKey] = useState(false);
+  const [log, setLog] = useState([]);                // { f, buildOk, calc, calcOk }
+  const [, force] = useState(0);
+
+  useEffect(() => {
+    if (!window.Progress) return;
+    return window.Progress.subscribe(() => force(n => n + 1));
+  }, []);
+
+  const f = round[pos];
+
+  function loadFormula(list, k) {
+    const item = list[k];
+    setPos(k);
+    setStage('build');
+    setPool(fbShuffle(item.tiles));
+    setPlaced([]);
+    setBuildOk(null);
+    setCalc(null);
+    setCalcText('');
+    setCalcOk(null);
+    window.scrollTo(0, 0);
+  }
+
+  function start(list) {
+    if (!list.length) return;
+    setRound(list);
+    setLog([]);
+    setView('play');
+    loadFormula(list, 0);
+  }
+
+  function place(k) {
+    if (buildOk !== null || placed.includes(k)) return;
+    setPlaced(p => [...p, k]);
+  }
+  function unplace(n) {
+    if (buildOk !== null) return;
+    setPlaced(p => p.filter((_, idx) => idx !== n));
+  }
+
+  function checkBuild() {
+    const tokens = placed.map(k => pool[k]);
+    const ok = fbIsCorrect(f, tokens);
+    setBuildOk(ok);
+    if (window.Progress) window.Progress.record(FB_SUBJECT, fbBuildKey(f), ok);
+    setLog(l => [...l, { f, buildOk: ok, calc: null, calcOk: null }]);
+  }
+
+  function toCalc() {
+    setCalc(fbPickCalc(f));
+    setStage('calc');
+  }
+
+  function checkCalc() {
+    const ok = fbCalcCorrect(calc, fbParseNumber(calcText));
+    setCalcOk(ok);
+    if (window.Progress) window.Progress.record(FB_SUBJECT, fbCalcKey(f, calc), ok);
+    setLog(l => l.map((e, idx) => idx === l.length - 1 ? { ...e, calc, calcOk: ok } : e));
+  }
+
+  function next() {
+    if (pos + 1 < round.length) loadFormula(round, pos + 1);
+    else { if (window.Progress) window.Progress.flush(); setView('done'); window.scrollTo(0, 0); }
+  }
+
+  const P = window.Progress;
+  const masteredCount = P ? ALL.filter(x => P.isMastered(FB_SUBJECT, fbBuildKey(x))).length : 0;
+  const groups = [];
+  ALL.forEach(x => {
+    let g = groups.find(gg => gg.name === x.group);
+    if (!g) { g = { name: x.group, items: [] }; groups.push(g); }
+    g.items.push(x);
+  });
+
+  const header = (
+    <div className="fb-head">
+      <button className="topbar-back" onClick={view === 'home' ? onBack : () => setView('home')}>
+        ← {view === 'home' ? 'Physiology' : 'Formula Builder'}
+      </button>
+      <div className="fb-head-row">
+        <h2 className="fb-title">Formula Builder</h2>
+        <span className="fb-head-meta">
+          {view === 'play'
+            ? `Formula ${pos + 1} of ${round.length}`
+            : `${masteredCount} of ${ALL.length} built correctly`}
+        </span>
+      </div>
+    </div>
+  );
+
+  // ── Home ────────────────────────────────────────────────────────────────
+  if (view === 'home') {
+    return (
+      <div className="fb-wrap">
+        {header}
+        <div style={{ ...HX_CARD, display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 22 }}>
+          <span style={HX_LABEL}>How it works</span>
+          <span style={{ fontSize: 14, color: 'var(--sb-ink-2)', lineHeight: 1.6 }}>
+            Build the right-hand side of each formula from tiles. Some tiles are decoys. Then use the
+            formula on a number problem. A round has {FB_ROUND_SIZE} formulas, and the ones you have
+            not built correctly yet come first.
+          </span>
+          <button className="hx-cta" onClick={() => start(fbPickRound(ALL, FB_ROUND_SIZE))}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+                     background: 'var(--sb-ink)', border: '1px solid var(--sb-ink)', borderRadius: 10,
+                     padding: '11px 14px', cursor: 'pointer', width: '100%', fontFamily: 'inherit' }}>
+            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--sb-cream)' }}>Start a round</span>
+            <span style={{ fontSize: 11.5, color: 'var(--sb-ink-4)' }}>{Math.min(FB_ROUND_SIZE, ALL.length)} formulas →</span>
+          </button>
+        </div>
+
+        <span style={{ ...HX_LABEL, display: 'block', marginBottom: 6 }}>Or practise one formula</span>
+        {groups.map(g => (
+          <div key={g.name} style={{ marginTop: 14 }}>
+            <div style={{ fontSize: 12, color: 'var(--sb-ink-3)', marginBottom: 4 }}>{g.name}</div>
+            <div className="hx-two" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 28 }}>
+              {g.items.map(x => {
+                const rec = P ? P.recordFor(FB_SUBJECT, fbBuildKey(x)) : null;
+                const mastered = P ? P.isMastered(FB_SUBJECT, fbBuildKey(x)) : false;
+                return (
+                  <div key={x.id} className="hx-row" onClick={() => start([x])}
+                    style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '10px 6px',
+                             borderBottom: '1px solid rgba(0,0,0,.06)', cursor: 'pointer', borderRadius: 4 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+                                   background: mastered ? 'var(--sb-ink)' : rec ? 'var(--sb-ink-4)' : '#d9d6cd' }} />
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 13.5 }}>{x.name}</span>
+                    <span style={{ fontSize: 11.5, color: 'var(--sb-ink-4)', flexShrink: 0 }}>
+                      {mastered ? 'built' : rec ? 'practise' : 'new'}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // ── Round summary ───────────────────────────────────────────────────────
+  if (view === 'done') {
+    const bOk = log.filter(e => e.buildOk).length;
+    const cAll = log.filter(e => e.calc);
+    const cOk = cAll.filter(e => e.calcOk).length;
+    const pct = log.length ? Math.round((bOk / log.length) * 100) : 0;
+    const ring = pct >= 80 ? 'score-great' : pct >= 50 ? 'score-ok' : 'score-poor';
+    const missed = log.filter(e => !e.buildOk || e.calcOk === false);
+    return (
+      <div className="fb-wrap">
+        {header}
+        <div className="results-banner">
+          <div className={`score-ring ${ring}`}><span>{pct}%</span><span className="score-label">built</span></div>
+          <div className="results-detail">
+            <h2>{pct >= 80 ? 'Great work!' : pct >= 50 ? 'Keep it up!' : 'Keep practising!'}</h2>
+            <p>{bOk} / {log.length} formulas built correctly
+              {cAll.length > 0 && ` · ${cOk} / ${cAll.length} calculations right`}</p>
+          </div>
+        </div>
+        {missed.length > 0 && (
+          <div style={{ ...HX_CARD, display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
+            <span style={HX_LABEL}>Review these</span>
+            {missed.map(e => (
+              <div key={e.f.id} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <span style={{ fontSize: 14, fontWeight: 600 }}>{e.f.name}</span>
+                <span style={{ fontSize: 13.5, color: 'var(--sb-ink-2)' }}>{e.f.display}</span>
+                {e.calcOk === false && (
+                  <span style={{ fontSize: 12.5, color: 'var(--sb-ink-3)' }}>Calculation: {e.calc.answer}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="exam-actions" style={{ marginTop: 8 }}>
+          <button className="btn-primary" onClick={() => start(fbPickRound(ALL, FB_ROUND_SIZE))}>New round →</button>
+          <button className="btn-secondary" onClick={() => setView('home')}>All formulas</button>
+          <button className="btn-secondary" onClick={onBack}>Back to Physiology</button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Play ────────────────────────────────────────────────────────────────
+  const built = placed.map(k => pool[k]);
+  const eqState = buildOk === null ? '' : buildOk ? 'correct' : 'wrong';
+  const keyEntries = Object.entries(f.key || {});
+
+  return (
+    <div className="fb-wrap">
+      {header}
+      <div className="question-card">
+        <div className="question-topic-tag">{f.group}</div>
+        <h3 className="fb-name">{f.name}</h3>
+
+        {/* Step 1: build */}
+        <div className="fb-step">Build the formula</div>
+        <div className={'fb-eq ' + eqState}>
+          <span className="fb-lhs">{f.lhs} =</span>
+          {built.length === 0 && buildOk === null && (
+            <span className="fb-placeholder">tap tiles below</span>
+          )}
+          {built.map((t, n) => (
+            <FbTile key={n} label={t} onClick={() => unplace(n)} disabled={buildOk !== null} />
+          ))}
+        </div>
+
+        {buildOk === null && (
+          <>
+            <div className="fb-pool">
+              {pool.map((t, k) => (
+                <FbTile key={k} label={t} onClick={() => place(k)} state={placed.includes(k) ? 'used' : ''}
+                  disabled={placed.includes(k)} />
+              ))}
+            </div>
+            {keyEntries.length > 0 && (
+              <div style={{ marginTop: 12 }}>
+                <button className="fb-link" onClick={() => setShowKey(s => !s)}>
+                  {showKey ? 'Hide symbol key' : 'Show symbol key'}
+                </button>
+                {showKey && (
+                  <div className="fb-key">
+                    {keyEntries.map(([s, m]) => <span key={s}><strong>{s}</strong> {m}</span>)}
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="exam-actions" style={{ marginTop: 18 }}>
+              <button className="btn-primary" onClick={checkBuild} disabled={!placed.length}>Check</button>
+              <button className="btn-secondary" onClick={() => setPlaced([])} disabled={!placed.length}>Clear</button>
+            </div>
+          </>
+        )}
+
+        {buildOk !== null && (
+          <FbReveal ok={buildOk} title={buildOk ? 'Correct' : 'Not quite'}>
+            <div className="fb-formula">{f.display}</div>
+            {f.why && <div className="fb-why">{f.why}</div>}
+            <div className="fb-source">{f.source}</div>
+            {f.note && <div className="fb-source">Note: {f.note}</div>}
+          </FbReveal>
+        )}
+
+        {buildOk !== null && stage === 'build' && (
+          <div className="exam-actions" style={{ marginTop: 18 }}>
+            {f.calcs && f.calcs.length
+              ? <button className="btn-primary" onClick={toCalc}>Calculate with it →</button>
+              : <button className="btn-primary" onClick={next}>{pos + 1 < round.length ? 'Next formula →' : 'See results'}</button>}
+          </div>
+        )}
+
+        {/* Step 2: calculate */}
+        {stage === 'calc' && calc && (
+          <div style={{ marginTop: 26, paddingTop: 22, borderTop: '1px solid var(--sb-line-soft)' }}>
+            <div className="fb-step">Now use it</div>
+            <p className="question-text" style={{ fontSize: 17, marginBottom: 14 }}>{calc.q}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <input className="fb-input" type="text" inputMode="decimal" autoFocus
+                value={calcText} disabled={calcOk !== null}
+                onChange={e => setCalcText(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && calcOk === null && fbParseNumber(calcText) != null) checkCalc(); }}
+                placeholder="Your answer" />
+              {calc.unit && <span style={{ fontSize: 14, color: 'var(--sb-ink-3)' }}>{calc.unit}</span>}
+              {calcOk === null && (
+                <button className="btn-primary" onClick={checkCalc}
+                  disabled={fbParseNumber(calcText) == null} style={{ padding: '11px 22px' }}>Check</button>
+              )}
+            </div>
+            {calcOk !== null && (
+              <FbReveal ok={calcOk} title={calcOk ? 'Correct' : 'Not quite'}>
+                <div className="fb-formula">{calc.answer}</div>
+                {calc.why && <div className="fb-why">{calc.why}</div>}
+                <div className="fb-source">{calc.source}</div>
+                {calc.note && <div className="fb-source">Note: {calc.note}</div>}
+              </FbReveal>
+            )}
+            {calcOk !== null && (
+              <div className="exam-actions" style={{ marginTop: 18 }}>
+                <button className="btn-primary" onClick={next}>{pos + 1 < round.length ? 'Next formula →' : 'See results'}</button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// RANGES GAME  (Physiology · physiology-ranges.js)
+// ─────────────────────────────────────────────────────────────
+/* Own progress subject, like Formula Builder, so ranges never mix into the
+ * T/F weak-area practice. */
+const RG_SUBJECT = 'Physiology · Ranges';
+const RG_ROUND_SIZE = 10;
+
+const rgDecimals = step => { const s = String(step); return s.includes('.') ? s.split('.')[1].length : 0; };
+const rgSnap = (v, step, dp) => +(Math.round(v / step) * step).toFixed(dp);
+const rgFmt = (v, dp) => Number(v).toFixed(dp);
+
+function rgNiceTick(span) {
+  const raw = span / 5;
+  const p = Math.pow(10, Math.floor(Math.log10(raw)));
+  const m = raw / p;
+  return (m < 1.5 ? 1 : m < 3 ? 2 : m < 7 ? 5 : 10) * p;
+}
+
+/* A scale 3-5 times wider than the normal range, placed at a random offset so
+ * the answer never sits in the same spot (or dead centre) twice. */
+function rgMakeScale(item) {
+  const w = Math.max(item.hi - item.lo, item.step * 2);
+  const span = w * (3 + Math.random() * 2);
+  const tick = rgNiceTick(span);
+  let min = item.lo - (span - w) * (0.2 + Math.random() * 0.6);
+  min = Math.min(min, item.lo - tick);
+  if (item.floor != null) min = Math.max(min, item.floor);
+  min = Math.floor(min / tick + 1e-9) * tick;
+  if (item.floor != null) min = Math.max(min, item.floor);
+  let max = Math.ceil((min + span) / tick - 1e-9) * tick;
+  max = Math.max(max, Math.ceil((item.hi + tick) / tick - 1e-9) * tick);
+  if (item.ceil != null) max = Math.min(max, item.ceil);
+  const dp = Math.max(rgDecimals(item.step), rgDecimals(tick));
+  return { min: +min.toFixed(dp), max: +max.toFixed(dp), tick, step: item.step, dp: rgDecimals(item.step), tickDp: rgDecimals(+tick.toFixed(6)) };
+}
+
+/* spot: both ends within tolerance of the normal range (or an accepted
+ * alternative); close: both within 2.5x; off otherwise. */
+function rgGrade(item, lo, hi) {
+  const ranges = [[item.lo, item.hi], ...(item.alt || [])];
+  let best = 'off';
+  ranges.forEach(([a, b]) => {
+    const tol = Math.max(item.step, 0.15 * (b - a)) + 1e-9;
+    const e = Math.max(Math.abs(lo - a), Math.abs(hi - b));
+    const g = e <= tol ? 'spot' : e <= tol * 2.5 ? 'close' : 'off';
+    if (g === 'spot' || (g === 'close' && best === 'off')) best = g;
+  });
+  return best;
+}
+
+const rgLabKey   = it => ({ question: 'Ranges: normal range of ' + it.label, topic: 'Ranges', subtopic: it.group });
+const rgFieldKey = (n, f) => ({ question: 'Pressure map: ' + n.label + ' ' + f.label, topic: 'Pressure map', subtopic: n.label });
+
+function rgPickRound(all, size) {
+  const P = window.Progress;
+  const shuffle = a => { const b = [...a]; for (let k = b.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [b[k], b[j]] = [b[j], b[k]]; } return b; };
+  if (!P) return shuffle(all).slice(0, size);
+  const fresh = all.filter(it => !P.isMastered(RG_SUBJECT, rgLabKey(it)));
+  const pool = (fresh.length ? fresh : all).map(it => ({ it, w: P.weightFor(RG_SUBJECT, rgLabKey(it)) }));
+  const out = [];
+  while (out.length < size && pool.length) {
+    let r = Math.random() * pool.reduce((s, x) => s + x.w, 0);
+    let k = 0;
+    for (; k < pool.length - 1; k++) { r -= pool[k].w; if (r <= 0) break; }
+    out.push(pool[k].it);
+    pool.splice(k, 1);
+  }
+  return out;
+}
+
+/* Two-handle range picker. Drag anywhere on the track (nearest handle moves),
+ * or nudge each end with the - / + buttons for exact values. */
+function RgScale({ item, scale, value, onChange, result }) {
+  const ref = useRef(null);
+  const dragRef = useRef(null);
+  const span = scale.max - scale.min;
+  const pct = v => ((v - scale.min) / span) * 100;
+  const locked = result != null;
+
+  function valueAt(clientX) {
+    const r = ref.current.getBoundingClientRect();
+    const t = Math.min(1, Math.max(0, (clientX - r.left) / r.width));
+    return rgSnap(scale.min + t * span, scale.step, scale.dp);
+  }
+  function setEnd(which, v) {
+    v = Math.min(scale.max, Math.max(scale.min, rgSnap(v, scale.step, scale.dp)));
+    const next = [...value];
+    next[which] = v;
+    if (next[0] > next[1]) { next.reverse(); dragRef.current = dragRef.current == null ? null : 1 - dragRef.current; }
+    onChange(next);
+  }
+  function onDown(e) {
+    if (locked) return;
+    const v = valueAt(e.clientX);
+    const which = Math.abs(v - value[0]) <= Math.abs(v - value[1]) ? 0 : 1;
+    dragRef.current = which;
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
+    setEnd(which, v);
+  }
+  function onMove(e) {
+    if (locked || dragRef.current == null) return;
+    setEnd(dragRef.current, valueAt(e.clientX));
+  }
+  function onUp() { dragRef.current = null; }
+  function onKey(which, e) {
+    if (locked) return;
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { e.preventDefault(); setEnd(which, value[which] - scale.step); }
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { e.preventDefault(); setEnd(which, value[which] + scale.step); }
+  }
+
+  const ticks = [];
+  for (let v = scale.min; v <= scale.max + 1e-9; v += scale.tick) ticks.push(+v.toFixed(6));
+  const bandClass = result == null ? '' : result === 'spot' ? ' ok' : ' bad';
+
+  return (
+    <div className="rg-scale">
+      <div className="rg-values">
+        {[0, 1].map(which => (
+          <div key={which} className="rg-val">
+            <span className="rg-val-label">{which === 0 ? 'Low' : 'High'}</span>
+            <button className="rg-nudge" disabled={locked} onClick={() => setEnd(which, value[which] - scale.step)}>−</button>
+            <span className="rg-val-num">{rgFmt(value[which], scale.dp)}</span>
+            <button className="rg-nudge" disabled={locked} onClick={() => setEnd(which, value[which] + scale.step)}>+</button>
+          </div>
+        ))}
+        {item.unit && <span className="rg-unit">{item.unit}</span>}
+      </div>
+
+      <div className={'rg-track-wrap' + (locked ? ' locked' : '')} ref={ref}
+        onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
+        <div className="rg-track" />
+        <div className={'rg-band' + bandClass}
+          style={{ left: pct(value[0]) + '%', width: Math.max(0, pct(value[1]) - pct(value[0])) + '%' }} />
+        {[0, 1].map(which => (
+          <button key={which} className={'rg-handle' + bandClass} tabIndex={0}
+            aria-label={(which === 0 ? 'Low' : 'High') + ' end'}
+            onKeyDown={e => onKey(which, e)}
+            style={{ left: pct(value[which]) + '%' }} />
+        ))}
+      </div>
+
+      {result != null && (
+        <div className="rg-true-wrap">
+          <div className="rg-true" style={{ left: pct(item.lo) + '%', width: (pct(item.hi) - pct(item.lo)) + '%' }} />
+          {item.typical != null && <div className="rg-typical" style={{ left: pct(item.typical) + '%' }} />}
+          <span className="rg-true-label" style={{ left: Math.min(pct(item.lo), 80) + '%' }}>Normal</span>
+        </div>
+      )}
+
+      <div className="rg-ticks">
+        {ticks.map(t => (
+          <span key={t} style={{ left: pct(t) + '%' }}>{rgFmt(t, scale.tickDp)}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function RgLabs() {
+  const ALL = (window.PHYSIO_RANGES || {}).labs || [];
+  const [view, setView] = useState('home');        // home | play | done
+  const [round, setRound] = useState([]);
+  const [pos, setPos] = useState(0);
+  const [scale, setScale] = useState(null);
+  const [value, setValue] = useState([0, 0]);
+  const [result, setResult] = useState(null);
+  const [log, setLog] = useState([]);
+  const [, force] = useState(0);
+
+  useEffect(() => {
+    if (!window.Progress) return;
+    return window.Progress.subscribe(() => force(n => n + 1));
+  }, []);
+
+  function load(list, k) {
+    const it = list[k];
+    const sc = rgMakeScale(it);
+    const span = sc.max - sc.min;
+    setPos(k);
+    setScale(sc);
+    setValue([rgSnap(sc.min + span * 0.25, sc.step, sc.dp), rgSnap(sc.min + span * 0.75, sc.step, sc.dp)]);
+    setResult(null);
+  }
+  function start(list) {
+    if (!list.length) return;
+    setRound(list); setLog([]); setView('play'); load(list, 0);
+  }
+  function check() {
+    const it = round[pos];
+    const g = rgGrade(it, value[0], value[1]);
+    setResult(g);
+    if (window.Progress) window.Progress.record(RG_SUBJECT, rgLabKey(it), g === 'spot');
+    setLog(l => [...l, { it, g, value: [...value] }]);
+  }
+  function next() {
+    if (pos + 1 < round.length) load(round, pos + 1);
+    else { if (window.Progress) window.Progress.flush(); setView('done'); }
+  }
+
+  const P = window.Progress;
+
+  if (view === 'home') {
+    const mastered = P ? ALL.filter(it => P.isMastered(RG_SUBJECT, rgLabKey(it))).length : 0;
+    const groups = [];
+    ALL.forEach(it => {
+      let g = groups.find(x => x.name === it.group);
+      if (!g) { g = { name: it.group, items: [] }; groups.push(g); }
+      g.items.push(it);
+    });
+    return (
+      <div>
+        <div style={{ ...HX_CARD, display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 22 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <span style={HX_LABEL}>How it works</span>
+            <span style={{ fontSize: 11.5, color: 'var(--sb-ink-4)' }}>{mastered} of {ALL.length} known</span>
+          </div>
+          <span style={{ fontSize: 14, color: 'var(--sb-ink-2)', lineHeight: 1.6 }}>
+            Drag the two handles to mark the normal range on the scale, or use − and + for exact values.
+            Check to see the real range over yours. The scale moves every time, so the answer is never in
+            the same place.
+          </span>
+          <button className="hx-cta" onClick={() => start(rgPickRound(ALL, RG_ROUND_SIZE))}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+                     background: 'var(--sb-ink)', border: '1px solid var(--sb-ink)', borderRadius: 10,
+                     padding: '11px 14px', cursor: 'pointer', width: '100%', fontFamily: 'inherit' }}>
+            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--sb-cream)' }}>Start a round</span>
+            <span style={{ fontSize: 11.5, color: 'var(--sb-ink-4)' }}>{Math.min(RG_ROUND_SIZE, ALL.length)} values →</span>
+          </button>
+        </div>
+        <span style={{ ...HX_LABEL, display: 'block', marginBottom: 6 }}>Or practise one value</span>
+        {groups.map(g => (
+          <div key={g.name} style={{ marginTop: 14 }}>
+            <div style={{ fontSize: 12, color: 'var(--sb-ink-3)', marginBottom: 4 }}>{g.name}</div>
+            <div className="hx-two" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 28 }}>
+              {g.items.map(it => {
+                const rec = P ? P.recordFor(RG_SUBJECT, rgLabKey(it)) : null;
+                const m = P ? P.isMastered(RG_SUBJECT, rgLabKey(it)) : false;
+                return (
+                  <div key={it.id} className="hx-row" onClick={() => start([it])}
+                    style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '10px 6px',
+                             borderBottom: '1px solid rgba(0,0,0,.06)', cursor: 'pointer', borderRadius: 4 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+                                   background: m ? 'var(--sb-ink)' : rec ? 'var(--sb-ink-4)' : '#d9d6cd' }} />
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 13.5 }}>{it.label}</span>
+                    <span style={{ fontSize: 11.5, color: 'var(--sb-ink-4)', flexShrink: 0 }}>{m ? 'known' : rec ? 'practise' : 'new'}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (view === 'done') {
+    const spot = log.filter(e => e.g === 'spot').length;
+    const pct = log.length ? Math.round((spot / log.length) * 100) : 0;
+    const ring = pct >= 80 ? 'score-great' : pct >= 50 ? 'score-ok' : 'score-poor';
+    const missed = log.filter(e => e.g !== 'spot');
+    return (
+      <div>
+        <div className="results-banner">
+          <div className={`score-ring ${ring}`}><span>{pct}%</span><span className="score-label">score</span></div>
+          <div className="results-detail">
+            <h2>{pct >= 80 ? 'Great work!' : pct >= 50 ? 'Keep it up!' : 'Keep practising!'}</h2>
+            <p>{spot} / {log.length} ranges spot on
+              {log.filter(e => e.g === 'close').length > 0 && ` · ${log.filter(e => e.g === 'close').length} close`}</p>
+          </div>
+        </div>
+        {missed.length > 0 && (
+          <div style={{ ...HX_CARD, display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
+            <span style={HX_LABEL}>Review these</span>
+            {missed.map(e => (
+              <div key={e.it.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', fontSize: 13.5 }}>
+                <span style={{ fontWeight: 600 }}>{e.it.label}</span>
+                <span style={{ color: 'var(--sb-ink-2)' }}>
+                  {e.it.lo}–{e.it.hi} {e.it.unit}
+                  <span style={{ color: 'var(--sb-ink-4)' }}> · you: {e.value[0]}–{e.value[1]}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="exam-actions" style={{ marginTop: 8 }}>
+          <button className="btn-primary" onClick={() => start(rgPickRound(ALL, RG_ROUND_SIZE))}>New round →</button>
+          <button className="btn-secondary" onClick={() => setView('home')}>All values</button>
+        </div>
+      </div>
+    );
+  }
+
+  const it = round[pos];
+  return (
+    <div className="question-card">
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'baseline' }}>
+        <div className="question-topic-tag">{it.group}</div>
+        <span style={{ fontSize: 12, color: 'var(--sb-ink-4)' }}>{pos + 1} of {round.length}</span>
+      </div>
+      <h3 className="fb-name" style={{ marginBottom: 6 }}>{it.label}</h3>
+      <div className="fb-step" style={{ marginBottom: 18 }}>Mark the normal range</div>
+      <RgScale item={it} scale={scale} value={value} onChange={setValue} result={result} />
+      {result == null ? (
+        <div className="exam-actions" style={{ marginTop: 22 }}>
+          <button className="btn-primary" onClick={check}>Check</button>
+          <button className="btn-secondary" onClick={() => setView('home')}>End round</button>
+        </div>
+      ) : (
+        <>
+          <FbReveal ok={result === 'spot'} title={result === 'spot' ? 'Spot on' : result === 'close' ? 'Close' : 'Not quite'}>
+            <div className="fb-formula">{it.answer}</div>
+            <div className="fb-source">{it.source}</div>
+            {it.note && <div className="fb-source">Note: {it.note}</div>}
+          </FbReveal>
+          <div className="exam-actions" style={{ marginTop: 18 }}>
+            <button className="btn-primary" onClick={next}>{pos + 1 < round.length ? 'Next value →' : 'See results'}</button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* Node positions in the circulation diagram (viewBox 0 0 900 380). Pulmonary
+ * loop on top, systemic loop on the bottom, heart chambers on the sides. */
+const RG_MAP_POS = {
+  rv: [95, 50], pa: [335, 50], pcap: [575, 50], la: [805, 50],
+  ra: [95, 190], lv: [805, 190], glom: [530, 190],
+  vc: [95, 330], veins: [275, 330], caps: [455, 330], arterioles: [635, 330], aorta: [805, 330],
+};
+const RG_MAP_FLOW = [['ra', 'rv'], ['rv', 'pa'], ['pa', 'pcap'], ['pcap', 'la'], ['la', 'lv'], ['lv', 'aorta'],
+                     ['aorta', 'arterioles'], ['arterioles', 'caps'], ['caps', 'veins'], ['veins', 'vc'], ['vc', 'ra']];
+const RG_MAP_SHORT = {
+  lv: 'Left ventricle', aorta: 'Aorta', arterioles: 'Arterioles', caps: 'Systemic capillaries',
+  glom: 'Glomerular capillaries', veins: 'Small veins', vc: 'Venae cavae', ra: 'Right atrium',
+  rv: 'Right ventricle', pa: 'Pulmonary artery', pcap: 'Pulmonary capillaries', la: 'Left atrium / pulm. veins',
+};
+
+function RgPressureMap() {
+  const data = window.PHYSIO_RANGES || {};
+  const NODES = data.map || [];
+  const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
+  const [sel, setSel] = useState(null);
+  const [inputs, setInputs] = useState({});
+  const [checked, setChecked] = useState({});      // nodeId -> [bool per field]
+  const panelRef = useRef(null);
+
+  const node = sel ? byId[sel] : null;
+  const order = ['lv', 'aorta', 'arterioles', 'caps', 'glom', 'veins', 'vc', 'ra', 'rv', 'pa', 'pcap', 'la'];
+
+  function open(id) {
+    setSel(id);
+    setTimeout(() => { if (panelRef.current) panelRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 30);
+  }
+  function check() {
+    const res = node.fields.map((f, k) => {
+      const v = fbParseNumber(inputs[node.id + ':' + k]);
+      const ok = v != null && v >= f.accept[0] - 1e-9 && v <= f.accept[1] + 1e-9;
+      if (window.Progress) window.Progress.record(RG_SUBJECT, rgFieldKey(node, f), ok);
+      return ok;
+    });
+    setChecked(c => ({ ...c, [node.id]: res }));
+  }
+  function retry() {
+    setChecked(c => { const n = { ...c }; delete n[node.id]; return n; });
+    setInputs(v => { const n = { ...v }; node.fields.forEach((_, k) => { delete n[node.id + ':' + k]; }); return n; });
+  }
+  function nextNode() {
+    const rest = order.filter(id => !checked[id] && id !== sel);
+    open(rest.length ? rest[0] : order[(order.indexOf(sel) + 1) % order.length]);
+  }
+  const state = id => {
+    const c = checked[id];
+    if (!c) return '';
+    return c.every(Boolean) ? 'ok' : 'bad';
+  };
+  const panel = node && (
+          <div className="question-card" style={{ marginTop: 16 }}>
+            <h3 className="fb-name" style={{ marginBottom: 14 }}>{node.label}</h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14 }}>
+              {node.fields.map((f, k) => {
+                const res = checked[node.id];
+                const st = res ? (res[k] ? ' ok' : ' bad') : '';
+                return (
+                  <label key={k} className={'pm-field' + st}>
+                    <span className="pm-field-label">{f.label}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <input className="fb-input" style={{ width: 110 }} type="text" inputMode="decimal"
+                        value={inputs[node.id + ':' + k] || ''} disabled={!!res}
+                        onChange={e => setInputs(v => ({ ...v, [node.id + ':' + k]: e.target.value }))}
+                        onKeyDown={e => { if (e.key === 'Enter' && !res) check(); }} />
+                      <span style={{ fontSize: 13, color: 'var(--sb-ink-3)' }}>mmHg</span>
+                    </span>
+                    {res && <span className="pm-field-answer">{f.answer}</span>}
+                  </label>
+                );
+              })}
+            </div>
+            {!checked[node.id] ? (
+              <div className="exam-actions" style={{ marginTop: 18 }}>
+                <button className="btn-primary" onClick={check}
+                  disabled={node.fields.some((_, k) => fbParseNumber(inputs[node.id + ':' + k]) == null)}>Check</button>
+              </div>
+            ) : (
+              <>
+                <FbReveal ok={checked[node.id].every(Boolean)} title={checked[node.id].every(Boolean) ? 'Correct' : 'Not quite'}>
+                  <div className="fb-formula">{node.answer}</div>
+                  <div className="fb-source">{node.source}</div>
+                  {node.note && <div className="fb-source">Note: {node.note}</div>}
+                </FbReveal>
+                <div className="exam-actions" style={{ marginTop: 18 }}>
+                  <button className="btn-primary" onClick={nextNode}>Next location →</button>
+                  <button className="btn-secondary" onClick={retry}>Try again</button>
+                </div>
+              </>
+            )}
+          </div>
+        );
+  const done = Object.keys(checked).length;
+  const allOk = Object.values(checked).filter(c => c.every(Boolean)).length;
+
+  const nodeEl = id => {
+    const [x, y] = RG_MAP_POS[id];
+    const label = RG_MAP_SHORT[id];
+    const words = label.split(' ');
+    const lines = label.length > 14 && words.length > 1
+      ? [words.slice(0, Math.ceil(words.length / 2)).join(' '), words.slice(Math.ceil(words.length / 2)).join(' ')]
+      : [label];
+    return (
+      <g key={id} className={'pm-node ' + state(id) + (sel === id ? ' sel' : '')} onClick={() => open(id)}
+        role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter') open(id); }}>
+        <rect x={x - 78} y={y - 25} width={156} height={50} rx={12} />
+        {lines.map((l, k) => (
+          <text key={k} x={x} y={y + (lines.length === 1 ? 5 : k === 0 ? -4 : 14)} textAnchor="middle">{l}</text>
+        ))}
+      </g>
+    );
+  };
+
+  const edge = ([a, b], k) => {
+    const [x1, y1] = RG_MAP_POS[a], [x2, y2] = RG_MAP_POS[b];
+    const dx = Math.sign(x2 - x1), dy = Math.sign(y2 - y1);
+    const sx = x1 + dx * 80, sy = y1 + dy * 27, ex = x2 - dx * 84, ey = y2 - dy * 31;
+    return <line key={k} x1={sx} y1={sy} x2={ex} y2={ey} className="pm-edge" markerEnd="url(#pm-arrow)" />;
+  };
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 13.5, color: 'var(--sb-ink-2)' }}>Tap a location and enter its normal pressure in mmHg.</span>
+        <span style={{ fontSize: 12, color: 'var(--sb-ink-4)' }}>{allOk} of {NODES.length} right{done > allOk ? ` · ${done - allOk} to review` : ''}</span>
+      </div>
+
+      <div className="pm-svg-wrap">
+        <svg viewBox="0 0 900 380" className="pm-svg">
+          <defs>
+            <marker id="pm-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" className="pm-arrowhead" />
+            </marker>
+          </defs>
+          <text x={450} y={14} textAnchor="middle" className="pm-caption">Pulmonary circulation</text>
+          <text x={450} y={377} textAnchor="middle" className="pm-caption">Systemic circulation</text>
+          {RG_MAP_FLOW.map(edge)}
+          <line x1={635} y1={305} x2={560} y2={218} className="pm-edge dashed" markerEnd="url(#pm-arrow)" />
+          {Object.keys(RG_MAP_POS).filter(id => byId[id]).map(nodeEl)}
+        </svg>
+      </div>
+
+      <div className="pm-list">
+        {[['Left heart & systemic circulation', ['lv', 'aorta', 'arterioles', 'caps', 'glom', 'veins', 'vc']],
+          ['Right heart & pulmonary circulation', ['ra', 'rv', 'pa', 'pcap', 'la']]].map(([title, ids]) => (
+          <div key={title} style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 12, color: 'var(--sb-ink-3)', marginBottom: 6 }}>{title}</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {ids.filter(id => byId[id]).map(id => (
+                <React.Fragment key={id}>
+                  <button className={'pm-row ' + state(id) + (sel === id ? ' sel' : '')} onClick={() => setSel(sel === id ? null : id)}>
+                    <span>{byId[id].label}</span>
+                    <span className="pm-row-state">{state(id) === 'ok' ? 'right' : state(id) === 'bad' ? 'review' : ''}</span>
+                  </button>
+                  {sel === id && <div style={{ marginBottom: 6 }}>{panel}</div>}
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div ref={panelRef} className="pm-panel-wide">{node && panel}</div>
+
+      {(data.facts || []).length > 0 && (
+        <div style={{ ...HX_CARD, marginTop: 22, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <span style={HX_LABEL}>Also know</span>
+          {data.facts.map((fct, k) => (
+            <div key={k} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span style={{ fontSize: 13.5, color: 'var(--sb-ink-2)', lineHeight: 1.55 }}>{fct.text}</span>
+              <span className="fb-source">{fct.source}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RangesGame({ onBack }) {
+  const [tab, setTab] = useState('labs');
+  const data = window.PHYSIO_RANGES || {};
+  return (
+    <div className="fb-wrap">
+      <div className="fb-head">
+        <button className="topbar-back" onClick={onBack}>← Physiology</button>
+        <div className="fb-head-row">
+          <h2 className="fb-title">Ranges</h2>
+          <span className="fb-head-meta">{(data.labs || []).length} normal ranges · {(data.map || []).length} pressure locations</span>
+        </div>
+        <div className="hx-tabs" style={{ display: 'flex', gap: 4, marginTop: 12, marginBottom: -13 }}>
+          {[['labs', 'Normal ranges'], ['map', 'Pressure map']].map(([k, label]) => (
+            <button key={k} className="hx-tab" onClick={() => setTab(k)}
+              style={{ fontWeight: tab === k ? 700 : 400,
+                       color: tab === k ? 'var(--sb-ink)' : 'var(--sb-ink-3)',
+                       borderBottom: '2px solid ' + (tab === k ? 'var(--sb-ink)' : 'transparent') }}>{label}</button>
+          ))}
+        </div>
+      </div>
+      {tab === 'labs' ? <RgLabs /> : <RgPressureMap />}
     </div>
   );
 }
@@ -3065,6 +4405,23 @@ const SUBJECT_PAGES = {
     },
     counter: () => (window.MUSCLE_BANK || []).length + ' muscles',
   },
+
+  Physiology: {
+    groups: [
+      { label: 'True / False', names: ['Blood', 'Cardiovascular'] },
+    ],
+    tools: () => [
+      { type: 'formula_builder', name: 'Formula Builder',
+        meta: (window.PHYSIO_FORMULAS || []).length + ' formulas · build each from tiles, then calculate with it' },
+      { type: 'ranges_game', name: 'Ranges',
+        meta: ((window.PHYSIO_RANGES || {}).labs || []).length + ' normal ranges on a scale · pressure map of the circulation' },
+    ],
+    unit: 'statements',
+    counter: () => {
+      const tf = window.PHYSIO_TF || {};
+      return Object.values(tf).reduce((n, list) => n + (list || []).length, 0) + ' T/F questions';
+    },
+  },
 };
 
 const HX_LABEL = {
@@ -3114,7 +4471,7 @@ function HxExamRow({ exam, started, onClick }) {
       <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, overflow: 'hidden',
                      textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{exam.name}</span>
       <span style={{ fontSize: 11.5, color: 'var(--sb-ink-4)', flexShrink: 0 }}>
-        {exam.questions.length ? exam.questions.length + ' q' : 'soon'}
+        {exam.countLabel || (exam.questions.length ? exam.questions.length + ' q' : 'soon')}
       </span>
     </div>
   );
@@ -3169,7 +4526,7 @@ function SubjectPage({ subject, config, onSelectExam, onBack }) {
         <button className="topbar-back" onClick={onBack}>← Subjects</button>
         <span style={{ flex: 1 }} />
         <span style={{ fontSize: 12.5, color: 'var(--sb-ink-4)' }}>
-          {poolSize.toLocaleString()} questions{config.counter ? ' · ' + config.counter() : ''}
+          {poolSize.toLocaleString()} {config.unit || 'questions'}{config.counter ? ' · ' + config.counter() : ''}
         </span>
       </div>
 
@@ -10699,6 +12056,33 @@ const PAGE_INSTRUCTIONS = {
       'Use "Show again later" to defer a plate you want another pass at this session.',
     ],
   },
+  ranges_game: {
+    title: 'Ranges',
+    steps: [
+      'Normal ranges: drag the two handles to mark the normal range on the scale, or use − and + for exact values.',
+      'Press Check. The real range appears under yours: spot on, close, or not quite. The scale moves each time.',
+      'Pressure map: tap a chamber or vessel in the circulation and type its normal pressure in mmHg.',
+      'Values you have not got right yet come first in new rounds.',
+    ],
+  },
+  formula_builder: {
+    title: 'Formula Builder',
+    steps: [
+      'You see the name of a formula and its left-hand side, for example "CO =".',
+      'Tap tiles to build the right-hand side. Some tiles are decoys. Tap a placed tile to take it back.',
+      'Press Check: green is right, red is wrong, and the correct formula appears with its source.',
+      'Then solve a number problem with the same formula. Formulas you have not built correctly yet come first in new rounds.',
+    ],
+  },
+  tf_exam: {
+    title: 'True / False',
+    steps: [
+      'Each question shows its stem first, with the statements listed underneath.',
+      'Mark every statement True or False. Tap the same choice again to clear it.',
+      'Press Submit at the bottom. Green is right, red is wrong, grey was left blank and is not counted.',
+      'Explanations appear under each statement after you submit. Statements you got right are hidden next time.',
+    ],
+  },
   exam: {
     title: 'Exam',
     steps: [
@@ -14234,7 +15618,7 @@ function App() {
       const key = val.type || 'exam';
       showInstructionsThen(key, () => setSpecialMode(val));
     } else {
-      showInstructionsThen('exam', () => { setExamIndex(val); setExamNonce(n => n + 1); });
+      showInstructionsThen(isTfSelection(subject, val) ? 'tf_exam' : 'exam', () => { setExamIndex(val); setExamNonce(n => n + 1); });
     }
   }
   /* Weak-area practice: skips the instruction overlay because it is only ever
@@ -14310,6 +15694,10 @@ function App() {
             ? <EpithelialGame onBack={handleBack} />
           : specialMode?.type === 'hematopoiesis_map'
             ? <HematopoiesisMap onBack={handleBack} />
+          : specialMode?.type === 'ranges_game'
+            ? <RangesGame onBack={handleBack} />
+          : specialMode?.type === 'formula_builder'
+            ? <FormulaBuilder onBack={handleBack} />
           : specialMode?.type === 'instant_feedback'
             ? <InstantFeedbackExam subject={subject} examIndex={specialMode.examIndex} onBack={handleBack} />
           : !subject
@@ -14323,6 +15711,14 @@ function App() {
               ? <ExamPicker subject={subject} onSelectExam={handleExamSelect} onBack={() => { setSubject(null); setExamIndex(null); setSpecialMode(null); }} />
               /* keyed so switching exams (or jumping to weak-area practice)
                  remounts and rebuilds the question set from fresh progress */
+              : isTfSelection(subject, examIndex)
+              ? <TrueFalseExam
+                  key={`tf:${subject}:${examIndex}:${examNonce}`}
+                  subject={subject}
+                  examIndex={examIndex}
+                  onBack={handleBack}
+                  onFocusWeak={handleFocusWeak}
+                />
               : <ExamScreen
                   key={`${subject}:${examIndex}:${examNonce}`}
                   subject={subject}
