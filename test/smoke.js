@@ -64,7 +64,7 @@ run(read('progress.js'), 'progress.js');
   'muscle-bank.js', 'artery-game.js', 'artery-assembly-data.js', 'timeline-data.js',
   'dissection-questions.js', 'brain-atlas-data.js', 'brain-labels.js',
   'brain-mri-quiz-data.js', 'vein-formation-data.js', 'histology-slides-data.js',
-  'histology-slide-ids.js', 'hematopoiesis-map-data.js', 'physiology-tf.js', 'physiology-formulas.js', 'physiology-ranges.js',
+  'histology-slide-ids.js', 'hematopoiesis-map-data.js', 'physiology-tf.js', 'physiology-formulas.js', 'physiology-ranges.js', 'physiology-glossary.js',
 ].forEach(f => run(read(f), f));
 
 // Expose the internals the test needs, then evaluate the app.
@@ -73,7 +73,8 @@ run(
   'QUESTION_BANK, dedupeByStem, sessionBreakdown, WEAK_FOCUS_SIZE, ' +
   'ExamScreen, ResultsBanner, WeakAreaCard, QuestionCard, YEARS, ' +
   'isTfSelection, tfGroupByStem, TrueFalseExam, FormulaBuilder, fbCanon, fbIsCorrect, ' +
-  'fbCalcCorrect, fbParseNumber, SUBJECT_PAGES, RangesGame, rgGrade, rgMakeScale };',
+  'fbCalcCorrect, fbParseNumber, SUBJECT_PAGES, RangesGame, rgGrade, rgMakeScale, physioTermsIn, ' +
+  'PhysioAbout, UnitQuestion, RgMapPanel };',
   'app'
 );
 
@@ -276,7 +277,24 @@ for (let k = 0; k < 40; k++) RG.labs.forEach(it => {
 });
 check('scale always contains the normal range and respects limits', scaleOk);
 check('scale position varies between rounds', centers.size > 2, 'distinct mins ' + centers.size);
-check('pressure map fields have accept ranges', RG.map.every(n => n.fields.every(f => f.accept[0] <= f.accept[1])));
+check('every map location has a range or a single value', RG.map.every(n => n.range || n.mean));
+check('map range ends contain their own value', RG.map.filter(n => n.range).every(n =>
+  ['low', 'high'].every(k => n.range[k].accept[0] <= n.range[k].value && n.range[k].value <= n.range[k].accept[1])));
+check('at least 9 map locations ask for a range', RG.map.filter(n => n.range).length >= 9);
+
+console.log('\n=== units + glossary ===');
+const GL = w.PHYSIO_GLOSSARY || {};
+const unitOk = it => Array.isArray(it.units) && it.units.length === 4 && new Set(it.units).size === 4;
+check('every range has 4 unit options, correct one matches', RG.labs.every(it => unitOk(it) && it.units[0] === (it.unit || 'no unit')));
+check('every map location has unit options (mmHg first)', RG.map.every(n => unitOk(n) && n.units[0] === 'mmHg'));
+check('every formula has unit options', (w.PHYSIO_FORMULAS || []).every(unitOk));
+const allTerms = [...RG.labs, ...RG.map, ...(w.PHYSIO_FORMULAS || [])].flatMap(x => x.terms || []);
+check('every linked term exists in the glossary', allTerms.length > 50 && allTerms.every(t => GL[t]), allTerms.filter(t => !GL[t]).join());
+check('every glossary entry explains meaning, importance and difference', Object.values(GL).every(e => e.full && e.why && e.vs));
+check('abbreviations found in T/F text', T.physioTermsIn('To calculate MCHC, which data are useful? INR and aPTT').join() .includes('MCHC')
+      && T.physioTermsIn('INR and aPTT').length === 2);
+check('MCH does not match inside MCHC', !T.physioTermsIn('MCHC only').includes('MCH'));
+check('CO does not match CO2', !T.physioTermsIn('O2 and CO2 transport').includes('CO'));
 check('Ranges is a Physiology tool', T.SUBJECT_PAGES.Physiology.tools().some(t => t.type === 'ranges_game'));
 
 console.log('\n=== render ===');
@@ -299,7 +317,13 @@ try {
 } catch (e) { renderErr = e; }
 let tfHost, tfErr = null, fbHost, fbErr = null;
 try { fbHost = mount(R.createElement(w.__test.FormulaBuilder, { onBack() {} })); } catch (e) { fbErr = e; }
-let rgHost, rgErr = null;
+let rgHost, rgErr = null, abHost, abErr = null, mpHost, mpErr = null;
+try { abHost = mount(R.createElement(w.__test.PhysioAbout, { keys: ['MCHC', 'MCH'] })); } catch (e) { abErr = e; }
+try {
+  const n = (w.PHYSIO_RANGES.map || []).find(x => x.id === 'aorta');
+  mpHost = mount(R.createElement(w.__test.RgMapPanel, { node: n, st: { unit: 'mmHg', value: [80, 120],
+    scale: { min: 0, max: 200, tick: 50, step: 1, dp: 0, tickDp: 0 } }, setSt() {} }));
+} catch (e) { mpErr = e; }
 try { rgHost = mount(R.createElement(w.__test.RangesGame, { onBack() {} })); } catch (e) { rgErr = e; }
 try {
   tfHost = mount(R.createElement(w.__test.TrueFalseExam, { subject: 'Physiology', examIndex: 1, onBack() {} }));
@@ -313,6 +337,12 @@ setTimeout(() => {
   check('TrueFalseExam renders without throwing', !tfErr, tfErr && tfErr.message);
   check('FormulaBuilder renders without throwing', !fbErr, fbErr && fbErr.message);
   check('RangesGame renders without throwing', !rgErr, rgErr && rgErr.message);
+  const abt = abHost ? abHost.textContent : '';
+  check('glossary box shows meaning, importance and difference', !abErr && /Mean corpuscular hemoglobin concentration/.test(abt)
+        && /Why it matters/.test(abt) && /Not to confuse with/.test(abt), (abErr && abErr.message) || abt.slice(0, 120));
+  const mpt = mpHost ? mpHost.textContent : '';
+  check('pressure map panel shows unit step, range step and mean', !mpErr && /Which unit/.test(mpt) && /pressure range/.test(mpt) && /Mean pressure/.test(mpt),
+        (mpErr && mpErr.message) || mpt.slice(0, 160));
   const rgt = rgHost ? rgHost.textContent : '';
   check('Ranges home shows both tabs', /Normal ranges/.test(rgt) && /Pressure map/.test(rgt) && /Sodium/.test(rgt), rgt.slice(0, 160));
   const fbt = fbHost ? fbHost.textContent : '';

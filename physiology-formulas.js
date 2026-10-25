@@ -58,7 +58,18 @@ window.PHYSIO_FORMULAS = [
    "R": "resistance",
    "P": "pressure",
    "r⁴": "radius to the 4th power"
-  }
+  },
+  "units": [
+   "ml/min",
+   "mmHg",
+   "mmHg·min/ml",
+   "cm/s"
+  ],
+  "terms": [
+   "Ohm",
+   "Poiseuille"
+  ],
+  "unitNote": "Also written as L/min or ml/s; any volume per time."
  },
  {
   "id": "tpr",
@@ -129,7 +140,20 @@ window.PHYSIO_FORMULAS = [
    "ΔP": "pressure difference",
    "CO": "cardiac output",
    "HR": "heart rate"
-  }
+  },
+  "units": [
+   "mmHg·min/L",
+   "mmHg",
+   "L/min",
+   "ml/mmHg"
+  ],
+  "terms": [
+   "TPR",
+   "MAP",
+   "RAP",
+   "CO"
+  ],
+  "unitNote": "Guyton uses PRU (mmHg per ml/s): normal ≈ 1 PRU. In mmHg·min/L the normal is ≈ 20."
  },
  {
   "id": "ap",
@@ -184,7 +208,18 @@ window.PHYSIO_FORMULAS = [
    "CO": "cardiac output",
    "TPR": "total peripheral resistance",
    "SV": "stroke volume"
-  }
+  },
+  "units": [
+   "mmHg",
+   "L/min",
+   "mmHg·min/L",
+   "ml"
+  ],
+  "terms": [
+   "MAP",
+   "CO",
+   "TPR"
+  ]
  },
  {
   "id": "map",
@@ -257,7 +292,19 @@ window.PHYSIO_FORMULAS = [
    "DP": "diastolic pressure",
    "SP": "systolic pressure",
    "PP": "pulse pressure"
-  }
+  },
+  "units": [
+   "mmHg",
+   "mmHg·min/L",
+   "L/min",
+   "ml"
+  ],
+  "terms": [
+   "MAP",
+   "SP",
+   "DP",
+   "PP"
+  ]
  },
  {
   "id": "pp",
@@ -332,7 +379,19 @@ window.PHYSIO_FORMULAS = [
    "DP": "diastolic pressure",
    "SV": "stroke volume",
    "C": "arterial compliance"
-  }
+  },
+  "units": [
+   "mmHg",
+   "ml/mmHg",
+   "ml",
+   "%"
+  ],
+  "terms": [
+   "PP",
+   "SP",
+   "DP",
+   "Compliance"
+  ]
  },
  {
   "id": "sv",
@@ -387,7 +446,18 @@ window.PHYSIO_FORMULAS = [
    "EDV": "end-diastolic volume",
    "ESV": "end-systolic volume",
    "HR": "heart rate"
-  }
+  },
+  "units": [
+   "ml",
+   "L/min",
+   "mmHg",
+   "%"
+  ],
+  "terms": [
+   "SV",
+   "EDV",
+   "ESV"
+  ]
  },
  {
   "id": "co",
@@ -468,7 +538,18 @@ window.PHYSIO_FORMULAS = [
    "HR": "heart rate",
    "EDV": "end-diastolic volume",
    "MAP": "mean arterial pressure"
-  }
+  },
+  "units": [
+   "L/min",
+   "ml",
+   "mmHg",
+   "beats/min"
+  ],
+  "terms": [
+   "CO",
+   "SV",
+   "HR"
+  ]
  },
  {
   "id": "ef",
@@ -549,7 +630,19 @@ window.PHYSIO_FORMULAS = [
    "EDV": "end-diastolic volume",
    "ESV": "end-systolic volume",
    "CO": "cardiac output"
-  }
+  },
+  "units": [
+   "% (a ratio, no unit)",
+   "ml",
+   "L/min",
+   "mmHg"
+  ],
+  "terms": [
+   "EF",
+   "SV",
+   "EDV"
+  ],
+  "unitNote": "Volume ÷ volume, so the units cancel. Written as a fraction (0.6) or a percentage (60%)."
  },
  {
   "id": "sw",
@@ -595,7 +688,18 @@ window.PHYSIO_FORMULAS = [
    "Pao": "mean aortic pressure",
    "HR": "heart rate",
    "EDV": "end-diastolic volume"
-  }
+  },
+  "units": [
+   "mmHg·ml (energy, ≈ J)",
+   "mmHg",
+   "L/min",
+   "mmHg/ml"
+  ],
+  "terms": [
+   "SW",
+   "SV"
+  ],
+  "unitNote": "1 mmHg·ml ≈ 1.333 × 10⁻⁴ J."
  },
  {
   "id": "mw",
@@ -648,7 +752,19 @@ window.PHYSIO_FORMULAS = [
    "CO": "cardiac output",
    "Pao": "mean aortic pressure",
    "SV": "stroke volume"
-  }
+  },
+  "units": [
+   "mmHg·L/min (power, ≈ W)",
+   "mmHg·ml",
+   "L/min",
+   "mmHg"
+  ],
+  "terms": [
+   "MinuteWork",
+   "SW",
+   "CO"
+  ],
+  "unitNote": "Work per time is power: 490 mmHg·L/min ≈ 1.09 W."
  },
  {
   "id": "lap",
@@ -716,7 +832,18 @@ window.PHYSIO_FORMULAS = [
    "r": "radius",
    "h": "wall thickness",
    "r⁴": "radius to the 4th power"
-  }
+  },
+  "units": [
+   "force per length (N/m)",
+   "mmHg",
+   "N",
+   "ml/mmHg"
+  ],
+  "terms": [
+   "Laplace",
+   "Afterload"
+  ],
+  "unitNote": "Pressure (force/area) × radius (length) = force per unit length of wall."
  },
  {
   "id": "comp",
@@ -771,7 +898,17 @@ window.PHYSIO_FORMULAS = [
    "ΔV": "volume change",
    "ΔP": "pressure difference",
    "V₀": "original volume"
-  }
+  },
+  "units": [
+   "ml/mmHg",
+   "mmHg/ml",
+   "per mmHg",
+   "mmHg"
+  ],
+  "terms": [
+   "Compliance",
+   "Distensibility"
+  ]
  },
  {
   "id": "dist",
@@ -820,7 +957,18 @@ window.PHYSIO_FORMULAS = [
    "ΔV": "volume change",
    "ΔP": "pressure difference",
    "V₀": "original volume"
-  }
+  },
+  "units": [
+   "per mmHg (fraction of volume)",
+   "ml/mmHg",
+   "mmHg/ml",
+   "ml"
+  ],
+  "terms": [
+   "Distensibility",
+   "Compliance"
+  ],
+  "unitNote": "ΔV/V₀ is a fraction with no unit, so distensibility is \"per mmHg\"."
  },
  {
   "id": "pois",
@@ -931,7 +1079,17 @@ window.PHYSIO_FORMULAS = [
    "η": "viscosity",
    "l": "vessel length",
    "r²": "radius squared"
-  }
+  },
+  "units": [
+   "ml/min",
+   "mmHg",
+   "cm/s",
+   "poise"
+  ],
+  "terms": [
+   "Poiseuille",
+   "Ohm"
+  ]
  },
  {
   "id": "re",
@@ -998,7 +1156,17 @@ window.PHYSIO_FORMULAS = [
    "η": "viscosity",
    "l": "vessel length",
    "π": "pi"
-  }
+  },
+  "units": [
+   "no unit",
+   "cm/s",
+   "poise",
+   "g/ml"
+  ],
+  "terms": [
+   "Re"
+  ],
+  "unitNote": "All units cancel, which is why the same cut-offs (≈ 2000) work in any vessel."
  },
  {
   "id": "vel",
@@ -1066,7 +1234,16 @@ window.PHYSIO_FORMULAS = [
    "A": "total cross-sectional area",
    "r": "radius",
    "ΔP": "pressure difference"
-  }
+  },
+  "units": [
+   "cm/s",
+   "ml/min",
+   "cm²",
+   "L/min"
+  ],
+  "terms": [
+   "Velocity"
+  ]
  },
  {
   "id": "mcv",
@@ -1127,7 +1304,19 @@ window.PHYSIO_FORMULAS = [
    "Hct": "hematocrit (L/L)",
    "RBC": "red cell count (×10¹²/L)",
    "Hb": "hemoglobin"
-  }
+  },
+  "units": [
+   "fL",
+   "pg",
+   "g/dL",
+   "%"
+  ],
+  "terms": [
+   "MCV",
+   "Hct",
+   "RBC"
+  ],
+  "unitNote": "1 fL = 10⁻¹⁵ L = 1 µm³."
  },
  {
   "id": "mch",
@@ -1185,7 +1374,19 @@ window.PHYSIO_FORMULAS = [
    "Hb": "hemoglobin",
    "RBC": "red cell count (×10¹²/L)",
    "Hct": "hematocrit (L/L)"
-  }
+  },
+  "units": [
+   "pg",
+   "fL",
+   "g/dL",
+   "%"
+  ],
+  "terms": [
+   "MCH",
+   "Hb",
+   "RBC"
+  ],
+  "unitNote": "1 pg = 10⁻¹² g."
  },
  {
   "id": "mchc",
@@ -1251,7 +1452,18 @@ window.PHYSIO_FORMULAS = [
    "MCH": "mean corpuscular hemoglobin",
    "MCV": "mean corpuscular volume",
    "RBC": "red cell count (×10¹²/L)"
-  }
+  },
+  "units": [
+   "g/dL",
+   "pg",
+   "fL",
+   "mg"
+  ],
+  "terms": [
+   "MCHC",
+   "MCH",
+   "MCV"
+  ]
  },
  {
   "id": "o2",
@@ -1293,6 +1505,18 @@ window.PHYSIO_FORMULAS = [
   "key": {
    "Hb": "hemoglobin",
    "Hct": "hematocrit (L/L)"
-  }
+  },
+  "units": [
+   "ml O₂ per 100 ml blood",
+   "mmHg",
+   "%",
+   "g/dL"
+  ],
+  "terms": [
+   "O2cap",
+   "Hb",
+   "SaO2"
+  ],
+  "unitNote": "Often written ml/dL or vol%."
  }
 ];

@@ -607,6 +607,34 @@
       border: 1.5px solid var(--sb-line); background: var(--sb-card); color: var(--sb-ink);
     }
     .fb-input:focus { outline: none; border-color: #3a3a36; }
+    /* ── Physiology shared: units + glossary ── */
+    .ux-opts { display: flex; flex-wrap: wrap; gap: 8px; }
+    .ux-opt { min-width: 90px; padding: 9px 14px; font-size: 14px; }
+    .ux-unit-fb { margin-top: 10px; font-size: 13px; font-weight: 600; }
+    .ux-unit-fb.ok { color: #4a7c6a; }
+    .ux-unit-fb.bad { color: #7c4a4a; }
+    .ux-unit-note { font-weight: 400; color: var(--sb-ink-3); }
+    .px-about {
+      margin-top: 14px; border-radius: 10px; padding: 14px 16px; background: var(--sb-cream);
+      border: 1px solid var(--sb-line-soft); display: flex; flex-direction: column; gap: 12px;
+    }
+    .px-about-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+      font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--sb-ink-3); }
+    .px-about-tag { font-weight: 500; letter-spacing: .04em; text-transform: none; color: var(--sb-ink-4); }
+    .px-about-item { display: flex; flex-direction: column; gap: 4px; }
+    .px-about-item + .px-about-item { border-top: 1px solid var(--sb-line-soft); padding-top: 10px; }
+    .px-about-term { font-size: 14.5px; color: var(--sb-ink); }
+    .px-about-term strong { font-weight: 700; }
+    .px-about-line { display: grid; grid-template-columns: 132px 1fr; gap: 8px; font-size: 13.5px; line-height: 1.55; color: var(--sb-ink-2); }
+    .px-about-line span { font-size: 11.5px; font-weight: 600; color: var(--sb-ink-3); padding-top: 2px; }
+    .pm-ends { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; font-size: 13px; color: var(--sb-ink-2); }
+    .pm-ends span { color: var(--sb-ink-3); }
+    .pm-mark { font-size: 11.5px; font-weight: 700; margin: 0 4px; }
+    .pm-mark.ok { color: #4a7c6a; }
+    .pm-mark.bad { color: #7c4a4a; }
+    .pm-inline .pm-panel-card { padding: 18px; }
+    @media (max-width: 600px) { .px-about-line { grid-template-columns: 1fr; gap: 1px; } }
+
     /* ── Ranges game ── */
     .rg-scale { user-select: none; -webkit-user-select: none; }
     .rg-values { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; margin-bottom: 18px; }
@@ -1686,6 +1714,7 @@
 <script src="physiology-tf.js"></script>
 <script src="physiology-formulas.js"></script>
 <script src="physiology-ranges.js"></script>
+<script src="physiology-glossary.js"></script>
 <script src="vendor/three.min.js"></script>
 <script>if(!window.THREE){document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');}</script>
 <script src="artery-3d-topology.js"></script>
@@ -2822,6 +2851,10 @@ function TrueFalseExam({ subject, examIndex, onBack, onFocusWeak }) {
             {submitted && g.note && (
               <div className="explanation-box"><strong>Note: </strong>{g.note}</div>
             )}
+            {submitted && (
+              <PhysioAbout title="Abbreviations and terms in this question"
+                keys={physioTermsIn([g.stem, ...g.items.map(x => x.statement)].join(' '))} />
+            )}
           </div>
         ))}
       </div>
@@ -3000,6 +3033,7 @@ function FormulaBuilder({ onBack }) {
   const [calcText, setCalcText] = useState('');
   const [calcOk, setCalcOk] = useState(null);
   const [showKey, setShowKey] = useState(false);
+  const [unitAns, setUnitAns] = useState(null);
   const [log, setLog] = useState([]);                // { f, buildOk, calc, calcOk }
   const [, force] = useState(0);
 
@@ -3020,6 +3054,7 @@ function FormulaBuilder({ onBack }) {
     setCalc(null);
     setCalcText('');
     setCalcOk(null);
+    setUnitAns(null);
     window.scrollTo(0, 0);
   }
 
@@ -3046,6 +3081,13 @@ function FormulaBuilder({ onBack }) {
     setBuildOk(ok);
     if (window.Progress) window.Progress.record(FB_SUBJECT, fbBuildKey(f), ok);
     setLog(l => [...l, { f, buildOk: ok, calc: null, calcOk: null }]);
+  }
+
+  function answerUnit(o) {
+    const ok = o === f.units[0];
+    setUnitAns(o);
+    if (window.Progress) window.Progress.record(FB_SUBJECT, { question: 'Formula Builder unit: ' + f.name, topic: 'Units', subtopic: f.name }, ok);
+    setLog(l => l.map((e, idx) => idx === l.length - 1 ? { ...e, unitOk: ok } : e));
   }
 
   function toCalc() {
@@ -3098,8 +3140,9 @@ function FormulaBuilder({ onBack }) {
         <div style={{ ...HX_CARD, display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 22 }}>
           <span style={HX_LABEL}>How it works</span>
           <span style={{ fontSize: 14, color: 'var(--sb-ink-2)', lineHeight: 1.6 }}>
-            Build the right-hand side of each formula from tiles. Some tiles are decoys. Then use the
-            formula on a number problem. A round has {FB_ROUND_SIZE} formulas, and the ones you have
+            Build the right-hand side of each formula from tiles. Some tiles are decoys. Then say which
+            unit the result is in, and use the formula on a number problem. After each answer you see what
+            the abbreviations stand for and why they matter. A round has {FB_ROUND_SIZE} formulas, and the ones you have
             not built correctly yet come first.
           </span>
           <button className="hx-cta" onClick={() => start(fbPickRound(ALL, FB_ROUND_SIZE))}
@@ -3146,7 +3189,7 @@ function FormulaBuilder({ onBack }) {
     const cOk = cAll.filter(e => e.calcOk).length;
     const pct = log.length ? Math.round((bOk / log.length) * 100) : 0;
     const ring = pct >= 80 ? 'score-great' : pct >= 50 ? 'score-ok' : 'score-poor';
-    const missed = log.filter(e => !e.buildOk || e.calcOk === false);
+    const missed = log.filter(e => !e.buildOk || e.calcOk === false || e.unitOk === false);
     return (
       <div className="fb-wrap">
         {header}
@@ -3155,7 +3198,8 @@ function FormulaBuilder({ onBack }) {
           <div className="results-detail">
             <h2>{pct >= 80 ? 'Great work!' : pct >= 50 ? 'Keep it up!' : 'Keep practising!'}</h2>
             <p>{bOk} / {log.length} formulas built correctly
-              {cAll.length > 0 && ` · ${cOk} / ${cAll.length} calculations right`}</p>
+              {cAll.length > 0 && ` · ${cOk} / ${cAll.length} calculations right`}
+              {` · ${log.filter(e => e.unitOk).length} / ${log.length} units right`}</p>
           </div>
         </div>
         {missed.length > 0 && (
@@ -3165,6 +3209,9 @@ function FormulaBuilder({ onBack }) {
               <div key={e.f.id} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 <span style={{ fontSize: 14, fontWeight: 600 }}>{e.f.name}</span>
                 <span style={{ fontSize: 13.5, color: 'var(--sb-ink-2)' }}>{e.f.display}</span>
+                {e.unitOk === false && (
+                  <span style={{ fontSize: 12.5, color: 'var(--sb-ink-3)' }}>Unit: {e.f.units[0]}</span>
+                )}
                 {e.calcOk === false && (
                   <span style={{ fontSize: 12.5, color: 'var(--sb-ink-3)' }}>Calculation: {e.calc.answer}</span>
                 )}
@@ -3241,7 +3288,16 @@ function FormulaBuilder({ onBack }) {
           </FbReveal>
         )}
 
-        {buildOk !== null && stage === 'build' && (
+        {buildOk !== null && <PhysioAbout keys={f.terms} />}
+
+        {buildOk !== null && f.units && (
+          <div style={{ marginTop: 22 }}>
+            <UnitQuestion key={f.id + ':' + pos} options={f.units} answer={unitAns} onAnswer={answerUnit}
+              prompt={'Units · What unit is ' + f.lhs + ' measured in?'} note={f.unitNote} />
+          </div>
+        )}
+
+        {buildOk !== null && (unitAns != null || !f.units) && stage === 'build' && (
           <div className="exam-actions" style={{ marginTop: 18 }}>
             {f.calcs && f.calcs.length
               ? <button className="btn-primary" onClick={toCalc}>Calculate with it →</button>
@@ -3445,6 +3501,82 @@ function RgScale({ item, scale, value, onChange, result }) {
   );
 }
 
+/* ── Shared by the Physiology tools ─────────────────────────────────────── */
+
+/* "What it means" box: for each glossary key, what the abbreviation stands
+ * for, why it matters, and what it is commonly confused with. */
+function PhysioAbout({ keys, title }) {
+  const G = window.PHYSIO_GLOSSARY || {};
+  const list = [...new Set(keys || [])].filter(k => G[k]);
+  if (!list.length) return null;
+  return (
+    <div className="px-about">
+      <div className="px-about-head">
+        <span>{title || 'What it means'}</span>
+        <span className="px-about-tag">study notes</span>
+      </div>
+      {list.map(k => {
+        const e = G[k];
+        return (
+          <div key={k} className="px-about-item">
+            <div className="px-about-term">
+              {e.label ? <><strong>{e.label}</strong> · {e.full}</> : <strong>{e.full}</strong>}
+            </div>
+            <div className="px-about-line"><span>Why it matters</span>{e.why}</div>
+            <div className="px-about-line"><span>Not to confuse with</span>{e.vs}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* Glossary keys whose pattern appears in a piece of text (T/F questions). */
+function physioTermsIn(text) {
+  const G = window.PHYSIO_GLOSSARY || {};
+  return Object.keys(G).filter(k => {
+    if (!G[k].match) return false;
+    try { return new RegExp(G[k].match).test(text); } catch (e) { return false; }
+  });
+}
+
+/* Multiple-choice unit question. options[0] is the correct unit in the data;
+ * the order shown is shuffled once per mount. */
+function UnitQuestion({ options, answer, onAnswer, prompt, note }) {
+  const [shown] = useState(() => {
+    const a = [...options];
+    for (let k = a.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [a[k], a[j]] = [a[j], a[k]]; }
+    return a;
+  });
+  const correct = options[0];
+  const done = answer != null;
+  return (
+    <div className="ux-unit">
+      <div className="fb-step">{prompt || 'Which unit?'}</div>
+      <div className="ux-opts">
+        {shown.map(o => {
+          let st = '';
+          if (done) {
+            if (o === correct) st = answer === o ? 'correct' : 'reveal-correct';
+            else if (o === answer) st = 'wrong';
+          }
+          return (
+            <button key={o} className={'tf-choice ux-opt ' + st} disabled={done} onClick={() => onAnswer(o)}>{o}</button>
+          );
+        })}
+      </div>
+      {done && (
+        <div className={'ux-unit-fb ' + (answer === correct ? 'ok' : 'bad')}>
+          {answer === correct ? 'Right unit.' : 'The unit is ' + correct + '.'}
+          {note && <span className="ux-unit-note"> {note}</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const rgUnitKey = it => ({ question: 'Ranges: unit of ' + it.label, topic: 'Units', subtopic: it.group || 'Pressure map' });
+
 function RgLabs() {
   const ALL = (window.PHYSIO_RANGES || {}).labs || [];
   const [view, setView] = useState('home');        // home | play | done
@@ -3452,6 +3584,7 @@ function RgLabs() {
   const [pos, setPos] = useState(0);
   const [scale, setScale] = useState(null);
   const [value, setValue] = useState([0, 0]);
+  const [unitAns, setUnitAns] = useState(null);
   const [result, setResult] = useState(null);
   const [log, setLog] = useState([]);
   const [, force] = useState(0);
@@ -3468,18 +3601,24 @@ function RgLabs() {
     setPos(k);
     setScale(sc);
     setValue([rgSnap(sc.min + span * 0.25, sc.step, sc.dp), rgSnap(sc.min + span * 0.75, sc.step, sc.dp)]);
+    setUnitAns(null);
     setResult(null);
   }
   function start(list) {
     if (!list.length) return;
     setRound(list); setLog([]); setView('play'); load(list, 0);
   }
+  function answerUnit(o) {
+    const it = round[pos];
+    setUnitAns(o);
+    if (window.Progress) window.Progress.record(RG_SUBJECT, rgUnitKey(it), o === it.units[0]);
+  }
   function check() {
     const it = round[pos];
     const g = rgGrade(it, value[0], value[1]);
     setResult(g);
     if (window.Progress) window.Progress.record(RG_SUBJECT, rgLabKey(it), g === 'spot');
-    setLog(l => [...l, { it, g, value: [...value] }]);
+    setLog(l => [...l, { it, g, value: [...value], unitOk: unitAns === it.units[0] }]);
   }
   function next() {
     if (pos + 1 < round.length) load(round, pos + 1);
@@ -3504,9 +3643,9 @@ function RgLabs() {
             <span style={{ fontSize: 11.5, color: 'var(--sb-ink-4)' }}>{mastered} of {ALL.length} known</span>
           </div>
           <span style={{ fontSize: 14, color: 'var(--sb-ink-2)', lineHeight: 1.6 }}>
-            Drag the two handles to mark the normal range on the scale, or use − and + for exact values.
-            Check to see the real range over yours. The scale moves every time, so the answer is never in
-            the same place.
+            First pick the unit the value is measured in. Then drag the two handles to mark the normal
+            range, or use − and + for exact values. After you check, you see the real range over yours,
+            plus what the abbreviation stands for and why it matters.
           </span>
           <button className="hx-cta" onClick={() => start(rgPickRound(ALL, RG_ROUND_SIZE))}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
@@ -3544,9 +3683,10 @@ function RgLabs() {
 
   if (view === 'done') {
     const spot = log.filter(e => e.g === 'spot').length;
+    const unitsOk = log.filter(e => e.unitOk).length;
     const pct = log.length ? Math.round((spot / log.length) * 100) : 0;
     const ring = pct >= 80 ? 'score-great' : pct >= 50 ? 'score-ok' : 'score-poor';
-    const missed = log.filter(e => e.g !== 'spot');
+    const missed = log.filter(e => e.g !== 'spot' || !e.unitOk);
     return (
       <div>
         <div className="results-banner">
@@ -3554,7 +3694,8 @@ function RgLabs() {
           <div className="results-detail">
             <h2>{pct >= 80 ? 'Great work!' : pct >= 50 ? 'Keep it up!' : 'Keep practising!'}</h2>
             <p>{spot} / {log.length} ranges spot on
-              {log.filter(e => e.g === 'close').length > 0 && ` · ${log.filter(e => e.g === 'close').length} close`}</p>
+              {log.filter(e => e.g === 'close').length > 0 && ` · ${log.filter(e => e.g === 'close').length} close`}
+              {` · ${unitsOk} / ${log.length} units right`}</p>
           </div>
         </div>
         {missed.length > 0 && (
@@ -3565,7 +3706,9 @@ function RgLabs() {
                 <span style={{ fontWeight: 600 }}>{e.it.label}</span>
                 <span style={{ color: 'var(--sb-ink-2)' }}>
                   {e.it.lo}–{e.it.hi} {e.it.unit}
-                  <span style={{ color: 'var(--sb-ink-4)' }}> · you: {e.value[0]}–{e.value[1]}</span>
+                  <span style={{ color: 'var(--sb-ink-4)' }}>
+                    {' · you: '}{e.value[0]}–{e.value[1]}{!e.unitOk && ' · unit wrong'}
+                  </span>
                 </span>
               </div>
             ))}
@@ -3581,30 +3724,39 @@ function RgLabs() {
 
   const it = round[pos];
   return (
-    <div className="question-card">
+    <div className="question-card" key={it.id + ':' + pos}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'baseline' }}>
         <div className="question-topic-tag">{it.group}</div>
         <span style={{ fontSize: 12, color: 'var(--sb-ink-4)' }}>{pos + 1} of {round.length}</span>
       </div>
-      <h3 className="fb-name" style={{ marginBottom: 6 }}>{it.label}</h3>
-      <div className="fb-step" style={{ marginBottom: 18 }}>Mark the normal range</div>
-      <RgScale item={it} scale={scale} value={value} onChange={setValue} result={result} />
-      {result == null ? (
-        <div className="exam-actions" style={{ marginTop: 22 }}>
-          <button className="btn-primary" onClick={check}>Check</button>
-          <button className="btn-secondary" onClick={() => setView('home')}>End round</button>
+      <h3 className="fb-name" style={{ marginBottom: 16 }}>{it.label}</h3>
+
+      <UnitQuestion options={it.units} answer={unitAns} onAnswer={answerUnit}
+        prompt="Step 1 · Which unit is it measured in?" />
+
+      {unitAns != null && (
+        <div style={{ marginTop: 22 }}>
+          <div className="fb-step" style={{ marginBottom: 18 }}>Step 2 · Mark the normal range ({it.unit || 'no unit'})</div>
+          <RgScale item={it} scale={scale} value={value} onChange={setValue} result={result} />
+          {result == null ? (
+            <div className="exam-actions" style={{ marginTop: 22 }}>
+              <button className="btn-primary" onClick={check}>Check</button>
+              <button className="btn-secondary" onClick={() => setView('home')}>End round</button>
+            </div>
+          ) : (
+            <>
+              <FbReveal ok={result === 'spot'} title={result === 'spot' ? 'Spot on' : result === 'close' ? 'Close' : 'Not quite'}>
+                <div className="fb-formula">{it.answer}</div>
+                <div className="fb-source">{it.source}</div>
+                {it.note && <div className="fb-source">Note: {it.note}</div>}
+              </FbReveal>
+              <PhysioAbout keys={it.terms} />
+              <div className="exam-actions" style={{ marginTop: 18 }}>
+                <button className="btn-primary" onClick={next}>{pos + 1 < round.length ? 'Next value →' : 'See results'}</button>
+              </div>
+            </>
+          )}
         </div>
-      ) : (
-        <>
-          <FbReveal ok={result === 'spot'} title={result === 'spot' ? 'Spot on' : result === 'close' ? 'Close' : 'Not quite'}>
-            <div className="fb-formula">{it.answer}</div>
-            <div className="fb-source">{it.source}</div>
-            {it.note && <div className="fb-source">Note: {it.note}</div>}
-          </FbReveal>
-          <div className="exam-actions" style={{ marginTop: 18 }}>
-            <button className="btn-primary" onClick={next}>{pos + 1 < round.length ? 'Next value →' : 'See results'}</button>
-          </div>
-        </>
       )}
     </div>
   );
@@ -3624,89 +3776,150 @@ const RG_MAP_SHORT = {
   glom: 'Glomerular capillaries', veins: 'Small veins', vc: 'Venae cavae', ra: 'Right atrium',
   rv: 'Right ventricle', pa: 'Pulmonary artery', pcap: 'Pulmonary capillaries', la: 'Left atrium / pulm. veins',
 };
+const RG_MAP_ORDER = ['lv', 'aorta', 'arterioles', 'caps', 'glom', 'veins', 'vc', 'ra', 'rv', 'pa', 'pcap', 'la'];
+
+const rgPartKey = (n, part) => ({ question: 'Pressure map: ' + n.label + ' ' + part, topic: 'Pressure map', subtopic: n.label });
+const rgInRange = (v, acc) => v != null && v >= acc[0] - 1e-9 && v <= acc[1] + 1e-9;
+
+/* Pseudo range item so RgScale can draw a location's pressure range. */
+function rgNodeItem(n) {
+  return { lo: n.range.low.value, hi: n.range.high.value, typical: n.mean ? n.mean.value : null,
+           unit: 'mmHg', step: 1, floor: 0 };
+}
+
+function RgMapPanel({ node, st, setSt }) {
+  const s = st || {};
+  const item = node.range ? rgNodeItem(node) : null;
+  const res = s.result;
+
+  function answerUnit(o) {
+    if (window.Progress) window.Progress.record(RG_SUBJECT, rgUnitKey(node), o === node.units[0]);
+    setSt({ ...s, unit: o });
+  }
+  function check() {
+    const r = {};
+    if (node.range) {
+      r.low = rgInRange(s.value[0], node.range.low.accept);
+      r.high = rgInRange(s.value[1], node.range.high.accept);
+      if (window.Progress) {
+        window.Progress.record(RG_SUBJECT, rgPartKey(node, 'range'), r.low && r.high);
+      }
+    }
+    if (node.mean) {
+      r.mean = rgInRange(fbParseNumber(s.mean), node.mean.accept);
+      if (window.Progress) window.Progress.record(RG_SUBJECT, rgPartKey(node, node.mean.label), r.mean);
+    }
+    r.ok = s.unit === node.units[0] && r.low !== false && r.high !== false && r.mean !== false;
+    setSt({ ...s, result: r });
+  }
+  function retry() {
+    const sc = item ? rgMakeScale(item) : null;
+    setSt({ scale: sc, value: sc ? [rgSnap(sc.min + (sc.max - sc.min) * 0.25, 1, 0), rgSnap(sc.min + (sc.max - sc.min) * 0.75, 1, 0)] : null });
+  }
+
+  const canCheck = (!node.range || s.value) && (!node.mean || fbParseNumber(s.mean) != null);
+  const mark = ok => <span className={'pm-mark ' + (ok ? 'ok' : 'bad')}>{ok ? 'right' : 'wrong'}</span>;
+
+  return (
+    <div className="question-card pm-panel-card">
+      <h3 className="fb-name" style={{ marginBottom: 14 }}>{node.label}</h3>
+      <UnitQuestion options={node.units}
+        answer={s.unit != null ? s.unit : null} onAnswer={answerUnit}
+        prompt="Step 1 · Which unit are these pressures in?" />
+
+      {s.unit != null && (
+        <div style={{ marginTop: 22 }}>
+          {node.range && (
+            <>
+              <div className="fb-step" style={{ marginBottom: 18 }}>
+                Step 2 · Mark the pressure range (mmHg)
+              </div>
+              <RgScale item={item} scale={s.scale} value={s.value}
+                onChange={v => setSt({ ...s, value: v })}
+                result={res ? (res.low && res.high ? 'spot' : 'off') : null} />
+              {res && (
+                <div className="pm-ends">
+                  <div>Low {mark(res.low)} <span>{node.range.low.text}</span></div>
+                  <div>High {mark(res.high)} <span>{node.range.high.text}</span></div>
+                </div>
+              )}
+            </>
+          )}
+          {node.mean && (
+            <label className={'pm-field' + (res ? (res.mean ? ' ok' : ' bad') : '')} style={{ marginTop: node.range ? 18 : 0 }}>
+              <span className="pm-field-label">{node.range ? 'Step 3 · ' : 'Step 2 · '}{node.mean.label} pressure</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input className="fb-input" style={{ width: 110 }} type="text" inputMode="decimal"
+                  value={s.mean || ''} disabled={!!res}
+                  onChange={e => setSt({ ...s, mean: e.target.value })}
+                  onKeyDown={e => { if (e.key === 'Enter' && !res && canCheck) check(); }} />
+                <span style={{ fontSize: 13, color: 'var(--sb-ink-3)' }}>mmHg</span>
+                {res && mark(res.mean)}
+              </span>
+              {res && <span className="pm-field-answer">{node.mean.text}</span>}
+            </label>
+          )}
+
+          {!res ? (
+            <div className="exam-actions" style={{ marginTop: 20 }}>
+              <button className="btn-primary" onClick={check} disabled={!canCheck}>Check</button>
+            </div>
+          ) : (
+            <>
+              <FbReveal ok={res.ok} title={res.ok ? 'Correct' : 'Not quite'}>
+                <div className="fb-formula">{node.answer}</div>
+                <div className="fb-source">{node.source}</div>
+                {node.note && <div className="fb-source">Note: {node.note}</div>}
+              </FbReveal>
+              <PhysioAbout keys={node.terms} />
+              <div className="exam-actions" style={{ marginTop: 18 }}>
+                <button className="btn-primary" onClick={s.onNext}>Next location →</button>
+                <button className="btn-secondary" onClick={retry}>Try again</button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function RgPressureMap() {
   const data = window.PHYSIO_RANGES || {};
   const NODES = data.map || [];
   const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
   const [sel, setSel] = useState(null);
-  const [inputs, setInputs] = useState({});
-  const [checked, setChecked] = useState({});      // nodeId -> [bool per field]
+  const [states, setStates] = useState({});       // nodeId -> { unit, scale, value, mean, result }
   const panelRef = useRef(null);
 
-  const node = sel ? byId[sel] : null;
-  const order = ['lv', 'aorta', 'arterioles', 'caps', 'glom', 'veins', 'vc', 'ra', 'rv', 'pa', 'pcap', 'la'];
-
+  function fresh(n) {
+    if (!n.range) return {};
+    const sc = rgMakeScale(rgNodeItem(n));
+    const span = sc.max - sc.min;
+    return { scale: sc, value: [rgSnap(sc.min + span * 0.25, 1, 0), rgSnap(sc.min + span * 0.75, 1, 0)] };
+  }
   function open(id) {
     setSel(id);
+    setStates(prev => prev[id] ? prev : { ...prev, [id]: fresh(byId[id]) });
     setTimeout(() => { if (panelRef.current) panelRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 30);
   }
-  function check() {
-    const res = node.fields.map((f, k) => {
-      const v = fbParseNumber(inputs[node.id + ':' + k]);
-      const ok = v != null && v >= f.accept[0] - 1e-9 && v <= f.accept[1] + 1e-9;
-      if (window.Progress) window.Progress.record(RG_SUBJECT, rgFieldKey(node, f), ok);
-      return ok;
-    });
-    setChecked(c => ({ ...c, [node.id]: res }));
-  }
-  function retry() {
-    setChecked(c => { const n = { ...c }; delete n[node.id]; return n; });
-    setInputs(v => { const n = { ...v }; node.fields.forEach((_, k) => { delete n[node.id + ':' + k]; }); return n; });
-  }
   function nextNode() {
-    const rest = order.filter(id => !checked[id] && id !== sel);
-    open(rest.length ? rest[0] : order[(order.indexOf(sel) + 1) % order.length]);
+    const rest = RG_MAP_ORDER.filter(id => byId[id] && !(states[id] && states[id].result) && id !== sel);
+    open(rest.length ? rest[0] : RG_MAP_ORDER[(RG_MAP_ORDER.indexOf(sel) + 1) % RG_MAP_ORDER.length]);
   }
+  const setFor = id => v => setStates(prev => ({ ...prev, [id]: v }));
   const state = id => {
-    const c = checked[id];
-    if (!c) return '';
-    return c.every(Boolean) ? 'ok' : 'bad';
+    const r = states[id] && states[id].result;
+    return r ? (r.ok ? 'ok' : 'bad') : '';
   };
+  const node = sel ? byId[sel] : null;
   const panel = node && (
-          <div className="question-card" style={{ marginTop: 16 }}>
-            <h3 className="fb-name" style={{ marginBottom: 14 }}>{node.label}</h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14 }}>
-              {node.fields.map((f, k) => {
-                const res = checked[node.id];
-                const st = res ? (res[k] ? ' ok' : ' bad') : '';
-                return (
-                  <label key={k} className={'pm-field' + st}>
-                    <span className="pm-field-label">{f.label}</span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <input className="fb-input" style={{ width: 110 }} type="text" inputMode="decimal"
-                        value={inputs[node.id + ':' + k] || ''} disabled={!!res}
-                        onChange={e => setInputs(v => ({ ...v, [node.id + ':' + k]: e.target.value }))}
-                        onKeyDown={e => { if (e.key === 'Enter' && !res) check(); }} />
-                      <span style={{ fontSize: 13, color: 'var(--sb-ink-3)' }}>mmHg</span>
-                    </span>
-                    {res && <span className="pm-field-answer">{f.answer}</span>}
-                  </label>
-                );
-              })}
-            </div>
-            {!checked[node.id] ? (
-              <div className="exam-actions" style={{ marginTop: 18 }}>
-                <button className="btn-primary" onClick={check}
-                  disabled={node.fields.some((_, k) => fbParseNumber(inputs[node.id + ':' + k]) == null)}>Check</button>
-              </div>
-            ) : (
-              <>
-                <FbReveal ok={checked[node.id].every(Boolean)} title={checked[node.id].every(Boolean) ? 'Correct' : 'Not quite'}>
-                  <div className="fb-formula">{node.answer}</div>
-                  <div className="fb-source">{node.source}</div>
-                  {node.note && <div className="fb-source">Note: {node.note}</div>}
-                </FbReveal>
-                <div className="exam-actions" style={{ marginTop: 18 }}>
-                  <button className="btn-primary" onClick={nextNode}>Next location →</button>
-                  <button className="btn-secondary" onClick={retry}>Try again</button>
-                </div>
-              </>
-            )}
-          </div>
-        );
-  const done = Object.keys(checked).length;
-  const allOk = Object.values(checked).filter(c => c.every(Boolean)).length;
+    <RgMapPanel key={node.id} node={node}
+      st={{ ...(states[node.id] || {}), onNext: nextNode }}
+      setSt={v => { const { onNext, ...rest } = v; setFor(node.id)(rest); }} />
+  );
+  const done = Object.values(states).filter(s => s.result).length;
+  const allOk = Object.values(states).filter(s => s.result && s.result.ok).length;
 
   const nodeEl = id => {
     const [x, y] = RG_MAP_POS[id];
@@ -3725,7 +3938,6 @@ function RgPressureMap() {
       </g>
     );
   };
-
   const edge = ([a, b], k) => {
     const [x1, y1] = RG_MAP_POS[a], [x2, y2] = RG_MAP_POS[b];
     const dx = Math.sign(x2 - x1), dy = Math.sign(y2 - y1);
@@ -3736,7 +3948,9 @@ function RgPressureMap() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 13.5, color: 'var(--sb-ink-2)' }}>Tap a location and enter its normal pressure in mmHg.</span>
+        <span style={{ fontSize: 13.5, color: 'var(--sb-ink-2)' }}>
+          Tap a location: pick the unit, then mark its pressure range (low to high) and the mean where there is one.
+        </span>
         <span style={{ fontSize: 12, color: 'var(--sb-ink-4)' }}>{allOk} of {NODES.length} right{done > allOk ? ` · ${done - allOk} to review` : ''}</span>
       </div>
 
@@ -3763,11 +3977,12 @@ function RgPressureMap() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {ids.filter(id => byId[id]).map(id => (
                 <React.Fragment key={id}>
-                  <button className={'pm-row ' + state(id) + (sel === id ? ' sel' : '')} onClick={() => setSel(sel === id ? null : id)}>
+                  <button className={'pm-row ' + state(id) + (sel === id ? ' sel' : '')}
+                    onClick={() => (sel === id ? setSel(null) : open(id))}>
                     <span>{byId[id].label}</span>
                     <span className="pm-row-state">{state(id) === 'ok' ? 'right' : state(id) === 'bad' ? 'review' : ''}</span>
                   </button>
-                  {sel === id && <div style={{ marginBottom: 6 }}>{panel}</div>}
+                  {sel === id && <div className="pm-inline" style={{ marginBottom: 6 }}>{panel}</div>}
                 </React.Fragment>
               ))}
             </div>
@@ -3775,7 +3990,7 @@ function RgPressureMap() {
         ))}
       </div>
 
-      <div ref={panelRef} className="pm-panel-wide">{node && panel}</div>
+      <div ref={panelRef} className="pm-panel-wide">{panel}</div>
 
       {(data.facts || []).length > 0 && (
         <div style={{ ...HX_CARD, marginTop: 22, display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -12059,9 +12274,9 @@ const PAGE_INSTRUCTIONS = {
   ranges_game: {
     title: 'Ranges',
     steps: [
-      'Normal ranges: drag the two handles to mark the normal range on the scale, or use − and + for exact values.',
-      'Press Check. The real range appears under yours: spot on, close, or not quite. The scale moves each time.',
-      'Pressure map: tap a chamber or vessel in the circulation and type its normal pressure in mmHg.',
+      'Normal ranges: first pick the unit, then drag the two handles to mark the normal range (or use − and +).',
+      'Press Check. The real range appears under yours, with what the abbreviation means and why it matters.',
+      'Pressure map: tap a chamber or vessel, pick the unit, then mark its pressure range and type the mean where there is one.',
       'Values you have not got right yet come first in new rounds.',
     ],
   },
@@ -12070,8 +12285,8 @@ const PAGE_INSTRUCTIONS = {
     steps: [
       'You see the name of a formula and its left-hand side, for example "CO =".',
       'Tap tiles to build the right-hand side. Some tiles are decoys. Tap a placed tile to take it back.',
-      'Press Check: green is right, red is wrong, and the correct formula appears with its source.',
-      'Then solve a number problem with the same formula. Formulas you have not built correctly yet come first in new rounds.',
+      'Press Check: the correct formula appears with its source, plus what each abbreviation stands for and why it matters.',
+      'Then pick the unit of the result, and solve a number problem with the same formula.',
     ],
   },
   tf_exam: {
@@ -12080,7 +12295,7 @@ const PAGE_INSTRUCTIONS = {
       'Each question shows its stem first, with the statements listed underneath.',
       'Mark every statement True or False. Tap the same choice again to clear it.',
       'Press Submit at the bottom. Green is right, red is wrong, grey was left blank and is not counted.',
-      'Explanations appear under each statement after you submit. Statements you got right are hidden next time.',
+      'Explanations appear under each statement after you submit, plus what each abbreviation stands for. Statements you got right are hidden next time.',
     ],
   },
   exam: {
