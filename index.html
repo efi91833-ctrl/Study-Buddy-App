@@ -562,6 +562,11 @@
       background: none; color: var(--sb-ink-3); cursor: pointer; }
     .tf-mode-btn.on { background: #3a3a36; color: #fff; }
     .tf-mode-btn:disabled:not(.on) { opacity: .45; cursor: default; }
+    .tf-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .tf-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .tf-flagbtn { font-family: inherit; font-size: 12.5px; padding: 5px 12px; border-radius: 8px; flex-shrink: 0;
+      border: 1px solid var(--sb-line-soft); background: var(--sb-cream); color: var(--sb-ink-3); cursor: pointer; }
+    .tf-flagbtn.on { background: #3a3a36; border-color: #3a3a36; color: #fff; }
     .tf-progress { height: 4px; border-radius: 2px; background: #e2ded4; margin: -8px 0 18px; overflow: hidden; }
     .tf-progress div { height: 100%; background: #3a3a36; transition: width .2s; }
     .tf-banner {
@@ -2377,6 +2382,10 @@ function poolFor(subject, examIndex) {
     const all = meta.exams ? meta.exams.flatMap(e => e.questions || []) : (meta.questions || []);
     return dedupeByStem(all);
   }
+  if (examIndex === 'flagged') {
+    const all = dedupeByStem(meta.exams ? meta.exams.flatMap(e => e.questions || []) : (meta.questions || []));
+    return all.filter(q => isStemFlagged(subject, q.stem || q.question));
+  }
   const exam = meta.exams[examIndex];
   // A single curated exam is left exactly as authored.
   return (exam && exam.questions) || [];
@@ -2414,6 +2423,12 @@ function buildExam(subject, examIndex) {
   const focused = examIndex === 'weak';
   const pool = poolFor(subject, examIndex);
   const P = window.Progress;
+
+  // Flagged questions are always shown in full, mastered or not: you flagged
+  // them because you want to repeat them.
+  if (examIndex === 'flagged') {
+    return { questions: pool, exhausted: false, focused: false, flagged: true, hidden: 0 };
+  }
 
   const fresh = P ? pool.filter(q => !P.isMastered(subject, q)) : pool;
   const hidden = pool.length - fresh.length;
@@ -2787,6 +2802,23 @@ function ExamScreen({ subject, examIndex, onBack, onFocusWeak }) {
 // ─────────────────────────────────────────────────────────────
 // TRUE / FALSE EXAM  (Physiology T/F banks)
 // ─────────────────────────────────────────────────────────────
+/* Flags are stored per question stem in progress.js, so they survive leaving
+ * the app and are not cleared by a progress reset. */
+function stemFlagKey(stem) {
+  return window.Progress ? window.Progress.keyFor({ question: 'flag:' + stem }) : null;
+}
+function isStemFlagged(subject, stem) {
+  return !!(window.Progress && window.Progress.isFlagged && window.Progress.isFlagged(subject, stemFlagKey(stem)));
+}
+function flaggedCount(subject) {
+  if (!window.Progress || !window.Progress.flaggedKeys) return 0;
+  const keys = new Set(window.Progress.flaggedKeys(subject));
+  const stems = new Set(poolFor(subject, 'all').map(q => q.stem || q.question));
+  let n = 0;
+  stems.forEach(st => { if (keys.has(stemFlagKey(st))) n += 1; });
+  return n;
+}
+
 /* True when the selection should open TrueFalseExam: a single exam of type
  * 'tf', or a weak-area / all session in a subject whose banks are all T/F. */
 function isTfSelection(subject, examIndex) {
@@ -2852,12 +2884,21 @@ function TfStatementRow({ item, answer, submitted, onChoose }) {
 }
 
 const TF_MODE_KEY = 'sb_tf_mode';
+const TF_SHUFFLE_KEY = 'sb_tf_shuffle';
 
 function TrueFalseExam({ subject, examIndex, onBack, onFocusWeak }) {
   // Built once per mount, like ExamScreen: remounting picks up new mastery.
   const [built] = useState(() => buildExam(subject, examIndex));
   const statements = built.questions;
-  const groups = useMemo(() => tfGroupByStem(statements), [statements]);
+  const ordered = useMemo(() => tfGroupByStem(statements), [statements]);
+  // Shuffle changes the order of the questions only; statements keep A, B, C...
+  // because some refer to each other ("none of the above").
+  const [shuffle, setShuffle] = useState(() => {
+    try { return localStorage.getItem(TF_SHUFFLE_KEY) === 'on'; } catch (e) { return false; }
+  });
+  const [shuffleSeed, setShuffleSeed] = useState(0);
+  const groups = useMemo(() => (shuffle ? shuffled(ordered) : ordered), [ordered, shuffle, shuffleSeed]);
+  const [, setFlagTick] = useState(0);
   // Statements without a legible key are shown but never scored or recorded.
   const scored = useMemo(() => statements.filter(s => s.correct), [statements]);
   const [answers, setAnswers] = useState({});
@@ -2874,7 +2915,22 @@ function TrueFalseExam({ subject, examIndex, onBack, onFocusWeak }) {
   const meta = QUESTION_BANK[subject];
   const examName = examIndex === 'weak'
     ? 'Weak Areas'
+    : examIndex === 'flagged'
+    ? 'Flagged'
     : (typeof examIndex === 'number' && meta.exams[examIndex] ? meta.exams[examIndex].name : '');
+
+  function pickShuffle(on) {
+    setShuffle(on);
+    if (on) setShuffleSeed(n => n + 1);
+    setIdx(0);
+    try { localStorage.setItem(TF_SHUFFLE_KEY, on ? 'on' : 'off'); } catch (e) {}
+  }
+
+  function toggleFlag(stem) {
+    if (!window.Progress || !window.Progress.toggleFlag) return;
+    window.Progress.toggleFlag(subject, stemFlagKey(stem));
+    setFlagTick(n => n + 1);
+  }
 
   function pickMode(m) {
     setMode(m);
@@ -2949,7 +3005,18 @@ function TrueFalseExam({ subject, examIndex, onBack, onFocusWeak }) {
     const done = isChecked(g.num);
     return (
       <div key={g.num} className="question-card">
-        <div className="question-num">Question {i + 1}{mode === 'one' ? ' of ' + groups.length : ''}</div>
+        <div className="tf-card-head">
+          <div className="question-num">Question {i + 1}{mode === 'one' ? ' of ' + groups.length : ''}</div>
+          {(() => {
+            const on = isStemFlagged(subject, g.stem);
+            return (
+              <button className={'tf-flagbtn' + (on ? ' on' : '')} onClick={() => toggleFlag(g.stem)}
+                title={on ? 'Remove from your flagged questions' : 'Save this question to repeat later'}>
+                {on ? 'Flagged' : 'Flag'}
+              </button>
+            );
+          })()}
+        </div>
         <div className="question-topic-tag">{g.topic} › {g.subtopic}</div>
         <p className="question-text">{g.stem}</p>
         <div className="tf-list">
@@ -2969,13 +3036,25 @@ function TrueFalseExam({ subject, examIndex, onBack, onFocusWeak }) {
     );
   };
 
+  const locked = submitted || finished || startedOne;
   const modeSwitch = (
-    <div className="tf-mode">
-      {[['one', 'One at a time'], ['all', 'Whole test']].map(([k, label]) => (
-        <button key={k} className={'tf-mode-btn' + (mode === k ? ' on' : '')}
-          disabled={submitted || finished || (startedOne && k !== mode)}
-          onClick={() => pickMode(k)}>{label}</button>
-      ))}
+    <div className="tf-tools">
+      <div className="tf-mode">
+        {[['one', 'One at a time'], ['all', 'Whole test']].map(([k, label]) => (
+          <button key={k} className={'tf-mode-btn' + (mode === k ? ' on' : '')}
+            disabled={submitted || finished || (startedOne && k !== mode)}
+            onClick={() => pickMode(k)}>{label}</button>
+        ))}
+      </div>
+      <div className="tf-mode">
+        {[[false, 'In order'], [true, 'Shuffled']].map(([k, label]) => (
+          <button key={label} className={'tf-mode-btn' + (shuffle === k ? ' on' : '')}
+            disabled={locked && shuffle !== k}
+            onClick={() => (shuffle === k && k && !locked ? setShuffleSeed(n => n + 1) : pickShuffle(k))}>
+            {label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 
@@ -2985,13 +3064,18 @@ function TrueFalseExam({ subject, examIndex, onBack, onFocusWeak }) {
       <div className="exam-subject-label">
         <span>{subject}{examName ? ` · ${examName}` : ''}</span>
       </div>
-      <h1 className="exam-title">{built.focused ? 'Weak Areas' : 'True / False'}</h1>
+      <h1 className="exam-title">{built.focused ? 'Weak Areas' : built.flagged ? 'Flagged questions' : 'True / False'}</h1>
       <p className="exam-meta">
         {groups.length} question{groups.length !== 1 ? 's' : ''} · {statements.length} statements
         {mode === 'all' && !submitted && answeredCount > 0 && ` · ${answeredCount} answered`}
         {mode === 'one' && tally.answered > 0 && ` · ${tally.correct} / ${tally.answered} right so far`}
         {built.hidden > 0 && ` · ${built.hidden} mastered, hidden`}
       </p>
+      {built.flagged && groups.length === 0 && (
+        <p className="tf-banner">
+          No flagged questions yet. Press "Flag" on any question to save it here, and it stays until you unflag it.
+        </p>
+      )}
       {built.exhausted && !submitted && !finished && (
         <p className="tf-banner">
           You have already answered everything here correctly. Showing the full set for review.
@@ -3019,6 +3103,7 @@ function TrueFalseExam({ subject, examIndex, onBack, onFocusWeak }) {
         </div>
       );
     }
+    if (!groups.length) return <div className="content">{header}</div>;
     const g = groups[idx];
     const done = !!checked[g.num];
     const last = idx === groups.length - 1;
@@ -5247,6 +5332,7 @@ function SubjectPage({ subject, config, onSelectExam, onBack }) {
    * qualifying weak topic yet, and the practice button still needs a home. */
   const showWeak   = hasStats;
   const showResume = resume.length > 0;
+  const flagged    = flaggedCount(subject);
 
   return (
     <div className="content" style={{ maxWidth: 860 }}>
@@ -5345,6 +5431,22 @@ function SubjectPage({ subject, config, onSelectExam, onBack }) {
             </div>
           )}
         </div>
+      )}
+
+      {/* ── Flagged questions ── */}
+      {flagged > 0 && (
+        <button className="hx-tool" onClick={() => onSelectExam('flagged')}
+          style={{ ...HX_CARD, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                   gap: 12, marginBottom: 26, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--sb-ink)',
+                   textAlign: 'left', transition: 'border-color .15s' }}>
+          <span style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: 14.5, fontWeight: 600 }}>Flagged questions</span>
+            <span style={{ fontSize: 11.5, color: 'var(--sb-ink-3)' }}>
+              The questions you flagged as hard · shown every time until you unflag them
+            </span>
+          </span>
+          <span style={{ fontSize: 12.5, color: 'var(--sb-ink-4)', flexShrink: 0 }}>{flagged} q →</span>
+        </button>
       )}
 
       {/* ── Practice tools ── */}
@@ -12811,6 +12913,7 @@ const PAGE_INSTRUCTIONS = {
       'One at a time (default): mark the statements, press "Check this question" and see the answers right away, then go on. "Whole test" lets you answer everything and submit once.',
       'Green is right, red is wrong, grey was left blank and is not counted. Tap the same choice again to clear it.',
       'Explanations appear under each statement after you submit, plus what each abbreviation stands for. Statements you got right are hidden next time.',
+      '"Shuffled" mixes the order of the questions (choose it before you start). "Flag" saves a hard question; open "Flagged questions" on the subject page to repeat it, even weeks later. It stays until you unflag it.',
     ],
   },
   exam: {

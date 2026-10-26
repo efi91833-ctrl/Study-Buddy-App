@@ -74,7 +74,7 @@ run(
   'ExamScreen, ResultsBanner, WeakAreaCard, QuestionCard, YEARS, ' +
   'isTfSelection, tfGroupByStem, TrueFalseExam, FormulaBuilder, fxCheck, fxPreview, ' +
   'fbCalcCorrect, fbParseNumber, SUBJECT_PAGES, RangesGame, rgGrade, rgMakeScale, physioTermsIn, ' +
-  'PhysioAbout, UnitQuestion, RgMapPanel };',
+  'PhysioAbout, UnitQuestion, RgMapPanel, stemFlagKey, isStemFlagged, flaggedCount };',
   'app'
 );
 
@@ -246,6 +246,22 @@ check('correct statements are hidden next time, wrong one stays',
       bloodAfter.length === blood.length - (firstStem.length - 1) && bloodAfter.some(q => q.id === firstStem[0].id));
 check('weak areas tracked by subtopic', P.weakAreas(PH).length === 0 && P.summary(PH).attempts === firstStem.length);
 
+console.log('\n=== physiology flags ===');
+const q5 = T.tfGroupByStem(phys.exams[0].questions).find(g => g.num === 5);
+check('nothing flagged at start', T.flaggedCount(PH) === 0 && T.poolFor(PH, 'flagged').length === 0);
+P.setFlag(PH, T.stemFlagKey(q5.stem), true);
+check('flagging a question counts it once', T.flaggedCount(PH) === 1 && T.isStemFlagged(PH, q5.stem));
+check('flagged pool holds all statements of that question',
+      T.poolFor(PH, 'flagged').length === q5.items.length && T.poolFor(PH, 'flagged').every(s => s.stemNum === 5));
+check('flag is saved to storage straight away', /"flags"/.test(w.localStorage.getItem('sb_progress_v2') || ''));
+q5.items.forEach(s => s.correct && P.record(PH, s, true));
+const fb = T.buildExam(PH, 'flagged');
+check('flagged session shows the question even when mastered', fb.flagged && fb.questions.length === q5.items.length);
+P.reset(PH);
+check('resetting progress keeps flags', T.flaggedCount(PH) === 1);
+check('flagged session opens the True/False screen', T.isTfSelection(PH, 'flagged'));
+check('export includes flags', /"flags"/.test(P.exportData()));
+
 console.log('\n=== formula builder ===');
 const FB = w.PHYSIO_FORMULAS || [];
 check('formula data loaded', FB.length === 20, 'n=' + FB.length);
@@ -341,6 +357,13 @@ try { rgHost = mount(R.createElement(w.__test.RangesGame, { onBack() {} })); } c
 try {
   tfHost = mount(R.createElement(w.__test.TrueFalseExam, { subject: 'Physiology', examIndex: 0, onBack() {} }));
 } catch (e) { tfErr = e; }
+let tfFlagHost = null, tfShufHost = null, tfExtraErr = null;
+try {
+  tfFlagHost = mount(R.createElement(w.__test.TrueFalseExam, { subject: 'Physiology', examIndex: 'flagged', onBack() {} }));
+  w.localStorage.setItem('sb_tf_shuffle', 'on');
+  tfShufHost = mount(R.createElement(w.__test.TrueFalseExam, { subject: 'Physiology', examIndex: 0, onBack() {} }));
+  w.localStorage.removeItem('sb_tf_shuffle');
+} catch (e) { tfExtraErr = e; }
 // createRoot renders asynchronously; give React a tick before asserting.
 setTimeout(() => {
   check('ExamScreen renders without throwing', !renderErr, renderErr && renderErr.message);
@@ -364,6 +387,13 @@ setTimeout(() => {
   check('T/F opens one question at a time by default', tfHost && tfHost.querySelectorAll('.question-card').length === 1
         && /Question 1 of 125/.test(tfHost.textContent) && /Check this question/.test(tfHost.textContent));
   check('progress can log a one-by-one session', typeof P.logSession === 'function');
+  check('T/F shows In order / Shuffled and a Flag button', /In order/.test(tft) && /Shuffled/.test(tft)
+        && tfHost.querySelector('.tf-flagbtn') && tfHost.querySelector('.tf-flagbtn').textContent === 'Flag');
+  const fgt = tfFlagHost ? tfFlagHost.textContent : '';
+  check('flagged session renders the flagged question, marked Flagged', !tfExtraErr && /Flagged questions/.test(fgt)
+        && /Question 1 of 1/.test(fgt) && tfFlagHost.querySelector('.tf-flagbtn.on'), (tfExtraErr && tfExtraErr.message) || fgt.slice(0, 160));
+  check('shuffled T/F still shows one question of 125', tfShufHost && tfShufHost.querySelectorAll('.question-card').length === 1
+        && /Question 1 of 125/.test(tfShufHost.textContent) && tfShufHost.querySelector('.tf-mode-btn.on + .tf-mode-btn, .tf-mode .on'));
   check('T/F exam shows stem, statements and True/False choices',
         /True \/ False/.test(tft) && /Question 1/.test(tft) && /TrueFalse/.test(tft), tft.slice(0, 160));
 

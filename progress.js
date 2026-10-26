@@ -12,6 +12,7 @@
  *       }
  *     }
  *   }
+ *   flags: { "Physiology": { "<key>": <timestamp flagged> } }   // flagged questions
  *   a  = attempts            c  = times correct
  *   s  = current streak      t  = last attempt timestamp (ms)
  *   tp = topic               st = subtopic
@@ -315,7 +316,41 @@
     return limit ? h.slice(0, limit) : h;
   }
 
+  // ── Flags ───────────────────────────────────────────────────────────────
+  /* Questions you flag to repeat later. Kept outside `subjects`, so resetting
+   * progress does not clear them, and saved straight away so they survive
+   * closing the app for weeks. `key` is any stable string (the T/F exam uses
+   * keyFor({ question: stem })). */
+  function flagStore(subject) {
+    var db = load();
+    if (!db.flags) db.flags = {};
+    if (!db.flags[subject]) db.flags[subject] = {};
+    return db.flags[subject];
+  }
+
+  function isFlagged(subject, key) {
+    return !!(key && flagStore(subject)[key]);
+  }
+
+  function setFlag(subject, key, on) {
+    if (!key) return false;
+    var f = flagStore(subject);
+    if (on) f[key] = Date.now(); else delete f[key];
+    flush();
+    notify('flag');
+    return !!on;
+  }
+
+  function toggleFlag(subject, key) {
+    return setFlag(subject, key, !isFlagged(subject, key));
+  }
+
+  function flaggedKeys(subject) {
+    return Object.keys(flagStore(subject));
+  }
+
   // ── Maintenance ─────────────────────────────────────────────────────────
+  // Flags are kept on reset; unflag questions one by one to remove them.
   function reset(subject) {
     var db = load();
     if (subject) delete db.subjects[subject];
@@ -331,7 +366,7 @@
   function importData(json) {
     var parsed = typeof json === 'string' ? JSON.parse(json) : json;
     if (!parsed || !parsed.subjects) throw new Error('Not a Study Buddy progress file');
-    cache = { v: SCHEMA_VERSION, subjects: parsed.subjects };
+    cache = { v: SCHEMA_VERSION, subjects: parsed.subjects, flags: parsed.flags || {} };
     flush();
     notify('import');
   }
@@ -356,6 +391,10 @@
     summary: summary,
     history: history,
     reset: reset,
+    isFlagged: isFlagged,
+    setFlag: setFlag,
+    toggleFlag: toggleFlag,
+    flaggedKeys: flaggedKeys,
     exportData: exportData,
     importData: importData,
     subscribe: subscribe,
