@@ -2311,15 +2311,15 @@ const QUESTION_BANK = {
 // YEARS  — subject folders shown on the home screen.
 // To file a subject under a year, add its QUESTION_BANK key below.
 // ─────────────────────────────────────────────────────────────
-/* Renders '1st Year' as a headline with a raised ordinal suffix. */
-function YearHeadline({ name, className }) {
+/* Renders '1st Year' as 'First Year'. The stored name stays '1st Year'
+ * (localStorage remembers the open folder by it); only the headline changes. */
+const YEAR_WORDS = ['', 'First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'];
+function yearTitle(name) {
   const m = /^(\d+)(st|nd|rd|th)\s+(.*)$/i.exec(name);
-  if (!m) return <div className={'year-headline ' + (className || '')}>{name}</div>;
-  return (
-    <div className={'year-headline ' + (className || '')}>
-      {m[1]}<sup>{m[2].toUpperCase()}</sup> {m[3]}
-    </div>
-  );
+  return m && YEAR_WORDS[+m[1]] ? YEAR_WORDS[+m[1]] + ' ' + m[3] : name;
+}
+function YearHeadline({ name, className }) {
+  return <div className={'year-headline ' + (className || '')}>{yearTitle(name)}</div>;
 }
 
 const YEARS = [
