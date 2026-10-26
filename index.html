@@ -2297,15 +2297,13 @@ const QUESTION_BANK = {
     icon: '',
     description: 'Function of the human body',
     exams: [
-      // Whole test in the original question order, then the two topics on their own.
-      tfExam('Full test: Blood + Cardiovascular',
+      // All 94 questions in the original order. Blood / Cardiovascular stay as
+      // topic tags on each question for weak-area tracking.
+      tfExam('1st - Block Test',
              [...((window.PHYSIO_TF || {}).Blood || []), ...((window.PHYSIO_TF || {}).Cardiovascular || [])]
-               .sort((a, b) => a.num - b.num)),
-      tfExam('Blood',          (window.PHYSIO_TF || {}).Blood),
-      tfExam('Cardiovascular', (window.PHYSIO_TF || {}).Cardiovascular),
+               .sort((x, y) => x.num - y.num)),
     ],
-    // The full block test repeats the topic banks, so count each statement once.
-    get questions() { return dedupeByStem(this.exams.flatMap(e => e.questions)); },
+    get questions() { return this.exams.flatMap(e => e.questions); },
   },
 };
 
@@ -5005,7 +5003,7 @@ const SUBJECT_PAGES = {
 
   Physiology: {
     groups: [
-      { label: 'First Block Test', names: ['Full test: Blood + Cardiovascular', 'Blood', 'Cardiovascular'] },
+      { label: 'True / False', names: ['1st - Block Test'] },
     ],
     tools: () => [
       { type: 'formula_builder', name: 'Formula Builder',

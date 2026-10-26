@@ -217,12 +217,13 @@ const PH = 'Physiology';
 const phys = T.QUESTION_BANK[PH];
 check('Physiology subject exists', !!phys);
 check('Physiology filed under 2nd Year', T.YEARS.some(y => y.name === '2nd Year' && y.subjects.includes(PH)));
-check('Full test, Blood and Cardiovascular banks',
-      phys.exams.map(e => e.name + ':' + e.type).join(',') === 'Full test: Blood + Cardiovascular:tf,Blood:tf,Cardiovascular:tf');
-check('Full test holds all 94 questions in original order',
+check('one T/F exam named "1st - Block Test", no duplicate banks',
+      phys.exams.map(e => e.name + ':' + e.type).join(',') === '1st - Block Test:tf');
+check('1st - Block Test holds all 94 questions in original order',
       T.tfGroupByStem(phys.exams[0].questions).map(g => g.num).join() === Array.from({ length: 94 }, (_, k) => k + 1).join());
-check('First Block Test is its own folder on the subject page',
-      T.SUBJECT_PAGES.Physiology.groups.some(g => g.label === 'First Block Test' && g.names.length === 3));
+check('subject page lists only the one block test',
+      T.SUBJECT_PAGES.Physiology.groups.length === 1 && T.SUBJECT_PAGES.Physiology.groups[0].names.join() === '1st - Block Test');
+check('both topics still tagged for weak areas', new Set(phys.questions.map(q => q.topic)).size === 2);
 const allSt = phys.questions;
 check('482 statements across 94 stems', allSt.length === 482 && T.tfGroupByStem(allSt).length === 94,
       allSt.length + ' / ' + T.tfGroupByStem(allSt).length);
@@ -230,16 +231,16 @@ const norm = x => String(x).toLowerCase().replace(/[^a-z0-9]/g, '');
 check('every statement has a unique progress key', new Set(allSt.map(q => norm(q.question))).size === allSt.length);
 check('every statement is topic/subtopic tagged', allSt.every(q => q.topic && q.subtopic));
 check('only the illegible Q94 is unscored', allSt.filter(q => !q.correct).map(q => q.stemNum).join() === '94,94,94,94,94');
-check('T/F routing: block test and single banks', T.isTfSelection(PH, 0) && T.isTfSelection(PH, 1) && T.isTfSelection(PH, 2));
+check('T/F routing: block test', T.isTfSelection(PH, 0) && T.isTfSelection(PH, 'weak'));
 check('T/F routing: weak-area session', T.isTfSelection(PH, 'weak'));
 check('T/F routing leaves other subjects alone', !T.isTfSelection(SUBJ, 0) && !T.isTfSelection(SUBJ, 'weak'));
-const blood = T.buildExam(PH, 1).questions;
+const blood = T.buildExam(PH, 0).questions;
 const firstStem = blood.filter(q => q.stemNum === blood[0].stemNum);
 const tfAns = {};
 firstStem.forEach((q, k) => { tfAns[q.id] = k === 0 ? (q.correct === 'T' ? 'F' : 'T') : q.correct; });
 const tfRes = P.recordExam(PH, 'tf test', firstStem, tfAns, { isCorrect: T.isCorrect, hasAnswer: T.hasAnswer });
 check('per-statement scoring', tfRes.answered === firstStem.length && tfRes.correct === firstStem.length - 1, JSON.stringify(tfRes));
-const bloodAfter = T.buildExam(PH, 1).questions;
+const bloodAfter = T.buildExam(PH, 0).questions;
 check('correct statements are hidden next time, wrong one stays',
       bloodAfter.length === blood.length - (firstStem.length - 1) && bloodAfter.some(q => q.id === firstStem[0].id));
 check('weak areas tracked by subtopic', P.weakAreas(PH).length === 0 && P.summary(PH).attempts === firstStem.length);
@@ -337,7 +338,7 @@ try {
 } catch (e) { mpErr = e; }
 try { rgHost = mount(R.createElement(w.__test.RangesGame, { onBack() {} })); } catch (e) { rgErr = e; }
 try {
-  tfHost = mount(R.createElement(w.__test.TrueFalseExam, { subject: 'Physiology', examIndex: 1, onBack() {} }));
+  tfHost = mount(R.createElement(w.__test.TrueFalseExam, { subject: 'Physiology', examIndex: 0, onBack() {} }));
 } catch (e) { tfErr = e; }
 // createRoot renders asynchronously; give React a tick before asserting.
 setTimeout(() => {
