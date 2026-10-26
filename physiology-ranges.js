@@ -895,7 +895,14 @@ window.PHYSIO_RANGES = {
      ],
      "text": "≈ 120 systolic"
     }
-   }
+   },
+   "spots": [
+    {
+     "img": "body",
+     "x": 75.03,
+     "y": 26.69
+    }
+   ]
   },
   {
    "id": "aorta",
@@ -940,7 +947,19 @@ window.PHYSIO_RANGES = {
     ],
     "text": "≈ 100",
     "label": "Mean"
-   }
+   },
+   "spots": [
+    {
+     "img": "body",
+     "x": 68.21,
+     "y": 5.94
+    },
+    {
+     "img": "organs",
+     "x": 53.55,
+     "y": 47.08
+    }
+   ]
   },
   {
    "id": "arterioles",
@@ -976,7 +995,14 @@ window.PHYSIO_RANGES = {
      "text": "≈ 50 at their start"
     }
    },
-   "note": "Guyton gives no number for arterioles in the text (only Fig. 14-2); value from Costanzo."
+   "note": "Guyton gives no number for arterioles in the text (only Fig. 14-2); value from Costanzo.",
+   "spots": [
+    {
+     "img": "body",
+     "x": 38.7,
+     "y": 86.73
+    }
+   ]
   },
   {
    "id": "caps",
@@ -1019,7 +1045,24 @@ window.PHYSIO_RANGES = {
     ],
     "text": "≈ 17 average functional pressure",
     "label": "Average functional"
-   }
+   },
+   "spots": [
+    {
+     "img": "body",
+     "x": 31.74,
+     "y": 91.72
+    },
+    {
+     "img": "body",
+     "x": 32.58,
+     "y": 51.49
+    },
+    {
+     "img": "organs",
+     "x": 40.68,
+     "y": 94.53
+    }
+   ]
   },
   {
    "id": "glom",
@@ -1045,7 +1088,14 @@ window.PHYSIO_RANGES = {
     "text": "≈ 60",
     "label": "Pressure"
    },
-   "note": "Guyton gives a single value (≈ 60 mmHg), not a range."
+   "note": "Guyton gives a single value (≈ 60 mmHg), not a range.",
+   "spots": [
+    {
+     "img": "organs",
+     "x": 40.16,
+     "y": 81.25
+    }
+   ]
   },
   {
    "id": "veins",
@@ -1080,7 +1130,14 @@ window.PHYSIO_RANGES = {
      "text": "6 mmHg above RAP"
     }
    },
-   "note": "Range is given relative to right atrial pressure (≈ 0)."
+   "note": "Range is given relative to right atrial pressure (≈ 0).",
+   "spots": [
+    {
+     "img": "body",
+     "x": 26.24,
+     "y": 88.32
+    }
+   ]
   },
   {
    "id": "vc",
@@ -1106,7 +1163,24 @@ window.PHYSIO_RANGES = {
     "text": "≈ 0 (Costanzo ≈ 4)",
     "label": "Pressure"
    },
-   "note": "A single value in the sources, not a range. Costanzo 6e Table 4.1 lists vena cava ≈ 4 mmHg (p.128)."
+   "note": "A single value in the sources, not a range. Costanzo 6e Table 4.1 lists vena cava ≈ 4 mmHg (p.128).",
+   "spots": [
+    {
+     "img": "body",
+     "x": 58.59,
+     "y": 6.34
+    },
+    {
+     "img": "body",
+     "x": 59.9,
+     "y": 36.83
+    },
+    {
+     "img": "organs",
+     "x": 27.81,
+     "y": 60.74
+    }
+   ]
   },
   {
    "id": "ra",
@@ -1151,7 +1225,14 @@ window.PHYSIO_RANGES = {
     "text": "≈ 0",
     "label": "Mean"
    },
-   "note": "Costanzo 6e lists 0–2 mmHg."
+   "note": "Costanzo 6e lists 0–2 mmHg.",
+   "spots": [
+    {
+     "img": "body",
+     "x": 57.28,
+     "y": 23.76
+    }
+   ]
   },
   {
    "id": "rv",
@@ -1185,7 +1266,14 @@ window.PHYSIO_RANGES = {
      ],
      "text": "≈ 25 systolic"
     }
-   }
+   },
+   "spots": [
+    {
+     "img": "body",
+     "x": 68.21,
+     "y": 32.87
+    }
+   ]
   },
   {
    "id": "pa",
@@ -1229,7 +1317,19 @@ window.PHYSIO_RANGES = {
     "text": "≈ 15 (15–16)",
     "label": "Mean"
    },
-   "note": "Guyton ch.14 (p.173) gives the mean as 16 mmHg; accept 15–16."
+   "note": "Guyton ch.14 (p.173) gives the mean as 16 mmHg; accept 15–16.",
+   "spots": [
+    {
+     "img": "body",
+     "x": 69.52,
+     "y": 11.49
+    },
+    {
+     "img": "organs",
+     "x": 31.93,
+     "y": 18.22
+    }
+   ]
   },
   {
    "id": "pcap",
@@ -1255,7 +1355,24 @@ window.PHYSIO_RANGES = {
     "text": "≈ 7",
     "label": "Mean"
    },
-   "note": "A single mean value in Guyton, not a range."
+   "note": "A single mean value in Guyton, not a range.",
+   "spots": [
+    {
+     "img": "body",
+     "x": 24.49,
+     "y": 65.35
+    },
+    {
+     "img": "body",
+     "x": 44.6,
+     "y": 65.35
+    },
+    {
+     "img": "organs",
+     "x": 38.62,
+     "y": 10.63
+    }
+   ]
   },
   {
    "id": "la",
@@ -1298,7 +1415,19 @@ window.PHYSIO_RANGES = {
     ],
     "text": "≈ 2",
     "label": "Mean"
-   }
+   },
+   "spots": [
+    {
+     "img": "body",
+     "x": 76.08,
+     "y": 16.24
+    },
+    {
+     "img": "organs",
+     "x": 45.57,
+     "y": 18.22
+    }
+   ]
   }
  ],
  "facts": [
@@ -1313,6 +1442,24 @@ window.PHYSIO_RANGES = {
   {
    "text": "1 mmHg = 1.36 cmH₂O (mercury is 13.6 × denser than water).",
    "source": "Guyton & Hall 14e, ch.14, p.176"
+  }
+ ],
+ "mapImages": [
+  {
+   "id": "body",
+   "label": "Body and heart",
+   "src": "images/physiology/circulation-dual-system.jpg",
+   "w": 1500,
+   "h": 1656,
+   "credit": "Figure: \"Dual System of Human Circulation\", OpenStax Anatomy and Physiology 2e, fig. 19.4 (openstax.org), CC BY-NC-SA 4.0."
+  },
+  {
+   "id": "organs",
+   "label": "Organ circuits",
+   "src": "images/physiology/circulation-organ-beds.jpg",
+   "w": 1400,
+   "h": 949,
+   "credit": "Figure: \"Cardiovascular Circulation\", OpenStax Anatomy and Physiology 2e, fig. 20.2 (openstax.org), CC BY-NC-SA 4.0."
   }
  ]
 };

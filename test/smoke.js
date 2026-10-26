@@ -72,7 +72,7 @@ run(
   code + '\n;window.__test = { buildExam, poolFor, shuffleOptions, isCorrect, hasAnswer, ' +
   'QUESTION_BANK, dedupeByStem, sessionBreakdown, WEAK_FOCUS_SIZE, ' +
   'ExamScreen, ResultsBanner, WeakAreaCard, QuestionCard, YEARS, ' +
-  'isTfSelection, tfGroupByStem, TrueFalseExam, FormulaBuilder, fbCanon, fbIsCorrect, ' +
+  'isTfSelection, tfGroupByStem, TrueFalseExam, FormulaBuilder, fxCheck, fxPreview, ' +
   'fbCalcCorrect, fbParseNumber, SUBJECT_PAGES, RangesGame, rgGrade, rgMakeScale, physioTermsIn, ' +
   'PhysioAbout, UnitQuestion, RgMapPanel };',
   'app'
@@ -217,8 +217,12 @@ const PH = 'Physiology';
 const phys = T.QUESTION_BANK[PH];
 check('Physiology subject exists', !!phys);
 check('Physiology filed under 2nd Year', T.YEARS.some(y => y.name === '2nd Year' && y.subjects.includes(PH)));
-check('two T/F banks: Blood and Cardiovascular',
-      phys.exams.map(e => e.name + ':' + e.type).join(',') === 'Blood:tf,Cardiovascular:tf');
+check('Full test, Blood and Cardiovascular banks',
+      phys.exams.map(e => e.name + ':' + e.type).join(',') === 'Full test: Blood + Cardiovascular:tf,Blood:tf,Cardiovascular:tf');
+check('Full test holds all 94 questions in original order',
+      T.tfGroupByStem(phys.exams[0].questions).map(g => g.num).join() === Array.from({ length: 94 }, (_, k) => k + 1).join());
+check('First Block Test is its own folder on the subject page',
+      T.SUBJECT_PAGES.Physiology.groups.some(g => g.label === 'First Block Test' && g.names.length === 3));
 const allSt = phys.questions;
 check('482 statements across 94 stems', allSt.length === 482 && T.tfGroupByStem(allSt).length === 94,
       allSt.length + ' / ' + T.tfGroupByStem(allSt).length);
@@ -226,16 +230,16 @@ const norm = x => String(x).toLowerCase().replace(/[^a-z0-9]/g, '');
 check('every statement has a unique progress key', new Set(allSt.map(q => norm(q.question))).size === allSt.length);
 check('every statement is topic/subtopic tagged', allSt.every(q => q.topic && q.subtopic));
 check('only the illegible Q94 is unscored', allSt.filter(q => !q.correct).map(q => q.stemNum).join() === '94,94,94,94,94');
-check('T/F routing: single bank', T.isTfSelection(PH, 0) && T.isTfSelection(PH, 1));
+check('T/F routing: block test and single banks', T.isTfSelection(PH, 0) && T.isTfSelection(PH, 1) && T.isTfSelection(PH, 2));
 check('T/F routing: weak-area session', T.isTfSelection(PH, 'weak'));
 check('T/F routing leaves other subjects alone', !T.isTfSelection(SUBJ, 0) && !T.isTfSelection(SUBJ, 'weak'));
-const blood = T.buildExam(PH, 0).questions;
+const blood = T.buildExam(PH, 1).questions;
 const firstStem = blood.filter(q => q.stemNum === blood[0].stemNum);
 const tfAns = {};
 firstStem.forEach((q, k) => { tfAns[q.id] = k === 0 ? (q.correct === 'T' ? 'F' : 'T') : q.correct; });
 const tfRes = P.recordExam(PH, 'tf test', firstStem, tfAns, { isCorrect: T.isCorrect, hasAnswer: T.hasAnswer });
 check('per-statement scoring', tfRes.answered === firstStem.length && tfRes.correct === firstStem.length - 1, JSON.stringify(tfRes));
-const bloodAfter = T.buildExam(PH, 0).questions;
+const bloodAfter = T.buildExam(PH, 1).questions;
 check('correct statements are hidden next time, wrong one stays',
       bloodAfter.length === blood.length - (firstStem.length - 1) && bloodAfter.some(q => q.id === firstStem[0].id));
 check('weak areas tracked by subtopic', P.weakAreas(PH).length === 0 && P.summary(PH).attempts === firstStem.length);
@@ -243,15 +247,19 @@ check('weak areas tracked by subtopic', P.weakAreas(PH).length === 0 && P.summar
 console.log('\n=== formula builder ===');
 const FB = w.PHYSIO_FORMULAS || [];
 check('formula data loaded', FB.length === 20, 'n=' + FB.length);
-check('every formula accepts its own answers', FB.every(f => f.answers.every(a => T.fbIsCorrect(f, a))));
-check('every answer tile is in the pool', FB.every(f => f.answers.every(a => a.every(t => f.tiles.includes(t)))));
-check('every formula has a calculation', FB.every(f => f.calcs.length > 0));
-const byId = Object.fromEntries(FB.map(f => [f.id, f]));
-check('order of × does not matter', T.fbIsCorrect(byId.co, ['HR', '×', 'SV']));
-check('order of − does matter', !T.fbIsCorrect(byId.pp, ['DP', '−', 'SP']));
-check('both MAP forms accepted', T.fbIsCorrect(byId.map, ['DP', '+', '⅓', '×', 'PP']) && T.fbIsCorrect(byId.map, ['0.4', '×', 'SP', '+', '0.6', '×', 'DP']));
-check('brackets matter in TPR', !T.fbIsCorrect(byId.tpr, ['MAP', '−', 'RAP', '÷', 'CO']));
-check('unfinished expression is wrong', !T.fbIsCorrect(byId.co, ['SV', '×']));
+const fx = (id, t) => T.fxCheck(byIdF[id], t).status;
+const byIdF = Object.fromEntries(FB.map(f => [f.id, f]));
+check('every formula accepts its own reference forms', FB.every(f => f.refs.every(r => T.fxCheck(f, f.target + ' = ' + r.expr).status === 'ok')));
+check('typed formula: any order and spelling', fx('co', 'CO = HR × SV') === 'ok' && fx('co', 'Q = SV HR') === 'ok' && fx('flow', 'Q = dP/R') === 'ok');
+check('typed formula: rearranged and name in words', fx('flow', 'ΔP = F × R') === 'ok' && fx('co', 'Cardiac output = SV × HR') === 'ok');
+check('typed formula: both MAP forms and mixed forms', fx('map', 'MAP = DP + ⅓PP') === 'ok' && fx('map', 'MAP = 0.6 DP + 0.4 SP') === 'ok' && fx('map', 'MAP = (SP + 2DP)/3') === 'ok');
+check('typed formula: Poiseuille with implicit multiplication', fx('pois', 'F = πΔPr⁴/(8ηl)') === 'ok');
+check('typed formula: wrong answers rejected', fx('flow', 'F = ΔP × R') === 'wrong' && fx('sv', 'SV = ESV − EDV') === 'wrong' && fx('map', 'MAP = (SP + DP)/2') === 'wrong');
+check('typed formula: identities rejected', fx('flow', 'F = F') === 'wrong');
+check('typed formula: missing constant is "close"', fx('mcv', 'MCV = Hct/RBC') === 'close');
+check('typed formula: unreadable input is not graded', fx('co', 'CO = SV × (HR') === 'error');
+check('typed formula: brackets matter', fx('tpr', 'TPR = MAP − RAP/CO') === 'wrong' && fx('tpr', 'TPR = (MAP − RAP)/CO') === 'ok');
+check('preview shows how the text was read', T.fxPreview('Q = πΔPr^4/(8ηl)').text === 'Q = π × ΔP × r⁴ ÷ (8 × η × l)');
 check('calc answers graded by range', FB.every(f => f.calcs.every(c => T.fbCalcCorrect(c, c.accept[0]) && !T.fbCalcCorrect(c, c.accept[1] * 1.5 + 1))));
 check('comma decimals parsed', T.fbParseNumber('5,04') === 5.04);
 check('Formula Builder is a Physiology tool', T.SUBJECT_PAGES.Physiology.tools().some(t => t.type === 'formula_builder'));
@@ -281,6 +289,9 @@ check('every map location has a range or a single value', RG.map.every(n => n.ra
 check('map range ends contain their own value', RG.map.filter(n => n.range).every(n =>
   ['low', 'high'].every(k => n.range[k].accept[0] <= n.range[k].value && n.range[k].value <= n.range[k].accept[1])));
 check('at least 9 map locations ask for a range', RG.map.filter(n => n.range).length >= 9);
+check('map uses the two OpenStax figures with credits', (RG.mapImages || []).length === 2 && RG.mapImages.every(i => /OpenStax/.test(i.credit) && i.src && i.w && i.h));
+check('every map location has a hotspot on a figure, inside the image', RG.map.every(n => n.spots.length &&
+  n.spots.every(sp => RG.mapImages.some(i => i.id === sp.img) && sp.x > 0 && sp.x < 100 && sp.y > 0 && sp.y < 100)));
 
 console.log('\n=== units + glossary ===');
 const GL = w.PHYSIO_GLOSSARY || {};
@@ -346,7 +357,7 @@ setTimeout(() => {
   const rgt = rgHost ? rgHost.textContent : '';
   check('Ranges home shows both tabs', /Normal ranges/.test(rgt) && /Pressure map/.test(rgt) && /Sodium/.test(rgt), rgt.slice(0, 160));
   const fbt = fbHost ? fbHost.textContent : '';
-  check('Formula Builder home lists formulas', /Start a round/.test(fbt) && /Cardiac output/.test(fbt), fbt.slice(0, 160));
+  check('Formula Builder home lists formulas by topic', /Start a mixed round/.test(fbt) && /Practise all/.test(fbt) && /Cardiac output/.test(fbt), fbt.slice(0, 160));
   const tft = tfHost ? tfHost.textContent : '';
   check('T/F exam shows stem, statements and True/False choices',
         /True \/ False/.test(tft) && /Question 1/.test(tft) && /TrueFalse/.test(tft), tft.slice(0, 160));

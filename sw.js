@@ -5,7 +5,7 @@
    - Cache-first strategy for all GET requests
    ============================================================ */
 
-const CACHE_NAME = 'study-buddy-v138';
+const CACHE_NAME = 'study-buddy-v139';
 
 /* All local files to pre-cache on install.
    IMPORTANT: this list must contain every <script src> in index.html. Seven
@@ -39,6 +39,8 @@ const LOCAL_ASSETS = [
   '/physiology-formulas.js',
   '/physiology-ranges.js',
   '/physiology-glossary.js',
+  '/images/physiology/circulation-dual-system.jpg',
+  '/images/physiology/circulation-organ-beds.jpg',
   '/artery-3d-topology.js',
   '/artery-3d-geometry.js',
   '/artery-3d.js',

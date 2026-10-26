@@ -1,6 +1,6 @@
 /* physiology-formulas.js — Formula Builder data (question data only; UI lives in index.html).
  * Built from cardio_qbank.json (Guyton & Hall 14e primary, Costanzo 6e / web where marked).
- * answers: accepted right-hand sides as tile sequences; order of + and × terms does not matter.
+ * refs: accepted equations (target = expr); answers are checked numerically, so any equivalent form counts.
  * calcs: number problems that use the formula; accept = [min, max] marked correct. */
 window.PHYSIO_FORMULAS = [
  {
@@ -8,21 +8,6 @@ window.PHYSIO_FORMULAS = [
   "name": "Blood flow (Ohm's law)",
   "group": "Hemodynamics",
   "lhs": "F",
-  "answers": [
-   [
-    "ΔP",
-    "÷",
-    "R"
-   ]
-  ],
-  "tiles": [
-   "ΔP",
-   "R",
-   "÷",
-   "P",
-   "×",
-   "r⁴"
-  ],
   "display": "F = ΔP / R  (also ΔP = F × R and R = ΔP / F)",
   "why": "Flow rises with the pressure difference between the two ends of the vessel and falls with resistance. The absolute pressure does not drive flow, only the difference does.",
   "source": "Guyton & Hall 14e, ch.14, p.174",
@@ -53,12 +38,12 @@ window.PHYSIO_FORMULAS = [
     "note": "Numbers from Costanzo 6e sample problem, ch.4, p.123."
    }
   ],
-  "key": {
-   "ΔP": "pressure difference",
-   "R": "resistance",
-   "P": "pressure",
-   "r⁴": "radius to the 4th power"
-  },
+  "target": "F",
+  "refs": [
+   {
+    "expr": "ΔP / R"
+   }
+  ],
   "units": [
    "ml/min",
    "mmHg",
@@ -76,34 +61,6 @@ window.PHYSIO_FORMULAS = [
   "name": "Total peripheral resistance",
   "group": "Hemodynamics",
   "lhs": "TPR",
-  "answers": [
-   [
-    "(",
-    "MAP",
-    "−",
-    "RAP",
-    ")",
-    "÷",
-    "CO"
-   ],
-   [
-    "ΔP",
-    "÷",
-    "CO"
-   ]
-  ],
-  "tiles": [
-   "MAP",
-   "RAP",
-   "ΔP",
-   "CO",
-   "(",
-   ")",
-   "−",
-   "÷",
-   "×",
-   "HR"
-  ],
   "display": "TPR = (mean arterial pressure − right atrial pressure) / cardiac output ≈ ΔP / CO",
   "why": "Normal ≈ 100 mmHg / 100 ml/s = 1 PRU (peripheral resistance unit). Range 0.2 PRU (fully dilated) to 4 PRU (strongly constricted). In mmHg·min/L: 100 / 5 = 20.",
   "source": "Guyton & Hall 14e, ch.14, p.177",
@@ -134,13 +91,19 @@ window.PHYSIO_FORMULAS = [
    }
   ],
   "note": "mmHg·min/L form: Costanzo 6e, ch.4, p.123",
-  "key": {
-   "MAP": "mean arterial pressure",
-   "RAP": "right atrial pressure",
-   "ΔP": "pressure difference",
-   "CO": "cardiac output",
-   "HR": "heart rate"
-  },
+  "target": "TPR",
+  "refs": [
+   {
+    "expr": "(MAP - RAP) / CO"
+   },
+   {
+    "expr": "ΔP / CO"
+   },
+   {
+    "expr": "MAP / CO",
+    "note": "Accepted: with right atrial pressure ≈ 0, ΔP ≈ MAP."
+   }
+  ],
   "units": [
    "mmHg·min/L",
    "mmHg",
@@ -160,21 +123,6 @@ window.PHYSIO_FORMULAS = [
   "name": "Arterial pressure",
   "group": "Pressure",
   "lhs": "MAP",
-  "answers": [
-   [
-    "CO",
-    "×",
-    "TPR"
-   ]
-  ],
-  "tiles": [
-   "CO",
-   "TPR",
-   "×",
-   "÷",
-   "SV",
-   "+"
-  ],
   "display": "Arterial pressure = cardiac output × total peripheral resistance",
   "why": "This is Ohm's law rearranged (ΔP = F × R) for the whole systemic circulation.",
   "source": "Guyton & Hall 14e, ch.19, p.232",
@@ -204,11 +152,12 @@ window.PHYSIO_FORMULAS = [
     "source": "Guyton & Hall 14e, ch.19, p.232"
    }
   ],
-  "key": {
-   "CO": "cardiac output",
-   "TPR": "total peripheral resistance",
-   "SV": "stroke volume"
-  },
+  "target": "MAP",
+  "refs": [
+   {
+    "expr": "CO * TPR"
+   }
+  ],
   "units": [
    "mmHg",
    "L/min",
@@ -226,36 +175,6 @@ window.PHYSIO_FORMULAS = [
   "name": "Mean arterial pressure",
   "group": "Pressure",
   "lhs": "MAP",
-  "answers": [
-   [
-    "0.6",
-    "×",
-    "DP",
-    "+",
-    "0.4",
-    "×",
-    "SP"
-   ],
-   [
-    "DP",
-    "+",
-    "⅓",
-    "×",
-    "PP"
-   ]
-  ],
-  "tiles": [
-   "DP",
-   "SP",
-   "PP",
-   "0.6",
-   "0.4",
-   "⅓",
-   "×",
-   "+",
-   "½",
-   "−"
-  ],
   "display": "MAP ≈ 0.6 × diastolic + 0.4 × systolic  (Guyton). Common clinical form: MAP = diastolic + ⅓ × pulse pressure (Costanzo)",
   "why": "Diastole takes more of the cardiac cycle than systole, so MAP sits closer to diastolic pressure. At very high heart rates MAP approaches the simple average of systolic and diastolic. Normal mean aortic pressure ≈ 100 mmHg.",
   "source": "Guyton & Hall 14e, ch.15, p.188",
@@ -288,11 +207,18 @@ window.PHYSIO_FORMULAS = [
    }
   ],
   "note": "DP + ⅓PP form: Costanzo 6e, ch.4, p.129. The two forms give slightly different numbers (120/80 → 96 vs 93 mmHg).",
-  "key": {
-   "DP": "diastolic pressure",
-   "SP": "systolic pressure",
-   "PP": "pulse pressure"
-  },
+  "target": "MAP",
+  "refs": [
+   {
+    "expr": "0.6*DP + 0.4*SP"
+   },
+   {
+    "expr": "DP + PP/3"
+   },
+   {
+    "expr": "DP + (SP - DP)/3"
+   }
+  ],
   "units": [
    "mmHg",
    "mmHg·min/L",
@@ -311,28 +237,6 @@ window.PHYSIO_FORMULAS = [
   "name": "Pulse pressure",
   "group": "Pressure",
   "lhs": "PP",
-  "answers": [
-   [
-    "SP",
-    "−",
-    "DP"
-   ],
-   [
-    "SV",
-    "÷",
-    "C"
-   ]
-  ],
-  "tiles": [
-   "SP",
-   "DP",
-   "SV",
-   "C",
-   "−",
-   "÷",
-   "+",
-   "×"
-  ],
   "display": "Pulse pressure = systolic − diastolic ≈ stroke volume / arterial compliance",
   "why": "Normal 120 − 80 = 40 mmHg. Increases with larger stroke volume or stiffer (less compliant) arteries.",
   "source": "Guyton & Hall 14e, ch.15, p.184–185",
@@ -374,12 +278,15 @@ window.PHYSIO_FORMULAS = [
     "source": "Guyton & Hall 14e, ch.15, p.185"
    }
   ],
-  "key": {
-   "SP": "systolic pressure",
-   "DP": "diastolic pressure",
-   "SV": "stroke volume",
-   "C": "arterial compliance"
-  },
+  "target": "PP",
+  "refs": [
+   {
+    "expr": "SP - DP"
+   },
+   {
+    "expr": "SV / C"
+   }
+  ],
   "units": [
    "mmHg",
    "ml/mmHg",
@@ -398,21 +305,6 @@ window.PHYSIO_FORMULAS = [
   "name": "Stroke volume",
   "group": "Heart",
   "lhs": "SV",
-  "answers": [
-   [
-    "EDV",
-    "−",
-    "ESV"
-   ]
-  ],
-  "tiles": [
-   "EDV",
-   "ESV",
-   "−",
-   "+",
-   "÷",
-   "HR"
-  ],
   "display": "SV = end-diastolic volume (EDV) − end-systolic volume (ESV)",
   "why": "Normal EDV 110–120 ml, ESV 40–50 ml, SV ≈ 70 ml.",
   "source": "Guyton & Hall 14e, ch.9, p.119",
@@ -442,11 +334,12 @@ window.PHYSIO_FORMULAS = [
     "source": "Guyton & Hall 14e, ch.9, p.119"
    }
   ],
-  "key": {
-   "EDV": "end-diastolic volume",
-   "ESV": "end-systolic volume",
-   "HR": "heart rate"
-  },
+  "target": "SV",
+  "refs": [
+   {
+    "expr": "EDV - ESV"
+   }
+  ],
   "units": [
    "ml",
    "L/min",
@@ -464,21 +357,6 @@ window.PHYSIO_FORMULAS = [
   "name": "Cardiac output",
   "group": "Heart",
   "lhs": "CO",
-  "answers": [
-   [
-    "SV",
-    "×",
-    "HR"
-   ]
-  ],
-  "tiles": [
-   "SV",
-   "HR",
-   "×",
-   "÷",
-   "EDV",
-   "MAP"
-  ],
   "display": "CO = stroke volume × heart rate",
   "why": "Normal resting CO ≈ 5 L/min (young men ≈ 5.6, women ≈ 4.9 L/min). Cardiac index ≈ 3 L/min/m².",
   "source": "Guyton & Hall 14e, ch.20, p.245 and p.257",
@@ -533,12 +411,12 @@ window.PHYSIO_FORMULAS = [
     "note": "Calculation taken from Costanzo; Guyton has no equivalent worked problem."
    }
   ],
-  "key": {
-   "SV": "stroke volume",
-   "HR": "heart rate",
-   "EDV": "end-diastolic volume",
-   "MAP": "mean arterial pressure"
-  },
+  "target": "CO",
+  "refs": [
+   {
+    "expr": "SV * HR"
+   }
+  ],
   "units": [
    "L/min",
    "ml",
@@ -556,33 +434,6 @@ window.PHYSIO_FORMULAS = [
   "name": "Ejection fraction",
   "group": "Heart",
   "lhs": "EF",
-  "answers": [
-   [
-    "SV",
-    "÷",
-    "EDV"
-   ],
-   [
-    "(",
-    "EDV",
-    "−",
-    "ESV",
-    ")",
-    "÷",
-    "EDV"
-   ]
-  ],
-  "tiles": [
-   "SV",
-   "EDV",
-   "ESV",
-   "÷",
-   "−",
-   "(",
-   ")",
-   "×",
-   "CO"
-  ],
   "display": "EF = SV / EDV",
   "why": "Normal ≈ 0.6 (60%); normal range 50–70%. Below 40% indicates heart failure with reduced EF.",
   "source": "Guyton & Hall 14e, ch.9, p.119; ch.22, p.280",
@@ -625,12 +476,23 @@ window.PHYSIO_FORMULAS = [
    }
   ],
   "note": "Costanzo 6e gives 0.55 as normal (ch.4, p.149).",
-  "key": {
-   "SV": "stroke volume",
-   "EDV": "end-diastolic volume",
-   "ESV": "end-systolic volume",
-   "CO": "cardiac output"
-  },
+  "target": "EF",
+  "refs": [
+   {
+    "expr": "SV / EDV"
+   },
+   {
+    "expr": "(EDV - ESV) / EDV"
+   },
+   {
+    "expr": "SV / EDV * 100",
+    "note": "Accepted as a percentage."
+   },
+   {
+    "expr": "(EDV - ESV) / EDV * 100",
+    "note": "Accepted as a percentage."
+   }
+  ],
   "units": [
    "% (a ratio, no unit)",
    "ml",
@@ -649,21 +511,6 @@ window.PHYSIO_FORMULAS = [
   "name": "Stroke work",
   "group": "Heart",
   "lhs": "SW",
-  "answers": [
-   [
-    "SV",
-    "×",
-    "Pao"
-   ]
-  ],
-  "tiles": [
-   "SV",
-   "Pao",
-   "×",
-   "÷",
-   "HR",
-   "EDV"
-  ],
   "display": "Stroke work ≈ SV × mean aortic pressure (= area inside the LV pressure–volume loop)",
   "why": "Guyton: most work is volume–pressure (external) work; the kinetic-energy part is only ~1% normally (but can exceed 50% in aortic stenosis). Right-ventricular work ≈ 1/6 of left because its pressure is ~6× lower.",
   "source": "Guyton & Hall 14e, ch.9, p.121–122",
@@ -683,12 +530,12 @@ window.PHYSIO_FORMULAS = [
    }
   ],
   "note": "The 'SV × aortic pressure' and 'CO × aortic pressure' formulas are stated in Costanzo 6e, ch.4, p.153; Guyton defines stroke work as the loop area.",
-  "key": {
-   "SV": "stroke volume",
-   "Pao": "mean aortic pressure",
-   "HR": "heart rate",
-   "EDV": "end-diastolic volume"
-  },
+  "target": "SW",
+  "refs": [
+   {
+    "expr": "SV * Pao"
+   }
+  ],
   "units": [
    "mmHg·ml (energy, ≈ J)",
    "mmHg",
@@ -706,27 +553,6 @@ window.PHYSIO_FORMULAS = [
   "name": "Minute work",
   "group": "Heart",
   "lhs": "Minute work",
-  "answers": [
-   [
-    "SW",
-    "×",
-    "HR"
-   ],
-   [
-    "CO",
-    "×",
-    "Pao"
-   ]
-  ],
-  "tiles": [
-   "SW",
-   "HR",
-   "CO",
-   "Pao",
-   "×",
-   "÷",
-   "SV"
-  ],
   "display": "Minute work = stroke work × heart rate ≈ CO × mean aortic pressure",
   "why": "Guyton: most work is volume–pressure (external) work; the kinetic-energy part is only ~1% normally (but can exceed 50% in aortic stenosis). Right-ventricular work ≈ 1/6 of left because its pressure is ~6× lower.",
   "source": "Guyton & Hall 14e, ch.9, p.121–122",
@@ -746,13 +572,15 @@ window.PHYSIO_FORMULAS = [
    }
   ],
   "note": "The 'SV × aortic pressure' and 'CO × aortic pressure' formulas are stated in Costanzo 6e, ch.4, p.153; Guyton defines stroke work as the loop area.",
-  "key": {
-   "SW": "stroke work",
-   "HR": "heart rate",
-   "CO": "cardiac output",
-   "Pao": "mean aortic pressure",
-   "SV": "stroke volume"
-  },
+  "target": "MW",
+  "refs": [
+   {
+    "expr": "SW * HR"
+   },
+   {
+    "expr": "CO * Pao"
+   }
+  ],
   "units": [
    "mmHg·L/min (power, ≈ W)",
    "mmHg·ml",
@@ -771,30 +599,6 @@ window.PHYSIO_FORMULAS = [
   "name": "Law of Laplace (heart)",
   "group": "Heart",
   "lhs": "T",
-  "answers": [
-   [
-    "P",
-    "×",
-    "r"
-   ],
-   [
-    "ΔP",
-    "×",
-    "r",
-    "÷",
-    "h"
-   ]
-  ],
-  "tiles": [
-   "P",
-   "ΔP",
-   "r",
-   "h",
-   "×",
-   "÷",
-   "r⁴",
-   "+"
-  ],
   "display": "Ventricular wall tension T = P × r  (with wall thickness: T = ΔP × r / h)",
   "why": "A dilated ventricle (larger r) needs more wall tension, and therefore more O₂, to make the same pressure. A thicker wall (larger h) lowers tension per unit of wall, which is why hypertrophy compensates for high pressure.",
   "source": "Guyton & Hall 14e, ch.9, p.123 (T = P × r); ch.14, p.180 (T = ΔP × r/h)",
@@ -826,13 +630,19 @@ window.PHYSIO_FORMULAS = [
    }
   ],
   "note": "Costanzo 6e writes it for a sphere as P = 2HT/r (ch.4, p.153).",
-  "key": {
-   "P": "pressure",
-   "ΔP": "pressure difference",
-   "r": "radius",
-   "h": "wall thickness",
-   "r⁴": "radius to the 4th power"
-  },
+  "target": "T",
+  "refs": [
+   {
+    "expr": "P * r"
+   },
+   {
+    "expr": "ΔP * r / h"
+   },
+   {
+    "expr": "P * r / (2*h)",
+    "note": "Accepted: Costanzo's sphere form, P = 2HT/r."
+   }
+  ],
   "units": [
    "force per length (N/m)",
    "mmHg",
@@ -850,21 +660,6 @@ window.PHYSIO_FORMULAS = [
   "name": "Vascular compliance",
   "group": "Vessels",
   "lhs": "C",
-  "answers": [
-   [
-    "ΔV",
-    "÷",
-    "ΔP"
-   ]
-  ],
-  "tiles": [
-   "ΔV",
-   "ΔP",
-   "÷",
-   "×",
-   "V₀",
-   "−"
-  ],
   "display": "Compliance = increase in volume / increase in pressure  (ΔV / ΔP)",
   "why": "Distensibility = ΔV / (ΔP × original volume). Compliance = distensibility × volume. A systemic vein is ~8× more distensible and ~24× more compliant than its artery.",
   "source": "Guyton & Hall 14e, ch.15, p.183",
@@ -894,11 +689,12 @@ window.PHYSIO_FORMULAS = [
     "source": "Guyton & Hall 14e, ch.15, p.183"
    }
   ],
-  "key": {
-   "ΔV": "volume change",
-   "ΔP": "pressure difference",
-   "V₀": "original volume"
-  },
+  "target": "C",
+  "refs": [
+   {
+    "expr": "ΔV / ΔP"
+   }
+  ],
   "units": [
    "ml/mmHg",
    "mmHg/ml",
@@ -915,27 +711,6 @@ window.PHYSIO_FORMULAS = [
   "name": "Distensibility",
   "group": "Vessels",
   "lhs": "Distensibility",
-  "answers": [
-   [
-    "ΔV",
-    "÷",
-    "(",
-    "ΔP",
-    "×",
-    "V₀",
-    ")"
-   ]
-  ],
-  "tiles": [
-   "ΔV",
-   "ΔP",
-   "V₀",
-   "÷",
-   "×",
-   "(",
-   ")",
-   "+"
-  ],
   "display": "Distensibility = ΔV / (ΔP × original volume)",
   "why": "Compliance = distensibility × volume. A systemic vein is ~8× more distensible and ~24× more compliant than its artery.",
   "source": "Guyton & Hall 14e, ch.15, p.183",
@@ -953,11 +728,12 @@ window.PHYSIO_FORMULAS = [
     "source": "Guyton & Hall 14e, ch.15, p.183"
    }
   ],
-  "key": {
-   "ΔV": "volume change",
-   "ΔP": "pressure difference",
-   "V₀": "original volume"
-  },
+  "target": "Dist",
+  "refs": [
+   {
+    "expr": "ΔV / (ΔP * V0)"
+   }
+  ],
   "units": [
    "per mmHg (fraction of volume)",
    "ml/mmHg",
@@ -975,37 +751,6 @@ window.PHYSIO_FORMULAS = [
   "name": "Poiseuille's law",
   "group": "Hemodynamics",
   "lhs": "F",
-  "answers": [
-   [
-    "π",
-    "×",
-    "ΔP",
-    "×",
-    "r⁴",
-    "÷",
-    "(",
-    "8",
-    "×",
-    "η",
-    "×",
-    "l",
-    ")"
-   ]
-  ],
-  "tiles": [
-   "π",
-   "ΔP",
-   "r⁴",
-   "8",
-   "η",
-   "l",
-   "×",
-   "÷",
-   "(",
-   ")",
-   "r²",
-   "4"
-  ],
   "display": "F = π × ΔP × r⁴ / (8 × η × l);  so resistance R = 8ηl / (πr⁴)",
   "why": "Flow is proportional to the 4th power of the radius. Resistance rises with viscosity (η) and vessel length (l). About two-thirds of systemic resistance is in the small arterioles.",
   "source": "Guyton & Hall 14e, ch.14, p.177–178",
@@ -1072,14 +817,12 @@ window.PHYSIO_FORMULAS = [
     "source": "Guyton & Hall 14e, ch.14, p.178"
    }
   ],
-  "key": {
-   "π": "pi",
-   "ΔP": "pressure difference",
-   "r⁴": "radius to the 4th power",
-   "η": "viscosity",
-   "l": "vessel length",
-   "r²": "radius squared"
-  },
+  "target": "F",
+  "refs": [
+   {
+    "expr": "π * ΔP * r^4 / (8 * η * l)"
+   }
+  ],
   "units": [
    "ml/min",
    "mmHg",
@@ -1096,27 +839,6 @@ window.PHYSIO_FORMULAS = [
   "name": "Reynolds' number",
   "group": "Hemodynamics",
   "lhs": "Re",
-  "answers": [
-   [
-    "v",
-    "×",
-    "d",
-    "×",
-    "ρ",
-    "÷",
-    "η"
-   ]
-  ],
-  "tiles": [
-   "v",
-   "d",
-   "ρ",
-   "η",
-   "×",
-   "÷",
-   "l",
-   "π"
-  ],
   "display": "Re = v × d × ρ / η   (v = mean velocity cm/s, d = diameter cm, ρ = density g/ml, η = viscosity poise)",
   "why": "Turbulence is more likely with high velocity, large diameter, high density, and low viscosity. Re 200–400: turbulence at branches. Re > ~2000: turbulence even in straight, smooth vessels. Blood viscosity ≈ 1/30 poise, density slightly > 1.",
   "source": "Guyton & Hall 14e, ch.14, p.175–176",
@@ -1149,14 +871,12 @@ window.PHYSIO_FORMULAS = [
    }
   ],
   "note": "Costanzo 6e uses other cut-offs: < 2000 laminar, > 3000 always turbulent (ch.4, p.126).",
-  "key": {
-   "v": "mean velocity",
-   "d": "diameter",
-   "ρ": "density",
-   "η": "viscosity",
-   "l": "vessel length",
-   "π": "pi"
-  },
+  "target": "Re",
+  "refs": [
+   {
+    "expr": "v * d * ρ / η"
+   }
+  ],
   "units": [
    "no unit",
    "cm/s",
@@ -1173,21 +893,6 @@ window.PHYSIO_FORMULAS = [
   "name": "Velocity of blood flow",
   "group": "Hemodynamics",
   "lhs": "v",
-  "answers": [
-   [
-    "F",
-    "÷",
-    "A"
-   ]
-  ],
-  "tiles": [
-   "F",
-   "A",
-   "÷",
-   "×",
-   "r",
-   "ΔP"
-  ],
   "display": "v = F / A  (flow divided by total cross-sectional area)",
   "why": "Aorta: area ≈ 2.5 cm², v ≈ 33 cm/s. Capillaries: area ≈ 2500 cm², v ≈ 0.3 mm/s (1/1000 of the aorta). Blood stays in a capillary for only 1–3 s.",
   "source": "Guyton & Hall 14e, ch.14, p.172",
@@ -1229,12 +934,12 @@ window.PHYSIO_FORMULAS = [
     "source": "Guyton & Hall 14e, ch.14, p.172 (areas and v = F/A)"
    }
   ],
-  "key": {
-   "F": "blood flow",
-   "A": "total cross-sectional area",
-   "r": "radius",
-   "ΔP": "pressure difference"
-  },
+  "target": "v",
+  "refs": [
+   {
+    "expr": "F / A"
+   }
+  ],
   "units": [
    "cm/s",
    "ml/min",
@@ -1250,24 +955,6 @@ window.PHYSIO_FORMULAS = [
   "name": "MCV",
   "group": "RBC indices",
   "lhs": "MCV",
-  "answers": [
-   [
-    "Hct",
-    "×",
-    "1000",
-    "÷",
-    "RBC"
-   ]
-  ],
-  "tiles": [
-   "Hct",
-   "RBC",
-   "Hb",
-   "1000",
-   "100",
-   "×",
-   "÷"
-  ],
   "display": "MCV = Hct (L/L) × 1000 / RBC (× 10¹²/L) → fL. Normal 90 fL (80–100).",
   "why": "Normal value from Guyton's table.",
   "source": "Web (not in either book): Open Education Alberta, 'Red Blood Cell Indices, Colour, and Size' – https://pressbooks.openeducationalberta.ca/mlsci/chapter/red-blood-cell-indices-colour-and-size/",
@@ -1300,11 +987,16 @@ window.PHYSIO_FORMULAS = [
    }
   ],
   "note": "Formula not in Guyton or Costanzo; normal value from Guyton table.",
-  "key": {
-   "Hct": "hematocrit (L/L)",
-   "RBC": "red cell count (×10¹²/L)",
-   "Hb": "hemoglobin"
-  },
+  "target": "MCV",
+  "refs": [
+   {
+    "expr": "Hct * 1000 / RBC"
+   },
+   {
+    "expr": "Hct * 10 / RBC",
+    "note": "Accepted: the form with Hct in % and RBC in millions/µL."
+   }
+  ],
   "units": [
    "fL",
    "pg",
@@ -1323,21 +1015,6 @@ window.PHYSIO_FORMULAS = [
   "name": "MCH",
   "group": "RBC indices",
   "lhs": "MCH",
-  "answers": [
-   [
-    "Hb",
-    "÷",
-    "RBC"
-   ]
-  ],
-  "tiles": [
-   "Hb",
-   "RBC",
-   "Hct",
-   "÷",
-   "×",
-   "1000"
-  ],
   "display": "MCH = Hb (g/L) / RBC (× 10¹²/L) → pg. Normal ≈ 28–36 pg (≈ 30 pg).",
   "why": "With Guyton's average man (Hb 15 g/dL = 150 g/L, RBC 5.2 × 10¹²/L): 150/5.2 ≈ 29 pg.",
   "source": "Web (not in either book): Open Education Alberta, 'Red Blood Cell Indices, Colour, and Size' – https://pressbooks.openeducationalberta.ca/mlsci/chapter/red-blood-cell-indices-colour-and-size/",
@@ -1370,11 +1047,16 @@ window.PHYSIO_FORMULAS = [
    }
   ],
   "note": "Neither book gives MCH; range from web source (ranges vary between labs).",
-  "key": {
-   "Hb": "hemoglobin",
-   "RBC": "red cell count (×10¹²/L)",
-   "Hct": "hematocrit (L/L)"
-  },
+  "target": "MCH",
+  "refs": [
+   {
+    "expr": "Hb / RBC"
+   },
+   {
+    "expr": "Hb * 10 / RBC",
+    "note": "Accepted: the form with Hb in g/dL and RBC in millions/µL."
+   }
+  ],
   "units": [
    "pg",
    "fL",
@@ -1393,27 +1075,6 @@ window.PHYSIO_FORMULAS = [
   "name": "MCHC",
   "group": "RBC indices",
   "lhs": "MCHC",
-  "answers": [
-   [
-    "Hb",
-    "÷",
-    "Hct"
-   ],
-   [
-    "MCH",
-    "÷",
-    "MCV"
-   ]
-  ],
-  "tiles": [
-   "Hb",
-   "Hct",
-   "MCH",
-   "MCV",
-   "RBC",
-   "÷",
-   "×"
-  ],
   "display": "MCHC = Hb (g/dL) / Hct (L/L) → g/dL. Normal ≈ 34 g/dL (range ≈ 31–36 g/dL).",
   "why": "",
   "source": "Guyton & Hall 14e, ch.33, p.439 (RBCs concentrate Hb up to ≈ 34 g/100 ml of cells)",
@@ -1446,13 +1107,19 @@ window.PHYSIO_FORMULAS = [
    }
   ],
   "note": "MCHC also equals MCH ÷ MCV with consistent units. Formula and range: Open Education Alberta (not in Guyton or Costanzo); Guyton ch.33, p.439 gives ≈ 34 g/100 ml of cells.",
-  "key": {
-   "Hb": "hemoglobin",
-   "Hct": "hematocrit (L/L)",
-   "MCH": "mean corpuscular hemoglobin",
-   "MCV": "mean corpuscular volume",
-   "RBC": "red cell count (×10¹²/L)"
-  },
+  "target": "MCHC",
+  "refs": [
+   {
+    "expr": "Hb / Hct"
+   },
+   {
+    "expr": "MCH / MCV"
+   },
+   {
+    "expr": "Hb * 100 / Hct",
+    "note": "Accepted: the form with Hct in %."
+   }
+  ],
   "units": [
    "g/dL",
    "pg",
@@ -1470,21 +1137,6 @@ window.PHYSIO_FORMULAS = [
   "name": "O₂ bound to hemoglobin",
   "group": "RBC indices",
   "lhs": "O₂ capacity",
-  "answers": [
-   [
-    "1.34",
-    "×",
-    "Hb"
-   ]
-  ],
-  "tiles": [
-   "1.34",
-   "Hb",
-   "Hct",
-   "0.6",
-   "×",
-   "÷"
-  ],
   "display": "O₂ bound to Hb (ml per 100 ml blood) = 1.34 × Hb (g/dL) at 100% saturation",
   "why": "Each gram of hemoglobin binds 1.34 ml O₂ when fully saturated. Average man (Hb 15 g/dL) ≈ 20 ml O₂ per 100 ml blood.",
   "source": "Guyton & Hall 14e, ch.33, p.439",
@@ -1502,10 +1154,12 @@ window.PHYSIO_FORMULAS = [
     "source": "Guyton & Hall 14e, ch.33, p.439"
    }
   ],
-  "key": {
-   "Hb": "hemoglobin",
-   "Hct": "hematocrit (L/L)"
-  },
+  "target": "O2cap",
+  "refs": [
+   {
+    "expr": "1.34 * Hb"
+   }
+  ],
   "units": [
    "ml O₂ per 100 ml blood",
    "mmHg",

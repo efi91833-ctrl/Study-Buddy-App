@@ -635,6 +635,75 @@
     .pm-inline .pm-panel-card { padding: 18px; }
     @media (max-width: 600px) { .px-about-line { grid-template-columns: 1fr; gap: 1px; } }
 
+    /* ── Formula Builder: typed formulas ── */
+    .fx-input {
+      width: 100%; box-sizing: border-box; font-family: var(--sb-serif); font-size: 22px; padding: 14px 16px;
+      border-radius: 12px; border: 1.5px solid var(--sb-line); background: var(--sb-cream); color: var(--sb-ink);
+    }
+    .fx-input:focus { outline: none; border-color: #3a3a36; background: var(--sb-card); }
+    .fx-input.correct { border-color: #4a7c6a; background: rgba(74,124,106,.08); }
+    .fx-input.wrong { border-color: #7c4a4a; background: rgba(124,74,74,.07); }
+    .fx-keys { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .fx-key {
+      min-width: 40px; height: 38px; padding: 0 10px; border-radius: 8px; border: 1.5px solid var(--sb-line);
+      background: #f3f0e8; color: var(--sb-ink); font-size: 17px; font-family: inherit; cursor: pointer;
+    }
+    .fx-key.wide { min-width: 52px; }
+    .fx-key:hover { border-color: rgba(0,0,0,.3); }
+    .fx-preview { margin-top: 12px; font-size: 14px; color: var(--sb-ink-3); min-height: 20px; }
+    .fx-preview strong { font-family: var(--sb-serif); font-size: 17px; font-weight: 400; color: var(--sb-ink); }
+    .fx-preview.bad { color: #7c4a4a; }
+    .fx-err { margin-top: 8px; font-size: 13px; color: #7c4a4a; }
+    .fx-yours { font-family: var(--sb-serif); font-size: 17px; color: var(--sb-ink); }
+    .fx-msg { font-size: 13.5px; color: var(--sb-ink-2); }
+    .fx-notation { margin-top: 14px; border-radius: 10px; padding: 14px 16px; background: var(--sb-cream); border: 1px solid var(--sb-line-soft); }
+    .fx-notation-intro { font-size: 13px; color: var(--sb-ink-2); line-height: 1.55; margin-bottom: 12px; }
+    .fx-notation-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; }
+    .fx-notation-row { display: grid; grid-template-columns: 52px 1fr; gap: 2px 8px; font-size: 13px; color: var(--sb-ink-2); padding: 3px 0; border-bottom: 1px solid var(--sb-line-soft); }
+    .fx-notation-row strong { font-family: var(--sb-serif); font-size: 15px; font-weight: 400; color: var(--sb-ink); grid-row: span 2; }
+    .fx-notation-alt { font-size: 11.5px; color: var(--sb-ink-4); }
+    .topic-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 4px; }
+    .topic-head-name { font-size: 13px; font-weight: 700; color: var(--sb-ink-2); }
+    .topic-head-btn {
+      font-family: inherit; font-size: 12px; font-weight: 600; color: var(--sb-ink); background: var(--sb-card);
+      border: 1px solid var(--sb-line); border-radius: 8px; padding: 6px 11px; cursor: pointer;
+    }
+    .topic-head-btn:hover { border-color: rgba(0,0,0,.35); }
+    /* ── Pressure map on the OpenStax figures ── */
+    .pm-imgtabs { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+    .pm-imgtab { font-family: inherit; font-size: 13px; padding: 7px 13px; border-radius: 8px; border: 1.5px solid var(--sb-line);
+      background: var(--sb-card); color: var(--sb-ink-2); cursor: pointer; }
+    .pm-imgtab.on { background: #3a3a36; border-color: #3a3a36; color: #fff; }
+    .pm-figure-wrap { background: #fff; border: 1px solid var(--sb-line-soft); border-radius: 16px; padding: 12px; }
+    .pm-figure { position: relative; width: 100%; user-select: none; -webkit-user-select: none; }
+    .pm-figure img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    .pm-spot {
+      position: absolute; width: 26px; height: 26px; margin: -13px 0 0 -13px; padding: 0; border-radius: 50%;
+      background: rgba(255,255,255,.92); border: 3px solid #1c1c1a; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.35);
+    }
+    .pm-spot::after { content: ''; position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: #1c1c1a; }
+    .pm-spot.ok { border-color: #4a7c6a; } .pm-spot.ok::after { background: #4a7c6a; }
+    .pm-spot.bad { border-color: #7c4a4a; } .pm-spot.bad::after { background: #7c4a4a; }
+    .pm-spot.sel { width: 32px; height: 32px; margin: -16px 0 0 -16px; box-shadow: 0 0 0 4px rgba(28,28,26,.25); }
+    .pm-spot-label {
+      display: none; position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%); white-space: nowrap;
+      background: #1c1c1a; color: #fff; font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 6px; pointer-events: none;
+    }
+    .pm-spot:hover .pm-spot-label, .pm-spot.sel .pm-spot-label { display: block; }
+    .pm-credit { margin-top: 8px; font-size: 11px; color: var(--sb-ink-4); line-height: 1.45; }
+    .pm-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .pm-chip { font-family: inherit; font-size: 12.5px; padding: 6px 10px; border-radius: 8px; border: 1.5px solid var(--sb-line);
+      background: var(--sb-card); color: var(--sb-ink-2); cursor: pointer; }
+    .pm-chip.sel { border-color: #3a3a36; color: var(--sb-ink); }
+    .pm-chip.ok { border-color: #4a7c6a; background: rgba(74,124,106,.08); }
+    .pm-chip.bad { border-color: #7c4a4a; background: rgba(124,74,74,.07); }
+    @media (max-width: 600px) {
+      .fx-input { font-size: 19px; }
+      .fx-notation-grid { grid-template-columns: 1fr; }
+      .pm-spot { width: 22px; height: 22px; margin: -11px 0 0 -11px; border-width: 2.5px; }
+      .pm-figure-wrap { padding: 6px; }
+    }
+
     /* ── Ranges game ── */
     .rg-scale { user-select: none; -webkit-user-select: none; }
     .rg-values { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; margin-bottom: 18px; }
@@ -2228,10 +2297,15 @@ const QUESTION_BANK = {
     icon: '',
     description: 'Function of the human body',
     exams: [
+      // Whole test in the original question order, then the two topics on their own.
+      tfExam('Full test: Blood + Cardiovascular',
+             [...((window.PHYSIO_TF || {}).Blood || []), ...((window.PHYSIO_TF || {}).Cardiovascular || [])]
+               .sort((a, b) => a.num - b.num)),
       tfExam('Blood',          (window.PHYSIO_TF || {}).Blood),
       tfExam('Cardiovascular', (window.PHYSIO_TF || {}).Cardiovascular),
     ],
-    get questions() { return this.exams.flatMap(e => e.questions); },
+    // The full block test repeats the topic banks, so count each statement once.
+    get questions() { return dedupeByStem(this.exams.flatMap(e => e.questions)); },
   },
 };
 
@@ -2878,77 +2952,359 @@ function TrueFalseExam({ subject, examIndex, onBack, onFocusWeak }) {
  * spots never mix into the Physiology T/F weak-area practice. */
 const FB_SUBJECT = 'Physiology · Formulas';
 const FB_ROUND_SIZE = 8;
-const FB_OPS = ['+', '−', '×', '÷', '(', ')'];
 
-/* Canonical string for a tile sequence, or null if it is not a valid
- * expression. Sums and products are sorted, so "HR × SV" equals "SV × HR" and
- * "0.4 × SP + 0.6 × DP" equals "0.6 × DP + 0.4 × SP". Dividing by a bracketed
- * product is flattened, so "a ÷ (b × c)" equals "a ÷ b ÷ c". */
-function fbCanon(tokens) {
-  let i = 0;
-  const peek = () => tokens[i];
-  const flip = sg => (sg === '+' ? '-' : '+');
-  // Returns an array of signed terms [{ sign, t }], or null.
-  function parseExpr() {
-    const terms = [];
-    let sign = '+';
-    if (peek() === '−') { sign = '-'; i++; }
-    for (;;) {
-      const t = parseTerm();
-      if (t == null) return null;
-      if (t.sumTerms) t.sumTerms.forEach(x => terms.push({ sign: sign === '+' ? x.sign : flip(x.sign), t: x.t }));
-      else terms.push({ sign, t });
-      if (peek() === '+' || peek() === '−') { sign = peek() === '+' ? '+' : '-'; i++; continue; }
-      break;
+/* ── Typed-formula engine ────────────────────────────────────────────────
+ * You type a formula as text ("CO = SV × HR", "F = ΔP/R", "Q = dP / R").
+ * It is parsed into an expression tree, the symbols are mapped onto the
+ * canonical names the data uses, and the equation is checked numerically
+ * against the reference equations: random values are put in for every
+ * variable and the reference supplies the matching value of the target. So
+ * any algebraically equivalent form counts: any order, rearranged, either
+ * side of "=". */
+
+/* Canonical symbol -> [how it is shown, meaning, spellings you can type].
+ * Several spellings can map to more than one symbol (Q is flow or cardiac
+ * output; R is resistance or TPR); the formula being asked decides. */
+const FX_SYMBOLS = [
+  ['F', 'F', 'blood flow', ['F', 'Q', 'flow', 'BF']],
+  ['ΔP', 'ΔP', 'pressure difference', ['ΔP', 'dP', 'deltaP', 'DeltaP', 'Pdiff']],
+  ['P', 'P', 'pressure', ['P']],
+  ['R', 'R', 'resistance', ['R', 'resistance']],
+  ['TPR', 'TPR', 'total peripheral resistance', ['TPR', 'SVR', 'R', 'PR']],
+  ['MAP', 'MAP', 'mean arterial pressure', ['MAP', 'AP', 'BP', 'Pa', 'Pm']],
+  ['RAP', 'RAP', 'right atrial pressure', ['RAP', 'CVP', 'Pra']],
+  ['CO', 'CO', 'cardiac output', ['CO', 'Q']],
+  ['SV', 'SV', 'stroke volume', ['SV']],
+  ['HR', 'HR', 'heart rate', ['HR', 'f']],
+  ['SP', 'SP', 'systolic pressure', ['SP', 'SBP', 'Ps', 'Psys']],
+  ['DP', 'DP', 'diastolic pressure', ['DP', 'DBP', 'Pd', 'Pdia', 'D']],
+  ['PP', 'PP', 'pulse pressure', ['PP']],
+  ['C', 'C', 'compliance', ['C', 'compliance']],
+  ['EDV', 'EDV', 'end-diastolic volume', ['EDV']],
+  ['ESV', 'ESV', 'end-systolic volume', ['ESV']],
+  ['EF', 'EF', 'ejection fraction', ['EF']],
+  ['SW', 'SW', 'stroke work', ['SW']],
+  ['MW', 'MW', 'minute work', ['MW', 'W']],
+  ['Pao', 'Pao', 'mean aortic pressure', ['Pao', 'AoP', 'P', 'MAP', 'Pa']],
+  ['T', 'T', 'wall tension', ['T', 'tension']],
+  ['r', 'r', 'radius', ['r']],
+  ['h', 'h', 'wall thickness', ['h', 'H', 'w']],
+  ['ΔV', 'ΔV', 'volume change', ['ΔV', 'dV', 'deltaV']],
+  ['V0', 'V₀', 'original volume', ['V0', 'Vo', 'V']],
+  ['Dist', 'D', 'distensibility', ['Dist', 'D', 'distensibility']],
+  ['η', 'η', 'viscosity', ['η', 'eta', 'viscosity']],
+  ['l', 'l', 'vessel length', ['l', 'L']],
+  ['Re', 'Re', "Reynolds' number", ['Re', 'NR']],
+  ['v', 'v', 'mean velocity', ['v', 'V', 'u']],
+  ['d', 'd', 'diameter', ['d', 'D']],
+  ['ρ', 'ρ', 'density', ['ρ', 'rho']],
+  ['A', 'A', 'cross-sectional area', ['A', 'CSA']],
+  ['Hct', 'Hct', 'hematocrit', ['Hct', 'HCT', 'PCV', 'Ht']],
+  ['RBC', 'RBC', 'red cell count', ['RBC', 'E', 'Er']],
+  ['Hb', 'Hb', 'hemoglobin', ['Hb', 'Hgb', 'HGB']],
+  ['MCV', 'MCV', 'mean corpuscular volume', ['MCV']],
+  ['MCH', 'MCH', 'mean corpuscular hemoglobin', ['MCH']],
+  ['MCHC', 'MCHC', 'mean corpuscular Hb concentration', ['MCHC']],
+  ['O2cap', 'O₂', 'O₂ bound to hemoglobin', ['O2', 'O2cap', 'CaO2', 'O2content']],
+];
+const FX_DISPLAY = Object.fromEntries(FX_SYMBOLS.map(s => [s[0], s[1]]));
+const FX_ALIAS = {};
+const FX_ALIAS_CI = {};
+FX_SYMBOLS.forEach(([canon, , , spell]) => {
+  spell.forEach(sp => {
+    (FX_ALIAS[sp] = FX_ALIAS[sp] || []).includes(canon) || FX_ALIAS[sp].push(canon);
+    if (sp.length >= 2) {
+      const k = sp.toLowerCase();
+      (FX_ALIAS_CI[k] = FX_ALIAS_CI[k] || []).includes(canon) || FX_ALIAS_CI[k].push(canon);
     }
-    return terms;
-  }
-  const sumStr = terms => terms.map(x => x.sign + x.t.str).sort().join('');
-  function parseTerm() {
-    const num = [], den = [];
-    let div = false, count = 0, lastSum = null;
-    for (;;) {
-      const f = parseFactor();
-      if (f == null) return null;
-      count += 1;
-      lastSum = f.sumTerms || null;
-      if (f.term) {
-        (div ? den : num).push(...f.term.num);
-        (div ? num : den).push(...f.term.den);
-      } else {
-        (div ? den : num).push(f.str);
-      }
-      if (peek() === '×' || peek() === '÷') { div = peek() === '÷'; i++; continue; }
-      break;
-    }
-    // A bracketed sum standing alone, e.g. "(EDV − ESV)", merges into the outer sum.
-    if (count === 1 && lastSum) return { sumTerms: lastSum };
-    num.sort(); den.sort();
-    return { num, den, str: num.join('*') + (den.length ? '/' + den.join('/') : '') };
-  }
-  function parseFactor() {
-    const t = peek();
-    if (t == null) return null;
-    if (t === '(') {
-      i++;
-      const e = parseExpr();
-      if (e == null || peek() !== ')') return null;
-      i++;
-      if (e.length === 1 && e[0].sign === '+') return { term: e[0].t };
-      return { str: '(' + sumStr(e) + ')', sumTerms: e };
-    }
-    if (FB_OPS.includes(t)) return null;
-    i++;
-    return { str: t };
-  }
-  const e = parseExpr();
-  if (e == null || i !== tokens.length) return null;
-  return (e.length === 1 && e[0].sign === '+') ? e[0].t.str : sumStr(e);
+  });
+});
+const FX_CONST = { 'π': Math.PI, pi: Math.PI };
+
+/* Identities a typed answer may lean on, so mixed forms such as
+ * "MAP = SP − ⅔ PP" are recognised: [symbol, needs, value]. */
+const FX_DERIVED = [
+  ['PP', ['SP', 'DP'], e => e.SP - e.DP],
+  ['SV', ['EDV', 'ESV'], e => e.EDV - e.ESV],
+];
+
+/* Keys for symbols that are awkward to type. The same keys for every formula,
+ * so they never hint at the answer. */
+const FX_KEYS = [
+  ['Δ', 'Δ'], ['η', 'η'], ['ρ', 'ρ'], ['π', 'π'], ['²', '²'], ['⁴', '⁴'], ['₀', '₀'],
+  ['×', ' × '], ['÷', ' ÷ '], ['−', ' − '], ['+', ' + '], ['(', '('], [')', ')'], ['=', ' = '], ['⅓', '⅓'],
+];
+
+function fxLookup(name) {
+  if (FX_CONST[name] != null) return { c: FX_CONST[name] };
+  if (FX_ALIAS[name]) return { cands: FX_ALIAS[name] };
+  // Case-insensitive only for longer names, so "hT" is h × T rather than Hct.
+  if (name.length >= 3 && FX_ALIAS_CI[name.toLowerCase()]) return { cands: FX_ALIAS_CI[name.toLowerCase()] };
+  return null;
 }
 
-function fbIsCorrect(formula, tokens) {
-  const c = fbCanon(tokens);
-  return c != null && formula.answers.some(a => fbCanon(a) === c);
+/* Splits an unknown run like "ηl" or "SVHR" into known symbols, longest
+ * first. Returns null if it cannot. */
+function fxSplit(name) {
+  if (!name) return [];
+  for (let k = name.length; k >= 1; k--) {
+    const head = name.slice(0, k);
+    const hit = fxLookup(head);
+    if (hit) {
+      const rest = fxSplit(name.slice(k));
+      if (rest) return [{ name: head, ...hit }, ...rest];
+    }
+  }
+  return null;
+}
+
+function fxTokenize(src, canonical) {
+  let s = String(src || '')
+    .replace(/∆/g, 'Δ').replace(/[−–—]/g, '-').replace(/[×·⋅∙*]/g, '*').replace(/[÷:]/g, '/')
+    .replace(/²/g, '^2').replace(/³/g, '^3').replace(/⁴/g, '^4')
+    .replace(/[₀₁₂₃₄]/g, c => String('₀₁₂₃₄'.indexOf(c)))
+    .replace(/⅓/g, '(1/3)').replace(/½/g, '(1/2)').replace(/¼/g, '(1/4)')
+    .replace(/(\d),(\d)/g, '$1.$2');
+  const out = [];
+  let i = 0;
+  while (i < s.length) {
+    const ch = s[i];
+    if (/\s/.test(ch)) { i++; continue; }
+    if ('+-*/^()='.includes(ch)) { out.push({ k: 'op', v: ch }); i++; continue; }
+    let m = /^\d*\.?\d+/.exec(s.slice(i));
+    if (m) { out.push({ k: 'num', v: parseFloat(m[0]) }); i += m[0].length; continue; }
+    m = /^Δ\s*[A-Za-z]/.exec(s.slice(i));
+    if (m) {                                      // ΔP, ΔV: delta binds to one letter
+      const name = 'Δ' + m[0].slice(-1);
+      out.push({ k: 'id', v: name }); i += m[0].length; continue;
+    }
+    if ('ηρπμ'.includes(ch)) { out.push({ k: 'id', v: ch }); i++; continue; }
+    m = /^[A-Za-z][A-Za-z0-9]*/.exec(s.slice(i));
+    if (m) { out.push({ k: 'id', v: m[0] }); i += m[0].length; continue; }
+    throw new Error('I cannot read "' + ch + '"');
+  }
+  // resolve identifiers into symbols (canonical mode: names are taken as-is)
+  const res = [];
+  out.forEach(t => {
+    if (t.k !== 'id') { res.push(t); return; }
+    if (canonical) {
+      if (FX_CONST[t.v] != null) res.push({ k: 'num', v: FX_CONST[t.v] });
+      else res.push({ k: 'sym', raw: t.v, cands: [t.v] });
+      return;
+    }
+    const hit = fxLookup(t.v);
+    const parts = hit ? [{ name: t.v, ...hit }] : fxSplit(t.v);
+    if (!parts) { res.push({ k: 'sym', raw: t.v, cands: [] }); return; }
+    parts.forEach((p, n) => {
+      if (n > 0) res.push({ k: 'op', v: '*' });
+      if (p.c != null) res.push({ k: 'num', v: p.c, raw: p.name });
+      else res.push({ k: 'sym', raw: p.name, cands: p.cands });
+    });
+  });
+  return res;
+}
+
+/* Recursive-descent parser: + - * / ^, unary minus, brackets, and implicit
+ * multiplication ("8ηl", "2(a+b)"). */
+function fxParse(src, canonical) {
+  const toks = fxTokenize(src, canonical);
+  let i = 0;
+  const peek = () => toks[i];
+  const isOp = (v) => peek() && peek().k === 'op' && peek().v === v;
+  const startsPrimary = () => peek() && (peek().k === 'num' || peek().k === 'sym' || isOp('('));
+  function expr() {
+    let a = term();
+    while (isOp('+') || isOp('-')) { const op = toks[i++].v; a = { t: 'bin', op, a, b: term() }; }
+    return a;
+  }
+  function term() {
+    let a = unary();
+    for (;;) {
+      if (isOp('*') || isOp('/')) { const op = toks[i++].v; a = { t: 'bin', op, a, b: unary() }; }
+      else if (startsPrimary()) a = { t: 'bin', op: '*', a, b: power() };
+      else return a;
+    }
+  }
+  function unary() {
+    if (isOp('-')) { i++; return { t: 'neg', a: unary() }; }
+    if (isOp('+')) { i++; return unary(); }
+    return power();
+  }
+  function power() {
+    const base = primary();
+    if (isOp('^')) { i++; return { t: 'bin', op: '^', a: base, b: unary() }; }
+    return base;
+  }
+  function primary() {
+    const t = peek();
+    if (!t) throw new Error('The formula ends too early');
+    if (t.k === 'num') { i++; return { t: 'num', v: t.v }; }
+    if (t.k === 'sym') { i++; return { t: 'sym', raw: t.raw, cands: t.cands }; }
+    if (isOp('(')) {
+      i++;
+      const e = expr();
+      if (!isOp(')')) throw new Error('A bracket is not closed');
+      i++;
+      return e;
+    }
+    throw new Error('Unexpected "' + t.v + '"');
+  }
+  const sides = [];
+  sides.push(expr());
+  if (isOp('=')) { i++; sides.push(expr()); }
+  if (i < toks.length) throw new Error(isOp('=') ? 'Use only one "="' : 'Unexpected "' + peek().v + '"');
+  return sides;
+}
+
+function fxSyms(node, out = []) {
+  if (!node) return out;
+  if (node.t === 'sym') out.push(node);
+  if (node.a) fxSyms(node.a, out);
+  if (node.b) fxSyms(node.b, out);
+  return out;
+}
+
+function fxEval(node, env) {
+  switch (node.t) {
+    case 'num': return node.v;
+    case 'sym': return env[node.bound];
+    case 'neg': return -fxEval(node.a, env);
+    default: {
+      const a = fxEval(node.a, env), b = fxEval(node.b, env);
+      if (node.op === '+') return a + b;
+      if (node.op === '-') return a - b;
+      if (node.op === '*') return a * b;
+      if (node.op === '/') return a / b;
+      return Math.pow(a, b);
+    }
+  }
+}
+
+/* Pretty text of what was understood, e.g. "F = ΔP ÷ R". */
+function fxShow(node, parentPrec = 0) {
+  const prec = { '+': 1, '-': 1, '*': 2, '/': 2, '^': 3 };
+  if (node.t === 'num') return +node.v.toFixed(6) === +(1 / 3).toFixed(6) ? '⅓' : node.v === Math.PI ? 'π' : String(+node.v.toFixed(6));
+  if (node.t === 'sym') return node.bound ? (FX_DISPLAY[node.bound] || node.bound) : node.raw;
+  if (node.t === 'neg') return '−' + fxShow(node.a, 3);
+  const p = prec[node.op];
+  if (node.op === '/' && node.a.t === 'num' && node.b.t === 'num' && node.a.v === 1 && [2, 3, 4].includes(node.b.v)) {
+    return '½⅓¼'[node.b.v - 2];
+  }
+  let s;
+  if (node.op === '^' && node.b.t === 'num' && [2, 3, 4].includes(node.b.v)) {
+    s = fxShow(node.a, 3) + '²³⁴'[node.b.v - 2];
+  } else {
+    const sym = { '+': ' + ', '-': ' − ', '*': ' × ', '/': ' ÷ ', '^': '^' }[node.op];
+    s = fxShow(node.a, p) + sym + fxShow(node.b, node.op === '-' || node.op === '/' ? p + 1 : p);
+  }
+  return p < parentPrec ? '(' + s + ')' : s;
+}
+
+/* True when a side contains a word that is not a symbol at all. */
+function fxIsLabel(side) {
+  return fxSyms(side).some(s => !s.cands || !s.cands.length);
+}
+
+/* Checks typed text against a formula's reference equations.
+ * Returns { status: 'ok' | 'close' | 'wrong' | 'error', read, message, note } */
+function fxCheck(formula, text) {
+  let sides;
+  try { sides = fxParse(text, false); }
+  catch (e) { return { status: 'error', message: e.message }; }
+  const target = formula.target;
+  let best = { status: 'wrong' };
+  const strangerSets = [];
+
+  for (const ref of formula.refs) {
+    const refAst = fxParse(ref.expr, true)[0];
+    fxSyms(refAst).forEach(s => { s.bound = s.raw; });
+    const vars = [...new Set(fxSyms(refAst).map(s => s.raw))];
+    const allowed = new Set([...vars, target]);
+    const derived = FX_DERIVED.filter(([sym, needs]) => !allowed.has(sym) && needs.every(n => allowed.has(n)));
+    derived.forEach(([sym]) => allowed.add(sym));
+
+    // Bind every typed symbol to a symbol of this reference equation.
+    const bindSide = side => {
+      const syms = fxSyms(side);
+      let bound = 0, unbound = [];
+      syms.forEach(s => {
+        const c = s.cands.find(x => allowed.has(x));
+        s.bound = c || null;
+        if (c) bound++; else unbound.push(s.raw);
+      });
+      return { bound, unbound, total: syms.length };
+    };
+    let L, R;
+    if (sides.length === 1) { L = { t: 'sym', raw: target, cands: [target], bound: target }; R = sides[0]; }
+    else { L = sides[0]; R = sides[1]; }
+    // A left side written in words ("Blood flow = ...", "Cardiac output = ...")
+    // is read as the name of the quantity being asked.
+    if (sides.length === 2 && fxIsLabel(L)) L = { t: 'sym', raw: target, bound: target, label: true };
+    else if (sides.length === 2) bindSide(L);
+    bindSide(R);
+    const rest = [...fxSyms(L), ...fxSyms(R)].filter(s => !s.bound).map(s => s.raw);
+    strangerSets.push(new Set(rest));
+    if (rest.length) continue;
+
+    const rnd = () => Math.exp(Math.log(0.4) + Math.random() * Math.log(12));
+    const trial = (consistent) => {
+      const env = {};
+      vars.forEach(v => { env[v] = rnd(); });
+      env[target] = consistent ? fxEval(refAst, env) : rnd();
+      derived.forEach(([sym, , fn]) => { env[sym] = fn(env); });
+      const l = fxEval(L, env), r = fxEval(R, env);
+      return { l, r, env };
+    };
+    const close = (a, b) => Math.abs(a - b) <= 1e-7 * Math.max(Math.abs(a), Math.abs(b), 1e-12);
+    let ok = true, ratios = [];
+    for (let k = 0; k < 8; k++) {
+      const { l, r } = trial(true);
+      if (!isFinite(l) || !isFinite(r) || !close(l, r)) ok = false;
+      if (r !== 0 && isFinite(l / r)) ratios.push(l / r);
+    }
+    if (ok) {
+      // Reject identities such as "F = F" that hold whatever the values are.
+      let identity = true;
+      for (let k = 0; k < 4; k++) { const { l, r } = trial(false); if (!close(l, r)) identity = false; }
+      if (!identity) return { status: 'ok', read: fxRead(text), note: ref.note };
+      continue;
+    }
+    // Same structure with a different constant factor?
+    if (ratios.length === 8 && ratios.every(x => close(x, ratios[0])) && close(ratios[0], -1)) {
+      best = { status: 'wrong', read: fxRead(text), message: 'Right variables, but the sign is reversed: check which way the subtraction goes.' };
+    } else if (best.status !== 'close' && ratios.length === 8 && ratios.every(x => close(x, ratios[0])) && !close(ratios[0], 1)) {
+      best = { status: 'close', read: fxRead(text),
+               message: 'Right variables and structure, but a constant factor is off.' };
+    } else if (best.status === 'wrong') {
+      best = { status: 'wrong', read: fxRead(text) };
+    }
+  }
+  // Symbols that fit none of the accepted forms.
+  const strangers = new Set(strangerSets.length ? [...strangerSets[0]].filter(x => strangerSets.every(st => st.has(x))) : []);
+  if (best.status === 'wrong' && strangers.size) {
+    const unknown = [...strangers].filter(x => !fxLookup(x) && !fxSplit(x));
+    const other = [...strangers].filter(x => !unknown.includes(x));
+    best.message = [other.length ? 'Not part of this formula: ' + other.join(', ') + '.' : '',
+                    unknown.length ? 'Not a symbol I know: ' + unknown.join(', ') + ' (see Notation).' : ''].filter(Boolean).join(' ');
+  }
+  if (!best.read) best.read = fxRead(text);
+  return best;
+}
+
+/* How the typed text was understood, e.g. "F = ΔP ÷ R". Symbols are shown
+ * as typed (not mapped), and a left side written in words is kept as words. */
+function fxRead(text) {
+  const sides = fxParse(text, false);
+  const parts = String(text).split('=');
+  const left = sides.length === 2 && fxIsLabel(sides[0]) ? parts[0].trim() : fxShow(sides[0]);
+  return sides.length === 2 ? left + ' = ' + fxShow(sides[1]) : fxShow(sides[0]);
+}
+
+/* Live preview while typing: parses only, no grading. */
+function fxPreview(text) {
+  if (!String(text || '').trim()) return { ok: false, text: '' };
+  try { return { ok: true, text: fxRead(text) }; }
+  catch (e) { return { ok: false, text: e.message }; }
 }
 
 function fbParseNumber(text) {
@@ -3003,19 +3359,47 @@ function fbPickCalc(f) {
   return scored[0].c;
 }
 
-function FbTile({ label, onClick, state, disabled }) {
-  const isOp = FB_OPS.includes(label);
-  return (
-    <button className={'fb-tile' + (isOp ? ' op' : '') + (state ? ' ' + state : '')}
-      onClick={onClick} disabled={disabled}>{label}</button>
-  );
-}
-
 function FbReveal({ ok, title, children }) {
   return (
     <div className={'fb-reveal ' + (ok ? 'ok' : 'bad')}>
       <div className="fb-reveal-head">{title}</div>
       {children}
+    </div>
+  );
+}
+
+/* Notation help: every symbol the checker knows, the same list for every
+ * formula, so it never narrows down the answer. */
+function FxNotation() {
+  const seen = new Set();
+  const rows = FX_SYMBOLS.filter(([canon]) => !seen.has(canon) && seen.add(canon));
+  return (
+    <div className="fx-notation">
+      <div className="fx-notation-intro">
+        Type symbols with the keyboard; use the keys for Δ, η, ρ, π, powers and ₀. Write × or *, ÷ or /,
+        and ⅓ or 1/3. Writing two symbols side by side multiplies them (8ηl). The left side can be the
+        symbol or the name in words ("Cardiac output = …").
+      </div>
+      <div className="fx-notation-grid">
+        {rows.map(([canon, show, meaning, spell]) => (
+          <div key={canon} className="fx-notation-row">
+            <strong>{show}</strong>
+            <span>{meaning}</span>
+            <span className="fx-notation-alt">{spell.filter(x => x !== show && x !== canon).slice(0, 3).join(', ')}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* Topic header on a home list: the topic name plus a button that practises
+ * every item in it. */
+function TopicHeader({ name, count, onPractise, unit }) {
+  return (
+    <div className="topic-head">
+      <span className="topic-head-name">{name}</span>
+      <button className="topic-head-btn" onClick={onPractise}>Practise all {count} {unit} →</button>
     </div>
   );
 }
@@ -3026,16 +3410,19 @@ function FormulaBuilder({ onBack }) {
   const [round, setRound] = useState([]);
   const [pos, setPos] = useState(0);
   const [stage, setStage] = useState('build');       // build | calc
-  const [pool, setPool] = useState([]);              // shuffled tiles for this formula
-  const [placed, setPlaced] = useState([]);          // indices into pool
-  const [buildOk, setBuildOk] = useState(null);      // null until checked
+  const [text, setText] = useState('');
+  const [result, setResult] = useState(null);        // fxCheck result once checked
+  const [parseErr, setParseErr] = useState('');
+  const [retry, setRetry] = useState(false);         // second try after a wrong answer (not recorded)
+  const [revealed, setRevealed] = useState(false);   // correct formula shown
   const [calc, setCalc] = useState(null);
   const [calcText, setCalcText] = useState('');
   const [calcOk, setCalcOk] = useState(null);
-  const [showKey, setShowKey] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [unitAns, setUnitAns] = useState(null);
-  const [log, setLog] = useState([]);                // { f, buildOk, calc, calcOk }
+  const [log, setLog] = useState([]);                // { f, buildOk, unitOk, calc, calcOk }
   const [, force] = useState(0);
+  const inputRef = useRef(null);
 
   useEffect(() => {
     if (!window.Progress) return;
@@ -3045,17 +3432,19 @@ function FormulaBuilder({ onBack }) {
   const f = round[pos];
 
   function loadFormula(list, k) {
-    const item = list[k];
     setPos(k);
     setStage('build');
-    setPool(fbShuffle(item.tiles));
-    setPlaced([]);
-    setBuildOk(null);
+    setText('');
+    setResult(null);
+    setParseErr('');
+    setRetry(false);
+    setRevealed(false);
     setCalc(null);
     setCalcText('');
     setCalcOk(null);
     setUnitAns(null);
     window.scrollTo(0, 0);
+    setTimeout(() => { if (inputRef.current) inputRef.current.focus(); }, 50);
   }
 
   function start(list) {
@@ -3066,21 +3455,32 @@ function FormulaBuilder({ onBack }) {
     loadFormula(list, 0);
   }
 
-  function place(k) {
-    if (buildOk !== null || placed.includes(k)) return;
-    setPlaced(p => [...p, k]);
-  }
-  function unplace(n) {
-    if (buildOk !== null) return;
-    setPlaced(p => p.filter((_, idx) => idx !== n));
+  function insert(s) {
+    const el = inputRef.current;
+    if (!el) { setText(t => t + s); return; }
+    const a = el.selectionStart != null ? el.selectionStart : text.length;
+    const b = el.selectionEnd != null ? el.selectionEnd : text.length;
+    const next = text.slice(0, a) + s + text.slice(b);
+    setText(next);
+    setTimeout(() => { el.focus(); el.setSelectionRange(a + s.length, a + s.length); }, 0);
   }
 
   function checkBuild() {
-    const tokens = placed.map(k => pool[k]);
-    const ok = fbIsCorrect(f, tokens);
-    setBuildOk(ok);
+    const r = fxCheck(f, text);
+    if (r.status === 'error') { setParseErr(r.message); return; }   // unreadable: not counted
+    setParseErr('');
+    setResult(r);
+    if (r.status === 'ok' || retry) setRevealed(true);
+    if (retry) return;                                               // retries are for practice only
+    const ok = r.status === 'ok';
     if (window.Progress) window.Progress.record(FB_SUBJECT, fbBuildKey(f), ok);
     setLog(l => [...l, { f, buildOk: ok, calc: null, calcOk: null }]);
+  }
+
+  function tryAgain() {
+    setResult(null);
+    setRetry(true);
+    setTimeout(() => { if (inputRef.current) inputRef.current.focus(); }, 50);
   }
 
   function answerUnit(o) {
@@ -3126,7 +3526,7 @@ function FormulaBuilder({ onBack }) {
         <span className="fb-head-meta">
           {view === 'play'
             ? `Formula ${pos + 1} of ${round.length}`
-            : `${masteredCount} of ${ALL.length} built correctly`}
+            : `${masteredCount} of ${ALL.length} written correctly`}
         </span>
       </div>
     </div>
@@ -3140,24 +3540,25 @@ function FormulaBuilder({ onBack }) {
         <div style={{ ...HX_CARD, display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 22 }}>
           <span style={HX_LABEL}>How it works</span>
           <span style={{ fontSize: 14, color: 'var(--sb-ink-2)', lineHeight: 1.6 }}>
-            Build the right-hand side of each formula from tiles. Some tiles are decoys. Then say which
-            unit the result is in, and use the formula on a number problem. After each answer you see what
-            the abbreviations stand for and why they matter. A round has {FB_ROUND_SIZE} formulas, and the ones you have
-            not built correctly yet come first.
+            You get only the name of a formula, and you write the whole formula yourself. Any correct
+            form counts: any order, rearranged, or with the name in words on the left. Then pick the unit
+            of the result and use the formula on a number problem. A round has {FB_ROUND_SIZE} formulas;
+            the ones you have not written correctly yet come first. Or pick a topic below.
           </span>
           <button className="hx-cta" onClick={() => start(fbPickRound(ALL, FB_ROUND_SIZE))}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
                      background: 'var(--sb-ink)', border: '1px solid var(--sb-ink)', borderRadius: 10,
                      padding: '11px 14px', cursor: 'pointer', width: '100%', fontFamily: 'inherit' }}>
-            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--sb-cream)' }}>Start a round</span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--sb-cream)' }}>Start a mixed round</span>
             <span style={{ fontSize: 11.5, color: 'var(--sb-ink-4)' }}>{Math.min(FB_ROUND_SIZE, ALL.length)} formulas →</span>
           </button>
         </div>
 
-        <span style={{ ...HX_LABEL, display: 'block', marginBottom: 6 }}>Or practise one formula</span>
+        <span style={{ ...HX_LABEL, display: 'block', marginBottom: 6 }}>By topic</span>
         {groups.map(g => (
-          <div key={g.name} style={{ marginTop: 14 }}>
-            <div style={{ fontSize: 12, color: 'var(--sb-ink-3)', marginBottom: 4 }}>{g.name}</div>
+          <div key={g.name} style={{ marginTop: 16 }}>
+            <TopicHeader name={g.name} count={g.items.length} unit={g.items.length === 1 ? 'formula' : 'formulas'}
+              onPractise={() => start(fbShuffle(g.items))} />
             <div className="hx-two" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 28 }}>
               {g.items.map(x => {
                 const rec = P ? P.recordFor(FB_SUBJECT, fbBuildKey(x)) : null;
@@ -3170,7 +3571,7 @@ function FormulaBuilder({ onBack }) {
                                    background: mastered ? 'var(--sb-ink)' : rec ? 'var(--sb-ink-4)' : '#d9d6cd' }} />
                     <span style={{ flex: 1, minWidth: 0, fontSize: 13.5 }}>{x.name}</span>
                     <span style={{ fontSize: 11.5, color: 'var(--sb-ink-4)', flexShrink: 0 }}>
-                      {mastered ? 'built' : rec ? 'practise' : 'new'}
+                      {mastered ? 'known' : rec ? 'practise' : 'new'}
                     </span>
                   </div>
                 );
@@ -3194,10 +3595,10 @@ function FormulaBuilder({ onBack }) {
       <div className="fb-wrap">
         {header}
         <div className="results-banner">
-          <div className={`score-ring ${ring}`}><span>{pct}%</span><span className="score-label">built</span></div>
+          <div className={`score-ring ${ring}`}><span>{pct}%</span><span className="score-label">written</span></div>
           <div className="results-detail">
             <h2>{pct >= 80 ? 'Great work!' : pct >= 50 ? 'Keep it up!' : 'Keep practising!'}</h2>
-            <p>{bOk} / {log.length} formulas built correctly
+            <p>{bOk} / {log.length} formulas written correctly
               {cAll.length > 0 && ` · ${cOk} / ${cAll.length} calculations right`}
               {` · ${log.filter(e => e.unitOk).length} / ${log.length} units right`}</p>
           </div>
@@ -3229,9 +3630,11 @@ function FormulaBuilder({ onBack }) {
   }
 
   // ── Play ────────────────────────────────────────────────────────────────
-  const built = placed.map(k => pool[k]);
-  const eqState = buildOk === null ? '' : buildOk ? 'correct' : 'wrong';
-  const keyEntries = Object.entries(f.key || {});
+  const preview = fxPreview(text);
+  const locked = result !== null;
+  const ok = result && result.status === 'ok';
+  const eqState = !result ? '' : ok ? 'correct' : 'wrong';
+  const done = locked && revealed;
 
   return (
     <div className="fb-wrap">
@@ -3240,64 +3643,70 @@ function FormulaBuilder({ onBack }) {
         <div className="question-topic-tag">{f.group}</div>
         <h3 className="fb-name">{f.name}</h3>
 
-        {/* Step 1: build */}
-        <div className="fb-step">Build the formula</div>
-        <div className={'fb-eq ' + eqState}>
-          <span className="fb-lhs">{f.lhs} =</span>
-          {built.length === 0 && buildOk === null && (
-            <span className="fb-placeholder">tap tiles below</span>
-          )}
-          {built.map((t, n) => (
-            <FbTile key={n} label={t} onClick={() => unplace(n)} disabled={buildOk !== null} />
-          ))}
-        </div>
+        <div className="fb-step">{retry && !locked ? 'Try again (not counted)' : 'Write the formula'}</div>
+        <input ref={inputRef} className={'fx-input ' + eqState} type="text" value={text} disabled={locked}
+          spellCheck={false} autoCapitalize="off" autoCorrect="off" autoComplete="off"
+          placeholder="Type the whole formula"
+          onChange={e => { setText(e.target.value); setParseErr(''); }}
+          onKeyDown={e => { if (e.key === 'Enter' && !locked && text.trim()) checkBuild(); }} />
 
-        {buildOk === null && (
+        {!locked && (
           <>
-            <div className="fb-pool">
-              {pool.map((t, k) => (
-                <FbTile key={k} label={t} onClick={() => place(k)} state={placed.includes(k) ? 'used' : ''}
-                  disabled={placed.includes(k)} />
+            <div className="fx-keys">
+              {FX_KEYS.map(([label, ins]) => (
+                <button key={label} className="fx-key" onMouseDown={e => e.preventDefault()} onClick={() => insert(ins)}>{label}</button>
               ))}
+              <button className="fx-key wide" onMouseDown={e => e.preventDefault()}
+                onClick={() => { setText(t => t.slice(0, -1)); }}>⌫</button>
             </div>
-            {keyEntries.length > 0 && (
-              <div style={{ marginTop: 12 }}>
-                <button className="fb-link" onClick={() => setShowKey(s => !s)}>
-                  {showKey ? 'Hide symbol key' : 'Show symbol key'}
-                </button>
-                {showKey && (
-                  <div className="fb-key">
-                    {keyEntries.map(([s, m]) => <span key={s}><strong>{s}</strong> {m}</span>)}
-                  </div>
-                )}
-              </div>
-            )}
-            <div className="exam-actions" style={{ marginTop: 18 }}>
-              <button className="btn-primary" onClick={checkBuild} disabled={!placed.length}>Check</button>
-              <button className="btn-secondary" onClick={() => setPlaced([])} disabled={!placed.length}>Clear</button>
+            <div className={'fx-preview' + (preview.ok ? '' : ' bad')}>
+              {text.trim()
+                ? (preview.ok ? <>Read as: <strong>{preview.text}</strong></> : preview.text)
+                : 'Your formula appears here as it is understood.'}
             </div>
+            {parseErr && <div className="fx-err">{parseErr}. Fix it and check again; this does not count.</div>}
+            <div className="exam-actions" style={{ marginTop: 16 }}>
+              <button className="btn-primary" onClick={checkBuild} disabled={!text.trim()}>Check</button>
+              <button className="btn-secondary" onClick={() => setText('')} disabled={!text}>Clear</button>
+              <button className="fb-link" onClick={() => setShowHelp(s => !s)}>{showHelp ? 'Hide notation' : 'Notation'}</button>
+            </div>
+            {showHelp && <FxNotation />}
           </>
         )}
 
-        {buildOk !== null && (
-          <FbReveal ok={buildOk} title={buildOk ? 'Correct' : 'Not quite'}>
-            <div className="fb-formula">{f.display}</div>
-            {f.why && <div className="fb-why">{f.why}</div>}
-            <div className="fb-source">{f.source}</div>
-            {f.note && <div className="fb-source">Note: {f.note}</div>}
+        {locked && (
+          <FbReveal ok={ok} title={ok ? 'Correct' : result.status === 'close' ? 'Almost' : 'Not quite'}>
+            <div className="fx-yours">You wrote: {result.read || text}</div>
+            {result.message && <div className="fx-msg">{result.message}</div>}
+            {ok && result.note && <div className="fx-msg">{result.note}</div>}
+            {revealed && (
+              <>
+                <div className="fb-formula">{f.display}</div>
+                {f.why && <div className="fb-why">{f.why}</div>}
+                <div className="fb-source">{f.source}</div>
+                {f.note && <div className="fb-source">Note: {f.note}</div>}
+              </>
+            )}
           </FbReveal>
         )}
 
-        {buildOk !== null && <PhysioAbout keys={f.terms} />}
-
-        {buildOk !== null && f.units && (
-          <div style={{ marginTop: 22 }}>
-            <UnitQuestion key={f.id + ':' + pos} options={f.units} answer={unitAns} onAnswer={answerUnit}
-              prompt={'Units · What unit is ' + f.lhs + ' measured in?'} note={f.unitNote} />
+        {locked && !revealed && (
+          <div className="exam-actions" style={{ marginTop: 14 }}>
+            <button className="btn-primary" onClick={tryAgain}>Try again (not counted)</button>
+            <button className="btn-secondary" onClick={() => setRevealed(true)}>Show the answer</button>
           </div>
         )}
 
-        {buildOk !== null && (unitAns != null || !f.units) && stage === 'build' && (
+        {done && <PhysioAbout keys={f.terms} />}
+
+        {done && f.units && (
+          <div style={{ marginTop: 22 }}>
+            <UnitQuestion key={f.id + ':' + pos} options={f.units} answer={unitAns} onAnswer={answerUnit}
+              prompt={'Units · What unit is the result, ' + (FX_DISPLAY[f.target] || f.target) + ', in?'} note={f.unitNote} />
+          </div>
+        )}
+
+        {done && (unitAns != null || !f.units) && stage === 'build' && (
           <div className="exam-actions" style={{ marginTop: 18 }}>
             {f.calcs && f.calcs.length
               ? <button className="btn-primary" onClick={toCalc}>Calculate with it →</button>
@@ -3651,14 +4060,15 @@ function RgLabs() {
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
                      background: 'var(--sb-ink)', border: '1px solid var(--sb-ink)', borderRadius: 10,
                      padding: '11px 14px', cursor: 'pointer', width: '100%', fontFamily: 'inherit' }}>
-            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--sb-cream)' }}>Start a round</span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--sb-cream)' }}>Start a mixed round</span>
             <span style={{ fontSize: 11.5, color: 'var(--sb-ink-4)' }}>{Math.min(RG_ROUND_SIZE, ALL.length)} values →</span>
           </button>
         </div>
-        <span style={{ ...HX_LABEL, display: 'block', marginBottom: 6 }}>Or practise one value</span>
+        <span style={{ ...HX_LABEL, display: 'block', marginBottom: 6 }}>By topic</span>
         {groups.map(g => (
-          <div key={g.name} style={{ marginTop: 14 }}>
-            <div style={{ fontSize: 12, color: 'var(--sb-ink-3)', marginBottom: 4 }}>{g.name}</div>
+          <div key={g.name} style={{ marginTop: 16 }}>
+            <TopicHeader name={g.name} count={g.items.length} unit={g.items.length === 1 ? 'value' : 'values'}
+              onPractise={() => start(fbShuffle(g.items))} />
             <div className="hx-two" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 28 }}>
               {g.items.map(it => {
                 const rec = P ? P.recordFor(RG_SUBJECT, rgLabKey(it)) : null;
@@ -3762,20 +4172,6 @@ function RgLabs() {
   );
 }
 
-/* Node positions in the circulation diagram (viewBox 0 0 900 380). Pulmonary
- * loop on top, systemic loop on the bottom, heart chambers on the sides. */
-const RG_MAP_POS = {
-  rv: [95, 50], pa: [335, 50], pcap: [575, 50], la: [805, 50],
-  ra: [95, 190], lv: [805, 190], glom: [530, 190],
-  vc: [95, 330], veins: [275, 330], caps: [455, 330], arterioles: [635, 330], aorta: [805, 330],
-};
-const RG_MAP_FLOW = [['ra', 'rv'], ['rv', 'pa'], ['pa', 'pcap'], ['pcap', 'la'], ['la', 'lv'], ['lv', 'aorta'],
-                     ['aorta', 'arterioles'], ['arterioles', 'caps'], ['caps', 'veins'], ['veins', 'vc'], ['vc', 'ra']];
-const RG_MAP_SHORT = {
-  lv: 'Left ventricle', aorta: 'Aorta', arterioles: 'Arterioles', caps: 'Systemic capillaries',
-  glom: 'Glomerular capillaries', veins: 'Small veins', vc: 'Venae cavae', ra: 'Right atrium',
-  rv: 'Right ventricle', pa: 'Pulmonary artery', pcap: 'Pulmonary capillaries', la: 'Left atrium / pulm. veins',
-};
 const RG_MAP_ORDER = ['lv', 'aorta', 'arterioles', 'caps', 'glom', 'veins', 'vc', 'ra', 'rv', 'pa', 'pcap', 'la'];
 
 const rgPartKey = (n, part) => ({ question: 'Pressure map: ' + n.label + ' ' + part, topic: 'Pressure map', subtopic: n.label });
@@ -3887,10 +4283,13 @@ function RgMapPanel({ node, st, setSt }) {
 function RgPressureMap() {
   const data = window.PHYSIO_RANGES || {};
   const NODES = data.map || [];
+  const IMAGES = data.mapImages || [];
   const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
+  const [imgId, setImgId] = useState(IMAGES.length ? IMAGES[0].id : null);
   const [sel, setSel] = useState(null);
   const [states, setStates] = useState({});       // nodeId -> { unit, scale, value, mean, result }
   const panelRef = useRef(null);
+  const img = IMAGES.find(i => i.id === imgId) || IMAGES[0];
 
   function fresh(n) {
     if (!n.range) return {};
@@ -3901,96 +4300,79 @@ function RgPressureMap() {
   function open(id) {
     setSel(id);
     setStates(prev => prev[id] ? prev : { ...prev, [id]: fresh(byId[id]) });
-    setTimeout(() => { if (panelRef.current) panelRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 30);
+    setTimeout(() => { if (panelRef.current) panelRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 40);
   }
   function nextNode() {
     const rest = RG_MAP_ORDER.filter(id => byId[id] && !(states[id] && states[id].result) && id !== sel);
-    open(rest.length ? rest[0] : RG_MAP_ORDER[(RG_MAP_ORDER.indexOf(sel) + 1) % RG_MAP_ORDER.length]);
+    const id = rest.length ? rest[0] : RG_MAP_ORDER[(RG_MAP_ORDER.indexOf(sel) + 1) % RG_MAP_ORDER.length];
+    // Show the figure that has this location.
+    const n = byId[id];
+    if (n && !n.spots.some(s => s.img === imgId)) setImgId(n.spots[0].img);
+    open(id);
   }
-  const setFor = id => v => setStates(prev => ({ ...prev, [id]: v }));
   const state = id => {
     const r = states[id] && states[id].result;
     return r ? (r.ok ? 'ok' : 'bad') : '';
   };
   const node = sel ? byId[sel] : null;
-  const panel = node && (
-    <RgMapPanel key={node.id} node={node}
-      st={{ ...(states[node.id] || {}), onNext: nextNode }}
-      setSt={v => { const { onNext, ...rest } = v; setFor(node.id)(rest); }} />
-  );
   const done = Object.values(states).filter(s => s.result).length;
   const allOk = Object.values(states).filter(s => s.result && s.result.ok).length;
 
-  const nodeEl = id => {
-    const [x, y] = RG_MAP_POS[id];
-    const label = RG_MAP_SHORT[id];
-    const words = label.split(' ');
-    const lines = label.length > 14 && words.length > 1
-      ? [words.slice(0, Math.ceil(words.length / 2)).join(' '), words.slice(Math.ceil(words.length / 2)).join(' ')]
-      : [label];
-    return (
-      <g key={id} className={'pm-node ' + state(id) + (sel === id ? ' sel' : '')} onClick={() => open(id)}
-        role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter') open(id); }}>
-        <rect x={x - 78} y={y - 25} width={156} height={50} rx={12} />
-        {lines.map((l, k) => (
-          <text key={k} x={x} y={y + (lines.length === 1 ? 5 : k === 0 ? -4 : 14)} textAnchor="middle">{l}</text>
-        ))}
-      </g>
-    );
-  };
-  const edge = ([a, b], k) => {
-    const [x1, y1] = RG_MAP_POS[a], [x2, y2] = RG_MAP_POS[b];
-    const dx = Math.sign(x2 - x1), dy = Math.sign(y2 - y1);
-    const sx = x1 + dx * 80, sy = y1 + dy * 27, ex = x2 - dx * 84, ey = y2 - dy * 31;
-    return <line key={k} x1={sx} y1={sy} x2={ex} y2={ey} className="pm-edge" markerEnd="url(#pm-arrow)" />;
-  };
-
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 13.5, color: 'var(--sb-ink-2)' }}>
-          Tap a location: pick the unit, then mark its pressure range (low to high) and the mean where there is one.
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 13.5, color: 'var(--sb-ink-2)', lineHeight: 1.5 }}>
+          Tap a dot on the figure: pick the unit, then mark the pressure range (low to high), and the mean where there is one.
         </span>
         <span style={{ fontSize: 12, color: 'var(--sb-ink-4)' }}>{allOk} of {NODES.length} right{done > allOk ? ` · ${done - allOk} to review` : ''}</span>
       </div>
 
-      <div className="pm-svg-wrap">
-        <svg viewBox="0 0 900 380" className="pm-svg">
-          <defs>
-            <marker id="pm-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M0,0 L10,5 L0,10 z" className="pm-arrowhead" />
-            </marker>
-          </defs>
-          <text x={450} y={14} textAnchor="middle" className="pm-caption">Pulmonary circulation</text>
-          <text x={450} y={377} textAnchor="middle" className="pm-caption">Systemic circulation</text>
-          {RG_MAP_FLOW.map(edge)}
-          <line x1={635} y1={305} x2={560} y2={218} className="pm-edge dashed" markerEnd="url(#pm-arrow)" />
-          {Object.keys(RG_MAP_POS).filter(id => byId[id]).map(nodeEl)}
-        </svg>
-      </div>
+      {IMAGES.length > 1 && (
+        <div className="pm-imgtabs">
+          {IMAGES.map(im => (
+            <button key={im.id} className={'pm-imgtab' + (im.id === imgId ? ' on' : '')} onClick={() => setImgId(im.id)}>
+              {im.label}
+            </button>
+          ))}
+        </div>
+      )}
 
-      <div className="pm-list">
-        {[['Left heart & systemic circulation', ['lv', 'aorta', 'arterioles', 'caps', 'glom', 'veins', 'vc']],
-          ['Right heart & pulmonary circulation', ['ra', 'rv', 'pa', 'pcap', 'la']]].map(([title, ids]) => (
-          <div key={title} style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 12, color: 'var(--sb-ink-3)', marginBottom: 6 }}>{title}</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {ids.filter(id => byId[id]).map(id => (
-                <React.Fragment key={id}>
-                  <button className={'pm-row ' + state(id) + (sel === id ? ' sel' : '')}
-                    onClick={() => (sel === id ? setSel(null) : open(id))}>
-                    <span>{byId[id].label}</span>
-                    <span className="pm-row-state">{state(id) === 'ok' ? 'right' : state(id) === 'bad' ? 'review' : ''}</span>
-                  </button>
-                  {sel === id && <div className="pm-inline" style={{ marginBottom: 6 }}>{panel}</div>}
-                </React.Fragment>
-              ))}
-            </div>
+      {img && (
+        <div className="pm-figure-wrap">
+          <div className="pm-figure" style={{ aspectRatio: img.w + ' / ' + img.h }}>
+            <img src={img.src} alt={img.label} draggable={false} />
+            {NODES.flatMap(n => n.spots.filter(s => s.img === img.id).map((s, k) => (
+              <button key={n.id + ':' + k} className={'pm-spot ' + state(n.id) + (sel === n.id ? ' sel' : '')}
+                style={{ left: s.x + '%', top: s.y + '%' }} onClick={() => open(n.id)}
+                aria-label={n.label} title={n.label}>
+                <span className="pm-spot-label">{n.label}</span>
+              </button>
+            )))}
           </div>
+          <div className="pm-credit">{img.credit}</div>
+        </div>
+      )}
+
+      <div className="pm-chips">
+        {RG_MAP_ORDER.filter(id => byId[id]).map(id => (
+          <button key={id} className={'pm-chip ' + state(id) + (sel === id ? ' sel' : '')}
+            onClick={() => {
+              const n = byId[id];
+              if (!n.spots.some(s => s.img === imgId)) setImgId(n.spots[0].img);
+              open(id);
+            }}>
+            {byId[id].label}
+          </button>
         ))}
       </div>
 
-      <div ref={panelRef} className="pm-panel-wide">{panel}</div>
+      <div ref={panelRef} style={{ scrollMarginTop: 150 }}>
+        {node && (
+          <RgMapPanel key={node.id} node={node}
+            st={{ ...(states[node.id] || {}), onNext: nextNode }}
+            setSt={v => { const { onNext, ...rest } = v; setStates(prev => ({ ...prev, [node.id]: rest })); }} />
+        )}
+      </div>
 
       {(data.facts || []).length > 0 && (
         <div style={{ ...HX_CARD, marginTop: 22, display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -4623,13 +5005,13 @@ const SUBJECT_PAGES = {
 
   Physiology: {
     groups: [
-      { label: 'True / False', names: ['Blood', 'Cardiovascular'] },
+      { label: 'First Block Test', names: ['Full test: Blood + Cardiovascular', 'Blood', 'Cardiovascular'] },
     ],
     tools: () => [
       { type: 'formula_builder', name: 'Formula Builder',
-        meta: (window.PHYSIO_FORMULAS || []).length + ' formulas · build each from tiles, then calculate with it' },
+        meta: (window.PHYSIO_FORMULAS || []).length + ' formulas by topic · write each one yourself, then calculate with it' },
       { type: 'ranges_game', name: 'Ranges',
-        meta: ((window.PHYSIO_RANGES || {}).labs || []).length + ' normal ranges on a scale · pressure map of the circulation' },
+        meta: ((window.PHYSIO_RANGES || {}).labs || []).length + ' normal ranges by topic · pressure map on a textbook figure' },
     ],
     unit: 'statements',
     counter: () => {
@@ -12276,16 +12658,16 @@ const PAGE_INSTRUCTIONS = {
     steps: [
       'Normal ranges: first pick the unit, then drag the two handles to mark the normal range (or use − and +).',
       'Press Check. The real range appears under yours, with what the abbreviation means and why it matters.',
-      'Pressure map: tap a chamber or vessel, pick the unit, then mark its pressure range and type the mean where there is one.',
+      'Pressure map: tap a dot on the textbook figure, pick the unit, then mark its pressure range and type the mean where there is one.',
       'Values you have not got right yet come first in new rounds.',
     ],
   },
   formula_builder: {
     title: 'Formula Builder',
     steps: [
-      'You see the name of a formula and its left-hand side, for example "CO =".',
-      'Tap tiles to build the right-hand side. Some tiles are decoys. Tap a placed tile to take it back.',
-      'Press Check: the correct formula appears with its source, plus what each abbreviation stands for and why it matters.',
+      'You see only the name of a formula, for example "Cardiac output". Type the whole formula yourself.',
+      'Use the keys under the box for Δ, η, ρ, π, powers and ₀. "Notation" lists every symbol the checker knows.',
+      'Any correct form counts: any order, rearranged, or with the name in words on the left. If you are wrong you can try once more (not counted) or show the answer.',
       'Then pick the unit of the result, and solve a number problem with the same formula.',
     ],
   },
