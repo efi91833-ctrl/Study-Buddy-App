@@ -216,6 +216,16 @@
     return { answered: answered, correct: correct, skipped: questions.length - answered };
   }
 
+  /* Adds a history entry for a session whose answers were already recorded
+   * one by one with record() (e.g. one-question-at-a-time True/False). */
+  function logSession(subject, examName, answered, correct) {
+    var store = subjectStore(subject);
+    store.h.push({ d: Date.now(), ex: examName || '', n: answered, c: correct });
+    if (store.h.length > HISTORY_LIMIT) store.h = store.h.slice(-HISTORY_LIMIT);
+    flush();
+    notify('exam');
+  }
+
   // ── Mastery ─────────────────────────────────────────────────────────────
   function isMastered(subject, q) {
     var rec = subjectStore(subject).q[keyFor(q)];
@@ -337,6 +347,7 @@
     keyFor: keyFor,
     record: record,
     recordExam: recordExam,
+    logSession: logSession,
     isMastered: isMastered,
     recordFor: recordFor,
     weightFor: weightFor,

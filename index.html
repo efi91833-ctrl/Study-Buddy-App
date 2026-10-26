@@ -556,6 +556,14 @@
     .tf-row.revealed, .tf-row.unscored { border-color: var(--sb-line-soft); background: rgba(0,0,0,.03); }
     .tf-why { grid-column: 2 / -1; font-size: 14px; line-height: 1.55; color: var(--sb-ink-2); }
     .tf-flag { grid-column: 2 / -1; font-size: 12px; color: var(--sb-ink-4); font-style: italic; }
+    .tf-mode { display: inline-flex; gap: 4px; margin-top: 14px; padding: 3px; border-radius: 10px;
+      background: var(--sb-cream); border: 1px solid var(--sb-line-soft); }
+    .tf-mode-btn { font-family: inherit; font-size: 13px; padding: 7px 13px; border-radius: 8px; border: none;
+      background: none; color: var(--sb-ink-3); cursor: pointer; }
+    .tf-mode-btn.on { background: #3a3a36; color: #fff; }
+    .tf-mode-btn:disabled:not(.on) { opacity: .45; cursor: default; }
+    .tf-progress { height: 4px; border-radius: 2px; background: #e2ded4; margin: -8px 0 18px; overflow: hidden; }
+    .tf-progress div { height: 100%; background: #3a3a36; transition: width .2s; }
     .tf-banner {
       margin-top: 10px; padding: 10px 14px; border-radius: 10px; font-size: 13px;
       background: var(--sb-cream); border: 1px solid var(--sb-line-soft); color: var(--sb-ink-2);
@@ -2842,6 +2850,8 @@ function TfStatementRow({ item, answer, submitted, onChoose }) {
   );
 }
 
+const TF_MODE_KEY = 'sb_tf_mode';
+
 function TrueFalseExam({ subject, examIndex, onBack, onFocusWeak }) {
   // Built once per mount, like ExamScreen: remounting picks up new mastery.
   const [built] = useState(() => buildExam(subject, examIndex));
@@ -2850,15 +2860,31 @@ function TrueFalseExam({ subject, examIndex, onBack, onFocusWeak }) {
   // Statements without a legible key are shown but never scored or recorded.
   const scored = useMemo(() => statements.filter(s => s.correct), [statements]);
   const [answers, setAnswers] = useState({});
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState(false);       // whole-test mode
+  // 'one': one question at a time, checked straight away. 'all': the whole test, one submit.
+  const [mode, setMode] = useState(() => {
+    try { return localStorage.getItem(TF_MODE_KEY) === 'all' ? 'all' : 'one'; } catch (e) { return 'one'; }
+  });
+  const [idx, setIdx] = useState(0);
+  const [checked, setChecked] = useState({});              // stem number -> true once checked
+  const [finished, setFinished] = useState(false);
+  const logged = useRef(false);
 
   const meta = QUESTION_BANK[subject];
   const examName = examIndex === 'weak'
     ? 'Weak Areas'
     : (typeof examIndex === 'number' && meta.exams[examIndex] ? meta.exams[examIndex].name : '');
 
+  function pickMode(m) {
+    setMode(m);
+    try { localStorage.setItem(TF_MODE_KEY, m); } catch (e) {}
+  }
+
+  const isChecked = num => mode === 'all' ? submitted : !!checked[num];
+
   function choose(id, v) {
-    if (submitted) return;
+    const s = statements.find(x => x.id === id);
+    if (!s || isChecked(s.stemNum)) return;
     setAnswers(prev => {
       const next = { ...prev };
       if (next[id] === v) delete next[id]; else next[id] = v;
@@ -2866,6 +2892,47 @@ function TrueFalseExam({ subject, examIndex, onBack, onFocusWeak }) {
     });
   }
 
+  // ── one-at-a-time ──
+  const checkedScored = scored.filter(s => checked[s.stemNum]);
+  const tally = {
+    answered: checkedScored.filter(s => hasAnswer(answers[s.id])).length,
+    correct: checkedScored.filter(s => hasAnswer(answers[s.id]) && isCorrect(s, answers[s.id])).length,
+  };
+  const tallyRef = useRef(tally);
+  tallyRef.current = tally;
+
+  /* Each checked question is recorded straight away, so nothing is lost if
+   * you leave halfway. The session itself is logged once, at the end or on leaving. */
+  function logOnce() {
+    if (logged.current || !window.Progress || !window.Progress.logSession) return;
+    const t = tallyRef.current;
+    if (!t.answered) return;
+    logged.current = true;
+    window.Progress.logSession(subject, examName, t.answered, t.correct);
+  }
+  useEffect(() => () => { if (mode === 'one') logOnce(); }, [mode]);
+
+  function checkOne() {
+    const g = groups[idx];
+    setChecked(c => ({ ...c, [g.num]: true }));
+    if (window.Progress) {
+      g.items.forEach(s => {
+        if (s.correct && hasAnswer(answers[s.id])) window.Progress.record(subject, s, isCorrect(s, answers[s.id]));
+      });
+      window.Progress.flush();
+    }
+  }
+  function go(k) {
+    setIdx(Math.max(0, Math.min(groups.length - 1, k)));
+    window.scrollTo(0, 0);
+  }
+  function finishOne() {
+    setFinished(true);
+    logOnce();
+    window.scrollTo(0, 0);
+  }
+
+  // ── whole test ──
   function handleSubmit() {
     setSubmitted(true);
     if (window.Progress) {
@@ -2875,27 +2942,113 @@ function TrueFalseExam({ subject, examIndex, onBack, onFocusWeak }) {
   }
 
   const answeredCount = statements.filter(s => hasAnswer(answers[s.id])).length;
+  const startedOne = Object.keys(checked).length > 0;
 
-  return (
-    <div className="content">
-      <div className="exam-header">
-        <button className="topbar-back" style={{ marginBottom: 16 }} onClick={onBack}>← {subject}</button>
-        <div className="exam-subject-label">
-          <span>{subject}{examName ? ` · ${examName}` : ''}</span>
+  const card = (g, i) => {
+    const done = isChecked(g.num);
+    return (
+      <div key={g.num} className="question-card">
+        <div className="question-num">Question {i + 1}{mode === 'one' ? ' of ' + groups.length : ''}</div>
+        <div className="question-topic-tag">{g.topic} › {g.subtopic}</div>
+        <p className="question-text">{g.stem}</p>
+        <div className="tf-list">
+          {g.items.map(item => (
+            <TfStatementRow key={item.id} item={item} answer={answers[item.id]}
+              submitted={done} onChoose={choose} />
+          ))}
         </div>
-        <h1 className="exam-title">{built.focused ? 'Weak Areas' : 'True / False'}</h1>
-        <p className="exam-meta">
-          {groups.length} question{groups.length !== 1 ? 's' : ''} · {statements.length} statements
-          {!submitted && answeredCount > 0 && ` · ${answeredCount} answered`}
-          {!submitted && built.hidden > 0 && ` · ${built.hidden} mastered, hidden`}
-        </p>
-        {built.exhausted && !submitted && (
-          <p className="tf-banner">
-            You have already answered everything here correctly. Showing the full set for review.
-            These answers still count toward your progress.
-          </p>
+        {done && g.note && (
+          <div className="explanation-box"><strong>Note: </strong>{g.note}</div>
+        )}
+        {done && (
+          <PhysioAbout title="Abbreviations and terms in this question"
+            keys={physioTermsIn([g.stem, ...g.items.map(x => x.statement)].join(' '))} />
         )}
       </div>
+    );
+  };
+
+  const modeSwitch = (
+    <div className="tf-mode">
+      {[['one', 'One at a time'], ['all', 'Whole test']].map(([k, label]) => (
+        <button key={k} className={'tf-mode-btn' + (mode === k ? ' on' : '')}
+          disabled={submitted || finished || (startedOne && k !== mode)}
+          onClick={() => pickMode(k)}>{label}</button>
+      ))}
+    </div>
+  );
+
+  const header = (
+    <div className="exam-header">
+      <button className="topbar-back" style={{ marginBottom: 16 }} onClick={onBack}>← {subject}</button>
+      <div className="exam-subject-label">
+        <span>{subject}{examName ? ` · ${examName}` : ''}</span>
+      </div>
+      <h1 className="exam-title">{built.focused ? 'Weak Areas' : 'True / False'}</h1>
+      <p className="exam-meta">
+        {groups.length} question{groups.length !== 1 ? 's' : ''} · {statements.length} statements
+        {mode === 'all' && !submitted && answeredCount > 0 && ` · ${answeredCount} answered`}
+        {mode === 'one' && tally.answered > 0 && ` · ${tally.correct} / ${tally.answered} right so far`}
+        {built.hidden > 0 && ` · ${built.hidden} mastered, hidden`}
+      </p>
+      {built.exhausted && !submitted && !finished && (
+        <p className="tf-banner">
+          You have already answered everything here correctly. Showing the full set for review.
+          These answers still count toward your progress.
+        </p>
+      )}
+      {modeSwitch}
+    </div>
+  );
+
+  // ── One at a time ──────────────────────────────────────────────────────
+  if (mode === 'one') {
+    if (finished) {
+      return (
+        <div className="content">
+          {header}
+          <ResultsBanner
+            questions={checkedScored}
+            answers={answers}
+            subject={subject}
+            onNext={onBack}
+            onFocusWeak={onFocusWeak || onBack}
+            onHome={onBack}
+          />
+        </div>
+      );
+    }
+    const g = groups[idx];
+    const done = !!checked[g.num];
+    const last = idx === groups.length - 1;
+    const pct = Math.round((Object.keys(checked).length / groups.length) * 100);
+    return (
+      <div className="content">
+        {header}
+        <div className="tf-progress"><div style={{ width: pct + '%' }} /></div>
+        <div className="question-list">{card(g, idx)}</div>
+        <div className="exam-actions">
+          {!done ? (
+            <>
+              <button className="btn-primary" onClick={checkOne}>Check this question</button>
+              <button className="btn-secondary" onClick={() => (last ? finishOne() : go(idx + 1))}>Skip</button>
+            </>
+          ) : (
+            <button className="btn-primary" onClick={() => (last ? finishOne() : go(idx + 1))}>
+              {last ? 'See results' : 'Next question →'}
+            </button>
+          )}
+          {idx > 0 && <button className="btn-secondary" onClick={() => go(idx - 1)}>← Previous</button>}
+          {!last && startedOne && <button className="fb-link" onClick={finishOne}>Finish here</button>}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Whole test ─────────────────────────────────────────────────────────
+  return (
+    <div className="content">
+      {header}
 
       {submitted && (
         <ResultsBanner
@@ -2909,26 +3062,7 @@ function TrueFalseExam({ subject, examIndex, onBack, onFocusWeak }) {
       )}
 
       <div className="question-list" style={submitted ? { marginTop: 28 } : null}>
-        {groups.map((g, i) => (
-          <div key={g.num} className="question-card">
-            <div className="question-num">Question {i + 1}</div>
-            <div className="question-topic-tag">{g.topic} › {g.subtopic}</div>
-            <p className="question-text">{g.stem}</p>
-            <div className="tf-list">
-              {g.items.map(item => (
-                <TfStatementRow key={item.id} item={item} answer={answers[item.id]}
-                  submitted={submitted} onChoose={choose} />
-              ))}
-            </div>
-            {submitted && g.note && (
-              <div className="explanation-box"><strong>Note: </strong>{g.note}</div>
-            )}
-            {submitted && (
-              <PhysioAbout title="Abbreviations and terms in this question"
-                keys={physioTermsIn([g.stem, ...g.items.map(x => x.statement)].join(' '))} />
-            )}
-          </div>
-        ))}
+        {groups.map((g, i) => card(g, i))}
       </div>
 
       {!submitted && (
@@ -12673,8 +12807,8 @@ const PAGE_INSTRUCTIONS = {
     title: 'True / False',
     steps: [
       'Each question shows its stem first, with the statements listed underneath.',
-      'Mark every statement True or False. Tap the same choice again to clear it.',
-      'Press Submit at the bottom. Green is right, red is wrong, grey was left blank and is not counted.',
+      'One at a time (default): mark the statements, press "Check this question" and see the answers right away, then go on. "Whole test" lets you answer everything and submit once.',
+      'Green is right, red is wrong, grey was left blank and is not counted. Tap the same choice again to clear it.',
       'Explanations appear under each statement after you submit, plus what each abbreviation stands for. Statements you got right are hidden next time.',
     ],
   },

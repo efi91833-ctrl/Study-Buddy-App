@@ -360,6 +360,9 @@ setTimeout(() => {
   const fbt = fbHost ? fbHost.textContent : '';
   check('Formula Builder home lists formulas by topic', /Start a mixed round/.test(fbt) && /Practise all/.test(fbt) && /Cardiac output/.test(fbt), fbt.slice(0, 160));
   const tft = tfHost ? tfHost.textContent : '';
+  check('T/F opens one question at a time by default', tfHost && tfHost.querySelectorAll('.question-card').length === 1
+        && /Question 1 of 94/.test(tfHost.textContent) && /Check this question/.test(tfHost.textContent));
+  check('progress can log a one-by-one session', typeof P.logSession === 'function');
   check('T/F exam shows stem, statements and True/False choices',
         /True \/ False/.test(tft) && /Question 1/.test(tft) && /TrueFalse/.test(tft), tft.slice(0, 160));
 
