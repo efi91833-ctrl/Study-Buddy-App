@@ -2305,10 +2305,11 @@ const QUESTION_BANK = {
     icon: '',
     description: 'Function of the human body',
     exams: [
-      // All 94 questions in the original order. Blood / Cardiovascular stay as
+      // Every T/F question in number order (1-94 original set, 95+ past papers).
+      // The PHYSIO_TF keys (Blood, Cardiovascular, Respiration, ...) stay as
       // topic tags on each question for weak-area tracking.
       tfExam('1st - Block Test',
-             [...((window.PHYSIO_TF || {}).Blood || []), ...((window.PHYSIO_TF || {}).Cardiovascular || [])]
+             Object.values(window.PHYSIO_TF || {}).flat()
                .sort((x, y) => x.num - y.num)),
     ],
     get questions() { return this.exams.flatMap(e => e.questions); },

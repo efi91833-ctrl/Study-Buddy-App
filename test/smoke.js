@@ -219,18 +219,19 @@ check('Physiology subject exists', !!phys);
 check('Physiology filed under 2nd Year', T.YEARS.some(y => y.name === '2nd Year' && y.subjects.includes(PH)));
 check('one T/F exam named "1st - Block Test", no duplicate banks',
       phys.exams.map(e => e.name + ':' + e.type).join(',') === '1st - Block Test:tf');
-check('1st - Block Test holds all 94 questions in original order',
-      T.tfGroupByStem(phys.exams[0].questions).map(g => g.num).join() === Array.from({ length: 94 }, (_, k) => k + 1).join());
+check('1st - Block Test holds all 125 questions in order (1-94 original, 95-125 past papers)',
+      T.tfGroupByStem(phys.exams[0].questions).map(g => g.num).join() === Array.from({ length: 125 }, (_, k) => k + 1).join());
 check('subject page lists only the one block test',
       T.SUBJECT_PAGES.Physiology.groups.length === 1 && T.SUBJECT_PAGES.Physiology.groups[0].names.join() === '1st - Block Test');
-check('both topics still tagged for weak areas', new Set(phys.questions.map(q => q.topic)).size === 2);
+check('three topics tagged for weak areas (Blood, Cardiovascular, DR ABC)', [...new Set(phys.questions.map(q => q.topic))].sort().join() === 'Blood,Cardiovascular,DR ABC');
 const allSt = phys.questions;
-check('482 statements across 94 stems', allSt.length === 482 && T.tfGroupByStem(allSt).length === 94,
+check('627 statements across 125 stems', allSt.length === 627 && T.tfGroupByStem(allSt).length === 125,
       allSt.length + ' / ' + T.tfGroupByStem(allSt).length);
 const norm = x => String(x).toLowerCase().replace(/[^a-z0-9]/g, '');
 check('every statement has a unique progress key', new Set(allSt.map(q => norm(q.question))).size === allSt.length);
 check('every statement is topic/subtopic tagged', allSt.every(q => q.topic && q.subtopic));
-check('only the illegible Q94 is unscored', allSt.filter(q => !q.correct).map(q => q.stemNum).join() === '94,94,94,94,94');
+check('every statement is scored', allSt.every(q => q.correct));
+check('Q94 now scored from the empty professor key (all false)', allSt.filter(q => q.stemNum === 94).every(q => q.correct === 'F'));
 check('T/F routing: block test', T.isTfSelection(PH, 0) && T.isTfSelection(PH, 'weak'));
 check('T/F routing: weak-area session', T.isTfSelection(PH, 'weak'));
 check('T/F routing leaves other subjects alone', !T.isTfSelection(SUBJ, 0) && !T.isTfSelection(SUBJ, 'weak'));
@@ -361,7 +362,7 @@ setTimeout(() => {
   check('Formula Builder home lists formulas by topic', /Start a mixed round/.test(fbt) && /Practise all/.test(fbt) && /Cardiac output/.test(fbt), fbt.slice(0, 160));
   const tft = tfHost ? tfHost.textContent : '';
   check('T/F opens one question at a time by default', tfHost && tfHost.querySelectorAll('.question-card').length === 1
-        && /Question 1 of 94/.test(tfHost.textContent) && /Check this question/.test(tfHost.textContent));
+        && /Question 1 of 125/.test(tfHost.textContent) && /Check this question/.test(tfHost.textContent));
   check('progress can log a one-by-one session', typeof P.logSession === 'function');
   check('T/F exam shows stem, statements and True/False choices',
         /True \/ False/.test(tft) && /Question 1/.test(tft) && /TrueFalse/.test(tft), tft.slice(0, 160));

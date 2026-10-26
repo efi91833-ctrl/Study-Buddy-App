@@ -1,7 +1,9 @@
 /* physiology-tf.js — Physiology True/False bank (question data only; UI lives in index.html).
  * Source: Physiology_Complete_Questions_True_False.docx (photographed professor answer keys).
  * Each stem has statements A..; answer true/false, or null where the key is not legible.
- * topic = folder (Blood / Cardiovascular), subtopic = weak-area tracking group. */
+ * Questions 95+ come from 1st_block_past_papers.pdf (photos of the professor's screen; answer = "Správná odpověď").
+ * topic = weak-area group (Blood, Cardiovascular, DR ABC), subtopic = finer weak-area tracking.
+ * Only questions on blood pressure, heart physiology, blood content, blood types, hemostasis and DR ABC are kept. */
 window.PHYSIO_TF = {
  "Blood": [
   {
@@ -2084,35 +2086,269 @@ window.PHYSIO_TF = {
     {
      "l": "A",
      "text": "Gives direct information about how fast oxygen is transported in the bloodstream.",
-     "answer": null,
-     "why": "RBC count alone cannot determine oxygen transport rate without flow and oxygen content."
+     "answer": false,
+     "why": "RBC count says how many cells there are, not how fast O2 is carried (that needs flow and O2 content)."
     },
     {
      "l": "B",
      "text": "Provides information about oxygen consumption per minute.",
-     "answer": null,
-     "why": "Oxygen consumption requires differences in oxygen content and blood flow, not RBC count alone."
+     "answer": false,
+     "why": "O2 consumption needs blood flow and the arteriovenous O2 difference (Fick), not the RBC count."
     },
     {
      "l": "C",
-     "text": "In a young man, must not be lower than 6,000,000,000 erythrocytes per liter.",
-     "answer": null,
-     "why": "The photographed key is unreadable; the number as printed seems much lower than usual healthy RBC counts."
+     "text": "In a young man, must not be lower than 6,000,000,000,000 erythrocytes per liter.",
+     "answer": false,
+     "why": "6,000,000,000,000 per liter is 6 x 10^12/L, above the normal male range (about 4.5-5.9 x 10^12/L), so it cannot be the lower limit."
     },
     {
      "l": "D",
      "text": "Is always lower in women than in men.",
-     "answer": null,
-     "why": "Average values differ, but individual ranges overlap."
+     "answer": false,
+     "why": "On average women have fewer RBCs (about 4-5.2 x 10^12/L), but individual ranges overlap, so \"always\" is wrong."
     },
     {
      "l": "E",
      "text": "In a young man, must not be lower than 6,000,000 erythrocytes per microliter.",
-     "answer": null,
-     "why": "Normal RBC counts are often below six million per microliter."
+     "answer": false,
+     "why": "6,000,000 per microliter is the same 6 x 10^12/L, which is above the normal range, so it cannot be the minimum."
     }
    ],
-   "note": "The correct-answer field is not legible in the photographed slide. T/F indications for this entry cannot reliably be sourced."
+   "note": "In the photographed key the correct-answer field is empty, so every statement is false."
+  },
+  {
+   "num": 97,
+   "ref": "ID 4475",
+   "topic": "Blood",
+   "subtopic": "Hemoglobin & RBC indices",
+   "stem": "Hemoglobin:",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Its saturation curve is linear",
+     "answer": false,
+     "why": "The O2 saturation curve is sigmoid because O2 binding to the four subunits is cooperative."
+    },
+    {
+     "l": "B",
+     "text": "Its saturation curve depends on temperature",
+     "answer": true,
+     "why": "Higher temperature shifts the curve to the right (lower affinity); lower temperature shifts it left."
+    },
+    {
+     "l": "C",
+     "text": "Is the most abundant blood protein",
+     "answer": true,
+     "why": "About 150 g/L of hemoglobin in whole blood is more than any plasma protein (albumin is about 45 g/L of plasma), so Hb is the most abundant protein in blood."
+    },
+    {
+     "l": "D",
+     "text": "Is synthesized by mature erythrocytes",
+     "answer": false,
+     "why": "Mature erythrocytes have no nucleus or ribosomes; Hb is synthesized in erythroblasts and reticulocytes."
+    },
+    {
+     "l": "E",
+     "text": "Is lipoprotein",
+     "answer": false,
+     "why": "Hb is a heme (iron-containing) protein, not a lipoprotein."
+    },
+    {
+     "l": "F",
+     "text": "Is colorless",
+     "answer": false,
+     "why": "Hb is red: oxyhemoglobin bright red, deoxyhemoglobin darker red."
+    }
+   ]
+  },
+  {
+   "num": 98,
+   "ref": "ID 1830",
+   "topic": "Blood",
+   "subtopic": "Hematocrit",
+   "stem": "Which anticoagulation is most suitable for microhematocrit estimation?",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Decalcification",
+     "answer": false,
+     "why": "Liquid calcium-binding anticoagulants (citrate, oxalate) dilute the sample or change cell volume, which falsifies the hematocrit; the method uses heparin."
+    },
+    {
+     "l": "B",
+     "text": "Anti vitamin K (coumarin)",
+     "answer": false,
+     "why": "Coumarins act only in vivo (they block vitamin K-dependent synthesis of clotting factors in the liver); they do nothing in a test tube."
+    },
+    {
+     "l": "C",
+     "text": "Heparin",
+     "answer": true,
+     "why": "Heparinized capillary tubes are the standard for microhematocrit: no dilution and no change in cell volume."
+    },
+    {
+     "l": "D",
+     "text": "Dilution",
+     "answer": false,
+     "why": "Dilution changes the hematocrit itself, so it cannot be used."
+    },
+    {
+     "l": "E",
+     "text": "None, blood must NOT be anticoagulated for microhematocrit method",
+     "answer": false,
+     "why": "Without anticoagulation the blood would clot in the capillary before or during centrifugation."
+    }
+   ]
+  },
+  {
+   "num": 99,
+   "ref": "ID 1596",
+   "topic": "Blood",
+   "subtopic": "Blood counts & lab methods",
+   "stem": "Which of the following methods do not require hemolysis?",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Cells counting (RBCs)",
+     "answer": true,
+     "why": "RBC counting needs intact cells; the diluent is isotonic so that cells do not lyse."
+    },
+    {
+     "l": "B",
+     "text": "Blood groups estimation",
+     "answer": true,
+     "why": "Blood grouping reads agglutination of intact red cells carrying the antigens."
+    },
+    {
+     "l": "C",
+     "text": "Hemoglobinometry",
+     "answer": false,
+     "why": "Hemoglobinometry (Drabkin) requires hemolysis to free Hb and convert it to cyanmethemoglobin."
+    },
+    {
+     "l": "D",
+     "text": "Sedimentation rate",
+     "answer": true,
+     "why": "Sedimentation rate measures how fast intact red cells settle."
+    },
+    {
+     "l": "E",
+     "text": "Hematocrit",
+     "answer": true,
+     "why": "Hematocrit is the volume of packed intact cells; hemolysis would falsify it."
+    }
+   ]
+  },
+  {
+   "num": 101,
+   "ref": "ID 1613",
+   "topic": "Blood",
+   "subtopic": "Coagulation",
+   "stem": "Which of the following terms has the least functional relation to the others?",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Hemostasis",
+     "answer": false,
+     "why": "Hemostasis (stopping of bleeding) includes platelet aggregation and coagulation, so it is closely related to the others."
+    },
+    {
+     "l": "B",
+     "text": "Agglutination",
+     "answer": true,
+     "why": "Agglutination is antigen-antibody clumping of red cells (blood groups). It is an immunological reaction, not part of hemostasis, so it has the least relation."
+    },
+    {
+     "l": "C",
+     "text": "Aggregation",
+     "answer": false,
+     "why": "Platelet aggregation is a core step of primary hemostasis."
+    },
+    {
+     "l": "D",
+     "text": "Anticoagulation",
+     "answer": false,
+     "why": "Anticoagulation is the regulatory counterpart of coagulation and works on the same system."
+    },
+    {
+     "l": "E",
+     "text": "Hemocoagulation",
+     "answer": false,
+     "why": "Hemocoagulation is secondary hemostasis."
+    }
+   ]
+  },
+  {
+   "num": 102,
+   "ref": "Past paper (SIM_2)",
+   "topic": "Blood",
+   "subtopic": "Blood loss",
+   "stem": "A previously healthy person lost a large amount of blood. Now, hemoglobin concentration is 60 g/L. Choose the correct answer(s):",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Hb concentration value 60 g/L could have been obtained right after the bleeding",
+     "answer": false,
+     "why": "Right after bleeding, cells and plasma are lost in the same proportion, so Hb concentration is initially unchanged. It falls only later, when interstitial fluid dilutes the blood."
+    },
+    {
+     "l": "B",
+     "text": "This value of Hb can be physiological in women",
+     "answer": false,
+     "why": "Normal Hb is about 120-160 g/L in women; 60 g/L is severe anemia."
+    },
+    {
+     "l": "C",
+     "text": "Hb is critically low",
+     "answer": true,
+     "why": "60 g/L is critically low (below the usual transfusion threshold of about 70 g/L)."
+    },
+    {
+     "l": "D",
+     "text": "Hb was estimated with a delay after the blood loss",
+     "answer": true,
+     "why": "The drop needs hemodilution, which takes hours to days, so this value was measured with a delay after the loss."
+    }
+   ]
+  },
+  {
+   "num": 116,
+   "ref": "ID 5256",
+   "topic": "Blood",
+   "subtopic": "Blood loss",
+   "stem": "After a 1 L blood loss:",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Blood count is not changed immediately (minutes) after bleeding",
+     "answer": true,
+     "why": "Whole blood is lost, so cell concentrations are unchanged in the first minutes."
+    },
+    {
+     "l": "B",
+     "text": "MCV, MCH and MCHC are not changed hours after bleeding",
+     "answer": true,
+     "why": "MCV, MCH and MCHC describe single cells; dilution changes counts but not these indices."
+    },
+    {
+     "l": "C",
+     "text": "MCV, MCH and MCHC are not changed one day after the bleeding",
+     "answer": true,
+     "why": "A day later the cells are still the same ones; new reticulocytes appear only after several days."
+    },
+    {
+     "l": "D",
+     "text": "The person could be thirsty",
+     "answer": true,
+     "why": "Hypovolemia triggers angiotensin II and ADH, which cause thirst."
+    },
+    {
+     "l": "E",
+     "text": "Immediately after bleeding the loss of volume is more serious than loss of erythrocytes",
+     "answer": true,
+     "why": "Right after bleeding the loss of volume threatens circulation first; reduced O2 capacity matters later."
+    }
+   ]
   }
  ],
  "Cardiovascular": [
@@ -3750,6 +3986,927 @@ window.PHYSIO_TF = {
      "text": "Two-thirds of measured systolic arterial pressure.",
      "answer": false,
      "why": "This is not a reliable measurement of diastolic BP."
+    }
+   ]
+  },
+  {
+   "num": 95,
+   "ref": "ID 4546",
+   "topic": "Cardiovascular",
+   "subtopic": "Hemodynamics",
+   "stem": "The pressure measured in arterial or venous circulation after a heart has stopped completely (e.g., one minute after), resulting in an equalization of pressures in the whole circulation, is called:",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Hemodynamic pressure",
+     "answer": false,
+     "why": "A general term for pressure created by flowing blood; once the heart stops there is no flow, so this is not the name."
+    },
+    {
+     "l": "B",
+     "text": "Mean arterial pressure",
+     "answer": false,
+     "why": "Mean arterial pressure is the time-average arterial pressure while the heart beats (about 93 mmHg); after cardiac arrest arterial pressure falls far below it."
+    },
+    {
+     "l": "C",
+     "text": "Transmural pressure",
+     "answer": false,
+     "why": "Transmural pressure is inside minus outside pressure across a vessel wall, not the equalized pressure of the whole circulation."
+    },
+    {
+     "l": "D",
+     "text": "Mean circulatory filling pressure",
+     "answer": true,
+     "why": "Mean circulatory filling pressure (about 7 mmHg) is the pressure everywhere in the circulation once flow stops and pressures equalize. It reflects blood volume relative to vascular capacity."
+    },
+    {
+     "l": "E",
+     "text": "Hydrostatic pressure",
+     "answer": false,
+     "why": "Hydrostatic pressure comes from the weight of a fluid column (gravity); it is not this concept."
+    }
+   ]
+  },
+  {
+   "num": 96,
+   "ref": "ID 1968",
+   "topic": "Cardiovascular",
+   "subtopic": "BP measurement",
+   "stem": "Indirect method of BP measurement used in labs:",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Is equally precise as the direct method",
+     "answer": false,
+     "why": "Cuff methods are less precise than direct intra-arterial measurement, which reads the pressure itself."
+    },
+    {
+     "l": "B",
+     "text": "Its precision could be depreciated by fast deflation of the cuff",
+     "answer": true,
+     "why": "Fast deflation lets the cuff pressure drop several mmHg between two beats, so the first or last Korotkoff sound is missed (systolic underestimated, diastolic overestimated)."
+    },
+    {
+     "l": "C",
+     "text": "Could provide an information about a pressure waveform during a single heart beat",
+     "answer": false,
+     "why": "A cuff gives only systolic and diastolic values. A beat-by-beat pressure waveform needs a direct (catheter) or special continuous method."
+    },
+    {
+     "l": "D",
+     "text": "Its precision linearly increases by repeating the measurement in one patient (e.g. 10 repetitions versus 3 repetitions)",
+     "answer": false,
+     "why": "Repeating reduces random error only with the square root of the number of readings, not linearly, and repeated cuffing can itself change BP."
+    },
+    {
+     "l": "E",
+     "text": "Its precision could be depreciated by very slow deflation of the cuff",
+     "answer": true,
+     "why": "Very slow deflation causes venous congestion and discomfort in the arm, which distorts the sounds and tends to raise the readings (especially diastolic)."
+    }
+   ]
+  },
+  {
+   "num": 100,
+   "ref": "ID 1856",
+   "topic": "Cardiovascular",
+   "subtopic": "BP measurement",
+   "stem": "Blood pressure measured 13 cm below the level of the reference point compared to pressure at reference level will be:",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Different by approx. 10 mmHg",
+     "answer": true,
+     "why": "13 cm of blood (density about 1.05) is about 13.7 cm H2O, and 13.6 cm H2O is about 10 mmHg."
+    },
+    {
+     "l": "B",
+     "text": "Incomparable",
+     "answer": false,
+     "why": "Pressures at different heights are comparable; the hydrostatic column (rho x g x h) is simply added."
+    },
+    {
+     "l": "C",
+     "text": "Higher, approx. by 13 cm of blood",
+     "answer": true,
+     "why": "Below the reference point the pressure is higher by the weight of the blood column above it, here 13 cm of blood."
+    },
+    {
+     "l": "D",
+     "text": "Higher by approx. 13 cm H2O",
+     "answer": true,
+     "why": "Blood density is close to water, so 13 cm of blood is roughly 13 cm H2O."
+    },
+    {
+     "l": "E",
+     "text": "Higher by approx. 13 cm Hg",
+     "answer": false,
+     "why": "13 cm Hg would be 130 mmHg, far too much; mercury is 13.6 times denser than blood."
+    }
+   ]
+  },
+  {
+   "num": 103,
+   "ref": "ID 5062",
+   "topic": "Cardiovascular",
+   "subtopic": "Blood pressure regulation",
+   "stem": "Which of the following parameters can significantly influence blood pressure?",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Fluid infusion",
+     "answer": true,
+     "why": "Infusion raises blood volume, venous return and cardiac output, which raises BP."
+    },
+    {
+     "l": "B",
+     "text": "Excessive sweating",
+     "answer": true,
+     "why": "Heavy sweating loses volume, which can lower BP."
+    },
+    {
+     "l": "C",
+     "text": "Drinks avoided for three days",
+     "answer": true,
+     "why": "Three days without fluids means dehydration and hypovolemia, which can lower BP."
+    },
+    {
+     "l": "D",
+     "text": "Change in body temperature",
+     "answer": true,
+     "why": "Heat causes skin vasodilation (lower BP); cold causes vasoconstriction (higher BP)."
+    },
+    {
+     "l": "E",
+     "text": "Physiological diuresis",
+     "answer": false,
+     "why": "Physiological diuresis is balanced by intake and has no significant effect on BP."
+    }
+   ]
+  },
+  {
+   "num": 106,
+   "ref": "ID 5824 / ID 5640",
+   "topic": "Cardiovascular",
+   "subtopic": "Volume status",
+   "stem": "A healthy 35-year-old individual has been dehydrated due to limited fluid intake over the past two days. Compared to optimal hydration, which of the following changes is most likely?",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Total peripheral resistance is lower",
+     "answer": false,
+     "why": "Hypovolemia activates the sympathetic system, so peripheral resistance rises rather than falls."
+    },
+    {
+     "l": "B",
+     "text": "CVP is higher",
+     "answer": false,
+     "why": "With less volume, CVP is lower, not higher."
+    },
+    {
+     "l": "C",
+     "text": "Preload is higher",
+     "answer": false,
+     "why": "Less venous return means lower preload."
+    },
+    {
+     "l": "D",
+     "text": "BP could be lower",
+     "answer": true,
+     "why": "If compensation is insufficient, BP falls."
+    },
+    {
+     "l": "E",
+     "text": "BP could be the same",
+     "answer": true,
+     "why": "In mild dehydration the baroreflex (vasoconstriction, tachycardia) can keep BP normal."
+    }
+   ],
+   "note": "5640 is the same question with slightly different wording."
+  },
+  {
+   "num": 107,
+   "ref": "ID 5638",
+   "topic": "Cardiovascular",
+   "subtopic": "Volume & venous pressure",
+   "stem": "Drinking 1 L of fresh pure water within 1 minute:",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Influences CVP",
+     "answer": true,
+     "why": "Absorbed water expands blood volume, so venous filling and CVP rise."
+    },
+    {
+     "l": "B",
+     "text": "Influences CVP more than arterial BP",
+     "answer": true,
+     "why": "Veins are compliant reservoirs, so added volume shows mainly as venous pressure; arterial BP is buffered by the baroreflex."
+    },
+    {
+     "l": "C",
+     "text": "Influences afterload more than preload",
+     "answer": false,
+     "why": "Added volume changes preload (venous return) more than afterload."
+    },
+    {
+     "l": "D",
+     "text": "Leads to hematocrit drop",
+     "answer": true,
+     "why": "Absorbed water dilutes the blood, so hematocrit drops (slightly and briefly)."
+    }
+   ],
+   "note": "Absorption takes several minutes, so the effects appear over the following tens of minutes."
+  },
+  {
+   "num": 108,
+   "ref": "ID 5860",
+   "topic": "Cardiovascular",
+   "subtopic": "Blood pressure",
+   "stem": "Which conditions are typically associated with narrowed pulse pressure?",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Stiff large arteries in the elderly",
+     "answer": false,
+     "why": "Stiff large arteries widen the pulse pressure (high systolic)."
+    },
+    {
+     "l": "B",
+     "text": "Severe hypovolemia",
+     "answer": true,
+     "why": "Severe hypovolemia lowers stroke volume, which narrows the pulse pressure."
+    },
+    {
+     "l": "C",
+     "text": "Low stroke volume",
+     "answer": true,
+     "why": "Pulse pressure depends mainly on stroke volume, so low SV narrows it."
+    },
+    {
+     "l": "D",
+     "text": "Hypotension caused by generalized vasodilation in a person with good cardiac contractility",
+     "answer": false,
+     "why": "Generalized vasodilation with good contractility lowers diastolic pressure, which widens the pulse pressure."
+    }
+   ]
+  },
+  {
+   "num": 109,
+   "ref": "ID 5624",
+   "topic": "Cardiovascular",
+   "subtopic": "Cardiac filling",
+   "stem": "End-diastolic volume would be decreased by:",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Low HR (e.g. 40/min)",
+     "answer": false,
+     "why": "Low HR prolongs diastole, which allows more filling, so EDV rises."
+    },
+    {
+     "l": "B",
+     "text": "Short duration of diastole",
+     "answer": true,
+     "why": "Short diastole (tachycardia) leaves less time to fill the ventricle."
+    },
+    {
+     "l": "C",
+     "text": "High pressure in the thoracic cavity (e.g. 50 mmHg)",
+     "answer": true,
+     "why": "High intrathoracic pressure (e.g. Valsalva) compresses the great veins and reduces venous return."
+    },
+    {
+     "l": "D",
+     "text": "Low pressure in the thoracic cavity (e.g. -15 mmHg)",
+     "answer": false,
+     "why": "Low (more negative) intrathoracic pressure, as in deep inspiration, enhances venous return."
+    }
+   ]
+  },
+  {
+   "num": 110,
+   "ref": "ID 5621",
+   "topic": "Cardiovascular",
+   "subtopic": "Hypotension management",
+   "stem": "Which of the following noninvasive interventions can be used to improve brain perfusion in hypotensive patients?",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Change of body position: laying down flat",
+     "answer": true,
+     "why": "Lying flat removes the hydrostatic gradient between heart and brain, which improves cerebral perfusion."
+    },
+    {
+     "l": "B",
+     "text": "Prone rather than supine position",
+     "answer": false,
+     "why": "Prone position has no hemodynamic advantage and makes breathing and assessment harder."
+    },
+    {
+     "l": "C",
+     "text": "Lower extremities elevation in laying position",
+     "answer": true,
+     "why": "Raising the legs returns blood from the legs (autotransfusion), which increases venous return and CO."
+    },
+    {
+     "l": "D",
+     "text": "Oral fluid intake if the patient is dehydrated and conscious",
+     "answer": true,
+     "why": "Oral fluids in a conscious, dehydrated patient restore volume."
+    },
+    {
+     "l": "E",
+     "text": "Laying position with elevated legs in hypotension due to poor cardiac contractility",
+     "answer": false,
+     "why": "With poor contractility (cardiogenic cause), extra preload strains the failing heart and can cause pulmonary congestion."
+    }
+   ]
+  },
+  {
+   "num": 111,
+   "ref": "ID 5859",
+   "topic": "Cardiovascular",
+   "subtopic": "Circulatory shock",
+   "stem": "In systemic hypotension, which changes are expected due to \"centralization of circulation\"?",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Preferential preservation of blood flow to brain and heart",
+     "answer": true,
+     "why": "Sympathetic vasoconstriction spares the autoregulated brain and heart."
+    },
+    {
+     "l": "B",
+     "text": "Relative preservation of kidney perfusion compared to skin and gut",
+     "answer": true,
+     "why": "Kidney perfusion is relatively preserved by autoregulation compared with skin and gut, which are strongly constricted."
+    },
+    {
+     "l": "C",
+     "text": "Increased risk of ischemic damage in skin, GIT and skeletal muscles if hypotension persists",
+     "answer": true,
+     "why": "Prolonged vasoconstriction causes ischemic damage in skin, GIT and skeletal muscle."
+    },
+    {
+     "l": "D",
+     "text": "Immediate full recovery of peripheral tissues once BP is normalized",
+     "answer": false,
+     "why": "Recovery is not immediate; ischemic and reperfusion injury take time to heal."
+    }
+   ]
+  },
+  {
+   "num": 112,
+   "ref": "ID 4559",
+   "topic": "Cardiovascular",
+   "subtopic": "Cardiac output & heart rate",
+   "stem": "Consider an athletic 70-kg man during heavy exercise with the following parameters: oxygen consumption 4 L/min, arterial oxygen 190 mL/L, mixed venous blood oxygen 30 mL/L of blood, heart rate 180 beats/min. Which statement is correct?",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Cardiac output is 12 L/min",
+     "answer": false,
+     "why": "By Fick, CO = VO2 / (CaO2 - CvO2) = 4000 / 160 mL/L = 25 L/min, not 12."
+    },
+    {
+     "l": "B",
+     "text": "Cardiac output is 25 L/min",
+     "answer": true,
+     "why": "4 L/min / (190 - 30 mL/L) = 25 L/min."
+    },
+    {
+     "l": "C",
+     "text": "Stroke volume is 67 mL",
+     "answer": false,
+     "why": "67 mL x 180 = 12 L/min, which does not match CO of 25 L/min."
+    },
+    {
+     "l": "D",
+     "text": "Stroke volume is 138 mL",
+     "answer": true,
+     "why": "SV = CO / HR = 25000 / 180, about 139 mL."
+    },
+    {
+     "l": "E",
+     "text": "Stroke volume cannot be calculated",
+     "answer": false,
+     "why": "Once CO is known, SV = CO / HR can be calculated."
+    },
+    {
+     "l": "F",
+     "text": "Cardiac output cannot be calculated",
+     "answer": false,
+     "why": "All Fick data (VO2 and arteriovenous O2 difference) are given, so CO can be calculated."
+    }
+   ]
+  },
+  {
+   "num": 113,
+   "ref": "ID 5789",
+   "topic": "Cardiovascular",
+   "subtopic": "Hemodynamics",
+   "stem": "Consider condition of constant cardiac output: if arteriolar vasoconstriction occurs, blood pressure rises:",
+   "statements": [
+    {
+     "l": "A",
+     "text": "In vessels parallel to networks with reduced lumen",
+     "answer": true,
+     "why": "With constant CO, flow is diverted to parallel beds, so pressure in vessels parallel to the constricted region rises."
+    },
+    {
+     "l": "B",
+     "text": "In vessels behind the region with reduced lumen",
+     "answer": false,
+     "why": "Downstream (behind) the constriction, pressure falls because of the extra pressure drop across it."
+    },
+    {
+     "l": "C",
+     "text": "In vessels in front of the region with reduced lumen",
+     "answer": true,
+     "why": "Upstream (in front of) the constriction, pressure rises."
+    },
+    {
+     "l": "D",
+     "text": "In all vessels",
+     "answer": false,
+     "why": "Pressure falls downstream, so it does not rise in all vessels."
+    }
+   ]
+  },
+  {
+   "num": 114,
+   "ref": "ID 5642 / ID 5825",
+   "topic": "Cardiovascular",
+   "subtopic": "Contractility",
+   "stem": "Positive inotropic effect of the sympathetic nervous system on the heart increases the:",
+   "statements": [
+    {
+     "l": "A",
+     "text": "End-diastolic volume",
+     "answer": false,
+     "why": "Inotropy does not increase filling; EDV is unchanged or slightly lower."
+    },
+    {
+     "l": "B",
+     "text": "End-systolic volume",
+     "answer": false,
+     "why": "Stronger contraction empties the ventricle more completely, so ESV decreases."
+    },
+    {
+     "l": "C",
+     "text": "Stroke volume",
+     "answer": true,
+     "why": "SV = EDV - ESV increases."
+    },
+    {
+     "l": "D",
+     "text": "Heart rate",
+     "answer": false,
+     "why": "Heart rate is a chronotropic effect, not inotropic."
+    },
+    {
+     "l": "E",
+     "text": "Ejection fraction",
+     "answer": true,
+     "why": "EF = SV / EDV increases."
+    }
+   ],
+   "note": "5825 is the same question in the SIM_2 set."
+  },
+  {
+   "num": 115,
+   "ref": "ID 5613",
+   "topic": "Cardiovascular",
+   "subtopic": "Heart rate regulation",
+   "stem": "HR commonly increases in response to:",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Drop of baroreceptor stimulation",
+     "answer": true,
+     "why": "Less baroreceptor firing means less vagal and more sympathetic tone, so HR rises."
+    },
+    {
+     "l": "B",
+     "text": "BP increase",
+     "answer": false,
+     "why": "A BP increase triggers the baroreflex, which slows HR."
+    },
+    {
+     "l": "C",
+     "text": "Venous return increase",
+     "answer": true,
+     "why": "Atrial stretch from higher venous return raises HR (Bainbridge reflex)."
+    },
+    {
+     "l": "D",
+     "text": "Fear",
+     "answer": true,
+     "why": "Fear activates the sympathetic system, which raises HR."
+    }
+   ]
+  },
+  {
+   "num": 119,
+   "ref": "ID 5858",
+   "topic": "Cardiovascular",
+   "subtopic": "Oxygen delivery",
+   "stem": "In a patient with low arterial blood pressure and decreased tissue blood flow, which of the following changes in tissue oxygenation and venous blood parameters do you expect if metabolic demand remains unchanged?",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Increased arterial O2 content",
+     "answer": false,
+     "why": "The lungs work normally, so arterial O2 content is unchanged."
+    },
+    {
+     "l": "B",
+     "text": "Increased tissue O2 extraction",
+     "answer": true,
+     "why": "With lower flow, tissues extract more O2 from each unit of blood."
+    },
+    {
+     "l": "C",
+     "text": "Decreased venous oxygen saturation (SvO2)",
+     "answer": true,
+     "why": "More extraction lowers mixed venous saturation."
+    },
+    {
+     "l": "D",
+     "text": "Elevated lactate due to anaerobic metabolism",
+     "answer": true,
+     "why": "Insufficient O2 supply shifts cells toward anaerobic glycolysis, which produces lactate."
+    },
+    {
+     "l": "E",
+     "text": "Longer diffusion path for both O2 and CO2 in tissue",
+     "answer": true,
+     "why": "Fewer perfused capillaries lengthen the diffusion distances in tissue."
+    }
+   ]
+  },
+  {
+   "num": 120,
+   "ref": "Past paper (JINE)",
+   "topic": "Cardiovascular",
+   "subtopic": "Hypotension causes",
+   "stem": "Your patient is severely hypotensive. What could be the reason?",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Cardiac output impaired",
+     "answer": true,
+     "why": "BP = CO x TPR, so impaired output lowers BP."
+    },
+    {
+     "l": "B",
+     "text": "Blood volume change",
+     "answer": true,
+     "why": "Hypovolemia lowers venous return and BP."
+    },
+    {
+     "l": "C",
+     "text": "Increased peripheral vascular resistance",
+     "answer": false,
+     "why": "Increased resistance raises BP."
+    },
+    {
+     "l": "D",
+     "text": "Change of blood viscosity by drop of HCT from 45 to 35% with blood volume not affected",
+     "answer": false,
+     "why": "A drop of Hct from 45 to 35% lowers viscosity only slightly and is compensated."
+    },
+    {
+     "l": "E",
+     "text": "Low aortic elasticity",
+     "answer": false,
+     "why": "Low aortic elasticity raises systolic pressure (widens pulse pressure) rather than causing hypotension."
+    }
+   ]
+  },
+  {
+   "num": 121,
+   "ref": "Past paper (JINE)",
+   "topic": "Cardiovascular",
+   "subtopic": "Hypotension causes",
+   "stem": "If the finding of low BP is not accompanied by a rise of HR, the reason could be in:",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Low blood volume",
+     "answer": false,
+     "why": "Hypovolemia normally triggers reflex tachycardia."
+    },
+    {
+     "l": "B",
+     "text": "Impaired conductive system of the heart",
+     "answer": true,
+     "why": "A conduction block can stop HR rising despite the baroreflex."
+    },
+    {
+     "l": "C",
+     "text": "Impaired generation of action potentials in the heart",
+     "answer": true,
+     "why": "If the SA node cannot generate faster APs, HR cannot rise."
+    },
+    {
+     "l": "D",
+     "text": "Impaired contractility",
+     "answer": false,
+     "why": "Weak contractility usually comes with compensatory tachycardia."
+    },
+    {
+     "l": "E",
+     "text": "Drop of peripheral resistance",
+     "answer": false,
+     "why": "Vasodilation triggers reflex tachycardia."
+    }
+   ]
+  },
+  {
+   "num": 123,
+   "ref": "Past paper (JINE)",
+   "topic": "Cardiovascular",
+   "subtopic": "Sympathetic response",
+   "stem": "Increased blood pressure and heart rate could be a consequence of:",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Hypoxia",
+     "answer": true,
+     "why": "Hypoxia triggers the chemoreflex and sympathetic activation."
+    },
+    {
+     "l": "B",
+     "text": "Blood loss 100 mL",
+     "answer": true,
+     "why": "A small loss (100 mL) does not lower BP; the stress of bleeding can raise HR and BP."
+    },
+    {
+     "l": "C",
+     "text": "Blood loss 2000 mL",
+     "answer": false,
+     "why": "A 2000 mL loss causes hypotension with tachycardia."
+    },
+    {
+     "l": "D",
+     "text": "Pain",
+     "answer": true,
+     "why": "Pain activates the sympathetic system."
+    }
+   ]
+  },
+  {
+   "num": 125,
+   "ref": "Past paper (JINE)",
+   "topic": "Cardiovascular",
+   "subtopic": "Venous return",
+   "stem": "Inspiration increases:",
+   "statements": [
+    {
+     "l": "A",
+     "text": "CVP",
+     "answer": false,
+     "why": "More negative intrathoracic pressure lowers CVP."
+    },
+    {
+     "l": "B",
+     "text": "End-diastolic volume",
+     "answer": true,
+     "why": "Higher venous return to the right heart increases right ventricular end-diastolic volume."
+    },
+    {
+     "l": "C",
+     "text": "The pressure in the right atrium",
+     "answer": false,
+     "why": "Right atrial pressure falls."
+    },
+    {
+     "l": "D",
+     "text": "Intra-alveolar pressure",
+     "answer": false,
+     "why": "Intra-alveolar pressure falls below atmospheric during inspiration."
+    },
+    {
+     "l": "E",
+     "text": "Intrapleural pressure",
+     "answer": false,
+     "why": "Intrapleural pressure becomes more negative."
+    }
+   ],
+   "note": "Statement B refers to the right ventricle."
+  }
+ ],
+ "DR ABC": [
+  {
+   "num": 104,
+   "ref": "ID 5251",
+   "topic": "DR ABC",
+   "subtopic": "Perfusion assessment",
+   "stem": "Which parameters inform us about sufficient peripheral perfusion?",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Mean arterial pressure over 90 mmHg",
+     "answer": true,
+     "why": "A mean arterial pressure above 90 mmHg gives an adequate perfusion pressure for peripheral tissues."
+    },
+    {
+     "l": "B",
+     "text": "Capillary refill time 4 s",
+     "answer": false,
+     "why": "A capillary refill time of 4 s is prolonged (normal under 2 s), a sign of poor peripheral perfusion."
+    },
+    {
+     "l": "C",
+     "text": "CVP 5 mmHg",
+     "answer": false,
+     "why": "CVP 5 mmHg is a normal filling pressure, but it describes preload and volume, not peripheral perfusion."
+    },
+    {
+     "l": "D",
+     "text": "CVP 25 mmHg",
+     "answer": false,
+     "why": "CVP 25 mmHg is very high (heart failure or overload) and says nothing good about perfusion."
+    }
+   ]
+  },
+  {
+   "num": 105,
+   "ref": "Past paper (JINE)",
+   "topic": "DR ABC",
+   "subtopic": "Condition assessment (triage)",
+   "stem": "Do the \"condition assessment\" for the following patient (choose red, yellow or green and a corresponding reason; more than one could be correct): 30-year-old conscious man in hot weather, feels dizzy, dry lips, sweating, red skin, no shortness of breath, RR 22/min, HR 120/min, regular pulse on radial artery, BP 90/60.",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Green because conscious, no shortness of breath, regular pulse on radial artery",
+     "answer": false,
+     "why": "Not green: dizziness, dehydration signs, tachycardia and low BP mean he is not stable."
+    },
+    {
+     "l": "B",
+     "text": "Yellow because of higher respiratory rate at rest",
+     "answer": false,
+     "why": "RR 22/min is only mildly raised; the key does not accept it as the reason for yellow."
+    },
+    {
+     "l": "C",
+     "text": "Yellow because of dizziness and signs of dehydration",
+     "answer": true,
+     "why": "Dizziness with dry lips and sweating in hot weather means dehydration or heat stress, so yellow (needs attention) is the right category and reason."
+    },
+    {
+     "l": "D",
+     "text": "Yellow because of high HR at rest",
+     "answer": false,
+     "why": "Per the key, the tachycardia is a consequence of the dehydration; the category is based on the clinical picture (dizziness, dehydration), not on HR alone."
+    },
+    {
+     "l": "E",
+     "text": "Red because of low BP",
+     "answer": false,
+     "why": "Not red: he is conscious with a regular radial pulse and BP 90/60; red is for life-threatening findings."
+    }
+   ]
+  },
+  {
+   "num": 117,
+   "ref": "ID 5614",
+   "topic": "DR ABC",
+   "subtopic": "Hypotension & bradycardia",
+   "stem": "An 80-year-old man has fainted. On examination, in the supine position, he is very pale, responsive to pain, with RR 22/min, HR 35/min, BP 85/45 mmHg, and CRT 4 seconds. Choose the correct statement(s):",
+   "statements": [
+    {
+     "l": "A",
+     "text": "The patient should benefit from legs elevation",
+     "answer": false,
+     "why": "The hypotension comes from bradycardia (CO = HR x SV); raising the legs adds little."
+    },
+    {
+     "l": "B",
+     "text": "Venous return in the supine position is better than in the sitting position in this situation",
+     "answer": true,
+     "why": "Supine position removes hydrostatic pooling, so venous return is better than when sitting."
+    },
+    {
+     "l": "C",
+     "text": "There is no evidence of a sympathetic compensatory reaction",
+     "answer": false,
+     "why": "Pallor and CRT of 4 s show vasoconstriction, which is evidence of sympathetic compensation."
+    },
+    {
+     "l": "D",
+     "text": "Pharmacological inhibition of the vagus nerve (or parasympathetic activity) could increase cardiac output",
+     "answer": true,
+     "why": "Blocking the vagus (e.g. atropine) raises HR and therefore CO."
+    },
+    {
+     "l": "E",
+     "text": "The assessment of this man is classified as \"in danger\" (yellow)",
+     "answer": false,
+     "why": "Responsive only to pain with shock-level BP means red (critical), not yellow."
+    }
+   ]
+  },
+  {
+   "num": 118,
+   "ref": "ID 5629",
+   "topic": "DR ABC",
+   "subtopic": "SBAR communication",
+   "stem": "This question deals with SBAR communication skills. Choose the best expression of the main problem of the given patient: 40-year-old woman on admission, alert, cannot speak for nearly permanent cough, cyanotic, looks stressed, HR 135/min, BP 140/90, CRT 2 s.",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Alert coughing person",
+     "answer": false,
+     "why": "This misses the cyanosis."
+    },
+    {
+     "l": "B",
+     "text": "Alert cyanotic and tachycardic person",
+     "answer": false,
+     "why": "This misses the main problem: the cough that stops her from speaking."
+    },
+    {
+     "l": "C",
+     "text": "Permanently coughing cyanotic person",
+     "answer": true,
+     "why": "Permanent cough with cyanosis is the main problem (airway and breathing)."
+    },
+    {
+     "l": "D",
+     "text": "Coughing person with tachycardia and high BP",
+     "answer": false,
+     "why": "Tachycardia and BP 140/90 are secondary findings."
+    }
+   ]
+  },
+  {
+   "num": 122,
+   "ref": "ID 5631",
+   "topic": "DR ABC",
+   "subtopic": "SBAR communication",
+   "stem": "This question deals with SBAR communication skills. Choose the best statement (just one) representing the main problem of the given patient: 80-year-old woman on admission, pain responsive, RR 25, red hot skin, t 39 °C, pulse on radial artery absent, pulse on carotid regular, HR 135/min, BP 70/40, CRT 4 s.",
+   "statements": [
+    {
+     "l": "A",
+     "text": "A person with high temperature and low BP",
+     "answer": false,
+     "why": "This misses the reduced consciousness."
+    },
+    {
+     "l": "B",
+     "text": "A person responsive only to pain, hypotensive (BP 70/40) with fever",
+     "answer": true,
+     "why": "It captures consciousness (responsive only to pain), shock-level BP and fever."
+    },
+    {
+     "l": "C",
+     "text": "A person with tachycardia, hypotension and vasodilation",
+     "answer": false,
+     "why": "Vasodilation is not the main problem stated."
+    },
+    {
+     "l": "D",
+     "text": "Tachypnoic, tachycardic and hypotensive person",
+     "answer": false,
+     "why": "This omits the altered consciousness."
+    }
+   ]
+  },
+  {
+   "num": 124,
+   "ref": "Past paper (JINE)",
+   "topic": "DR ABC",
+   "subtopic": "Condition assessment (triage)",
+   "stem": "Do the \"condition assessment\" for the following patient (choose red, yellow or green and a good reason; more than one could be correct): 50-year-old woman in laying position, alert, oriented, but very weak, no breathing difficulty, RR 22/min, pale skin, strong vaginal bleeding for 2 days, HR 135/min, BP 80/50, CRT 4 s.",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Yellow because of strong vaginal bleeding for 2 days",
+     "answer": false,
+     "why": "Heavy bleeding with shock means red, not yellow."
+    },
+    {
+     "l": "B",
+     "text": "Yellow because of HR 135/min at rest",
+     "answer": false,
+     "why": "This is red, not yellow."
+    },
+    {
+     "l": "C",
+     "text": "Yellow because of low BP",
+     "answer": false,
+     "why": "This is red, not yellow."
+    },
+    {
+     "l": "D",
+     "text": "Red because of low BP in a heavily bleeding person",
+     "answer": true,
+     "why": "Hypotension with tachycardia (shock index 135/80, about 1.7) in a bleeding patient means red."
     }
    ]
   }
