@@ -261,6 +261,8 @@ P.reset(PH);
 check('resetting progress keeps flags', T.flaggedCount(PH) === 1);
 check('flagged session opens the True/False screen', T.isTfSelection(PH, 'flagged'));
 check('export includes flags', /"flags"/.test(P.exportData()));
+P.importData(JSON.stringify({ subjects: JSON.parse(P.exportData()).subjects }));
+check('importing a backup without flags keeps flags', T.flaggedCount(PH) === 1);
 
 console.log('\n=== formula builder ===');
 const FB = w.PHYSIO_FORMULAS || [];

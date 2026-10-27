@@ -6,7 +6,7 @@ const path = require('path');
 const babel = require('@babel/core');
 const { JSDOM, VirtualConsole } = require('jsdom');
 
-const ROOT = process.argv[2];
+const ROOT = process.argv[2] || path.join(__dirname, '..');
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 
 const html = read('index.html');
@@ -67,8 +67,9 @@ w.eval(`
 function flush(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
 (async () => {
-  await flush(80); // let the fetch + effects settle
+  // app_data.json is large: wait for the first card rather than a fixed delay.
   const root = w.document.getElementById('root');
+  for (let t = 0; t < 100 && !root.querySelector('.ar-find-num'); t++) await flush(50);
   let ok = true;
   function check(cond, label) {
     if (!cond) { ok = false; console.log('FAIL:', label); }

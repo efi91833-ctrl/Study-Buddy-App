@@ -366,7 +366,10 @@
   function importData(json) {
     var parsed = typeof json === 'string' ? JSON.parse(json) : json;
     if (!parsed || !parsed.subjects) throw new Error('Not a Study Buddy progress file');
-    cache = { v: SCHEMA_VERSION, subjects: parsed.subjects, flags: parsed.flags || {} };
+    // A backup made before flags existed has none: keep the current flags
+    // rather than wiping them.
+    var flags = parsed.flags || load().flags || {};
+    cache = { v: SCHEMA_VERSION, subjects: parsed.subjects, flags: flags };
     flush();
     notify('import');
   }
