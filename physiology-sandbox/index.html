@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Physiology Sandbox: beat-by-beat circulation model on the Z-Anatomy heart (CC BY-SA 4.0).
+     Opened from Study Buddy (Physiology → Physiology Sandbox) in an iframe, or on its own.
+     three.js 0.160.0 and three-mesh-bvh 0.7.6 are vendored in ./vendor (MIT) so it works offline. -->
+<title>Physiology Sandbox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap">
+<style>
+/* Layout: a dark bedside "bench" (monitor strip, 3D imaging field, waveform sweep) on the left,
+   a paper-like lab notebook (experiments, formulas, graphs) on the right; stacks on phones. */
+:root {
+  --bg: #eceff1; --surface: #ffffff; --ink: #142029; --muted: #566773; --line: #d3dbe0;
+  --accent: #b3263a; --venous: #2f5fb3; --chip: #e3e8eb; --good: #237a4b; --warn: #a8641a;
+  --up: #b4530a; --up-bg: #fbe8d6; --down: #1f55c4; --down-bg: #dde7fb;
+  --mon-bg: #0a0f13; --mon-panel: #10181e; --mon-line: #22303a; --mon-text: #dce6ec; --mon-dim: #7d909c;
+  --abp: #ff5162; --hr: #4ade8b; --pap: #f4d44d; --cvp: #5aa9ff; --lvp: #d8c7ff;
+  --f-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --f-data: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e1418; --surface: #151e25; --ink: #e2e9ee; --muted: #8e9ea9; --line: #27343d;
+  --accent: #ff6475; --venous: #74a6ff; --chip: #1e2a32; --good: #5ccf8c; --warn: #e4a452; --up: #f5a65b; --up-bg: #3a2614; --down: #7eaaff; --down-bg: #172541; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0e1418; --surface: #151e25; --ink: #e2e9ee; --muted: #8e9ea9; --line: #27343d;
+  --accent: #ff6475; --venous: #74a6ff; --chip: #1e2a32; --good: #5ccf8c; --warn: #e4a452; --up: #f5a65b; --up-bg: #3a2614; --down: #7eaaff; --down-bg: #172541; color-scheme: dark }
+
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.45; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.app { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 430px); height: 100%; }
+.bench { background: var(--mon-bg); color: var(--mon-text); display: flex; flex-direction: column; min-width: 0; min-height: 0;
+  padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: 12px; padding-block: 10px; gap: 8px; }
+.notebook { overflow-y: auto; min-width: 0; border-left: 1px solid var(--line);
+  padding-left: 18px; padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 14px 40px; }
+
+/* monitor strip */
+.vitals { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 1px; background: var(--mon-line); border: 1px solid var(--mon-line); border-radius: 6px; overflow: hidden; }
+.vit { background: var(--mon-panel); padding: 6px 10px 7px; min-width: 0; }
+.vit .lab { font-family: var(--f-display); font-stretch: 75%; font-weight: 600; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--mon-dim); display: flex; justify-content: space-between; gap: 4px; }
+.vit .val { font-family: var(--f-data); font-weight: 500; font-size: 22px; line-height: 1.15; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.vit .val small { font-size: 12px; color: var(--mon-dim); margin-left: 3px; }
+.vit .dl { font-family: var(--f-data); font-size: 10.5px; color: var(--mon-dim); font-variant-numeric: tabular-nums; }
+.vit .dl.up { color: #ffb36b; } .vit .dl.down { color: #7fc3ff; }
+
+/* 3D field */
+.field { position: relative; flex: 1; min-height: 300px; border-radius: 8px; overflow: hidden; border: 1px solid var(--mon-line);
+  background: radial-gradient(120% 90% at 50% 40%, #1b2833 0%, #0d1419 55%, #080c0f 100%); }
+#gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.ov { position: absolute; z-index: 2; }
+.ov-tl { top: 10px; left: 10px; display: flex; gap: 6px; flex-wrap: wrap; max-width: calc(100% - 20px); }
+.ov-tr { bottom: 32px; right: 10px; display: flex; flex-direction: column-reverse; gap: 6px; align-items: flex-end; }
+.ov-bl { left: 10px; bottom: 10px; }
+.vhint { left: 10px; bottom: 10px; max-width: min(420px, 60%); background: rgba(10,15,19,.82); border: 1px solid var(--mon-line); border-radius: 6px; padding: 8px 10px; font-size: 12.5px; line-height: 1.4; color: var(--mon-text); }
+.vhint b { display: block; margin-bottom: 2px; }
+.ov-br { right: 10px; bottom: 10px; text-align: right; font-size: 11px; color: var(--mon-dim); max-width: 60%; }
+.ov-br a { color: var(--mon-dim); }
+.seg { display: inline-flex; background: rgba(10,15,19,.78); border: 1px solid var(--mon-line); border-radius: 6px; overflow: hidden; backdrop-filter: blur(6px); }
+.seg button { background: none; border: 0; padding: 6px 10px; font-family: var(--f-display); font-stretch: 85%; font-weight: 600; font-size: 12.5px; color: var(--mon-dim); cursor: pointer; }
+.seg .seg-lab { align-self: center; padding: 0 4px 0 9px; font-family: var(--f-display); font-stretch: 80%; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--mon-dim); }
+.seg button[aria-pressed="true"] { color: var(--mon-text); background: #22313c; }
+.seg button:hover { color: var(--mon-text); }
+.phase { font-family: var(--f-display); font-stretch: 80%; font-weight: 700; font-size: 13px; letter-spacing: .06em; text-transform: uppercase;
+  background: rgba(10,15,19,.78); border: 1px solid var(--mon-line); border-radius: 6px; padding: 6px 10px; color: var(--mon-text); display: flex; gap: 8px; align-items: center; }
+.phase i { width: 8px; height: 8px; border-radius: 50%; background: var(--abp); display: inline-block; }
+.legend { background: rgba(10,15,19,.78); border: 1px solid var(--mon-line); border-radius: 6px; padding: 7px 10px 6px; width: 210px; font-size: 11px; color: var(--mon-dim); }
+.legend .bar { height: 8px; border-radius: 4px; margin: 5px 0 3px; background: linear-gradient(90deg, #2b4fd6, #19a7b8 35%, #e9d34a 60%, #f08a2c 80%, #d7263d); }
+.legend .ticks { position: relative; height: 13px; font-family: var(--f-data); font-size: 10px; }
+.legend .ticks span { position: absolute; transform: translateX(-50%); }
+.tip { position: absolute; z-index: 3; pointer-events: none; background: rgba(8,12,15,.92); border: 1px solid #2d3d48; border-radius: 6px; padding: 7px 10px; font-size: 12.5px; max-width: 260px; color: var(--mon-text); }
+.tip b { font-family: var(--f-display); font-stretch: 90%; display: block; font-size: 13.5px; }
+.tip .r { color: var(--mon-dim); font-size: 11.5px; }
+.tip .n { font-family: var(--f-data); font-size: 12px; margin-top: 3px; }
+.lbl { position: absolute; z-index: 1; pointer-events: none; font-family: var(--f-display); font-stretch: 80%; font-weight: 600; font-size: 11.5px; letter-spacing: .04em;
+  color: #e9f0f4; text-shadow: 0 1px 3px #000, 0 0 8px #000; white-space: nowrap; transform: translate(-50%, -50%); }
+.loading { position: absolute; inset: 0; display: grid; place-items: center; z-index: 4; color: var(--mon-dim); font-family: var(--f-data); font-size: 13px; text-align: center; padding: 20px; }
+.zoom { background: rgba(8,12,15,.92); border: 1px solid #2d3d48; border-radius: 8px; padding: 8px 10px 9px; width: 300px; max-width: calc(100vw - 60px); }
+.zoom header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.zoom h3 { margin: 0; font-family: var(--f-display); font-stretch: 85%; font-size: 13.5px; font-weight: 700; }
+.zoom canvas { width: 100%; height: 120px; display: block; margin: 6px 0 4px; border-radius: 4px; background: #160c0e; }
+.zoom p { margin: 0; font-size: 12px; color: var(--mon-dim); }
+.zoom .eq { font-family: var(--f-data); font-size: 12px; color: var(--mon-text); }
+.xbtn { background: none; border: 0; color: var(--mon-dim); cursor: pointer; font-size: 16px; line-height: 1; padding: 2px 4px; }
+.run { display: inline-flex; gap: 6px; }
+.sec-bar { flex: 1 1 100%; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: rgba(10,15,19,.78); border: 1px solid var(--mon-line); border-radius: 6px; padding: 5px 10px; font-size: 12px; color: var(--mon-dim); max-width: calc(100% - 20px); }
+.sec-bar input { width: 140px; accent-color: var(--abp); }
+.sec-bar output { font-family: var(--f-data); color: var(--mon-text); min-width: 46px; }
+.sec-bar .hint { font-size: 11.5px; }
+.lbl.vlbl { font-size: 11px; color: #ffd9a8; }
+.lbl.vlbl.open { color: #9cc4ff; }
+
+/* sweep */
+.sweep { height: 128px; position: relative; border: 1px solid var(--mon-line); border-radius: 6px; background: var(--mon-panel); flex: none; }
+.sweep canvas { width: 100%; height: 100%; display: block; }
+.sweep .keys { position: absolute; top: 5px; right: 8px; display: flex; gap: 10px; font-family: var(--f-display); font-stretch: 80%; font-size: 11px; font-weight: 600; letter-spacing: .06em; }
+
+/* notebook */
+.nb-head { display: flex; flex-direction: column; gap: 2px; margin-bottom: 12px; }
+.nb-head h1 { font-family: var(--f-display); font-stretch: 72%; font-weight: 800; font-size: 30px; line-height: 1; letter-spacing: -.005em; margin: 0; text-wrap: balance; }
+.nb-head p { margin: 2px 0 0; color: var(--muted); font-size: 13.5px; max-width: 60ch; }
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); margin-bottom: 14px; position: sticky; top: -14px; background: var(--bg); z-index: 2; padding-top: 4px; }
+.tabs button { white-space: nowrap; background: none; border: 0; padding: 8px 12px 9px; font-family: var(--f-display); font-stretch: 85%; font-weight: 700; font-size: 14px; letter-spacing: .02em; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tabs button[aria-selected="true"] { color: var(--ink); border-color: var(--accent); }
+section.grp { padding-block: 4px 16px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+section.grp:last-child { border-bottom: 0; }
+.grp h2 { font-family: var(--f-display); font-stretch: 78%; font-weight: 700; font-size: 12.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.grp h2 .aside { text-transform: none; letter-spacing: 0; font-family: var(--f-body); font-weight: 400; font-size: 12px; }
+.note { font-size: 13px; color: var(--muted); margin: 0 0 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { background: var(--chip); border: 1px solid transparent; border-radius: 999px; padding: 5px 11px; font-size: 13.5px; cursor: pointer; line-height: 1.2; }
+.chip:hover { border-color: var(--line); }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.chip small { opacity: .7; font-size: 11.5px; margin-left: 4px; }
+.ctl { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; align-items: baseline; padding: 6px 0; }
+.ctl label { font-weight: 600; font-size: 14px; }
+.ctl output { font-family: var(--f-data); font-size: 12.5px; font-variant-numeric: tabular-nums; color: var(--muted); text-align: right; }
+.ctl input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); margin: 2px 0 0; }
+.ctl.ven input[type=range] { accent-color: var(--venous); }
+.ctl .sub { grid-column: 1 / -1; font-size: 12px; color: var(--muted); }
+.zbtn { background: none; border: 0; padding: 0; color: var(--accent); font-size: 12px; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.btn { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 11px; font-size: 13.5px; cursor: pointer; font-weight: 600; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.switch { display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 600; font-size: 14px; }
+.switch input { appearance: none; width: 38px; height: 22px; border-radius: 11px; background: var(--line); position: relative; cursor: pointer; flex: none; margin: 0; transition: background .2s; }
+.switch input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--surface); transition: transform .2s; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+.switch input:checked { background: var(--good); }
+.switch input:checked::after { transform: translateX(16px); }
+.drug { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 10px; padding: 7px 0; border-top: 1px dashed var(--line); align-items: start; }
+.drug:first-of-type { border-top: 0; }
+.drug .chip { justify-self: start; }
+.drug p { margin: 2px 0 0; font-size: 12.5px; color: var(--muted); }
+.vol { font-family: var(--f-data); font-size: 13px; }
+
+/* formulas */
+.fx { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px 12px; margin-bottom: 12px; }
+.fx h3 { margin: 0 0 6px; font-family: var(--f-display); font-stretch: 85%; font-weight: 700; font-size: 15px; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.fx h3 span { font-family: var(--f-body); font-weight: 400; font-size: 12px; color: var(--muted); }
+.eqn { font-family: var(--f-data); font-size: 15px; line-height: 1.9; overflow-x: auto; white-space: nowrap; }
+.eqn .op { color: var(--muted); padding: 0 3px; }
+.var { font: inherit; background: var(--chip); border: 1px solid transparent; border-radius: 4px; padding: 0 5px; cursor: help; }
+.var:hover, .var:focus-visible { border-color: var(--accent); }
+.subst { font-family: var(--f-data); font-size: 13px; font-variant-numeric: tabular-nums; color: var(--accent); overflow-wrap: anywhere; padding: 2px 0 4px; }
+.fx p { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
+.fx .try { margin-top: 8px; }
+
+/* control map */
+.cmap-card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; }
+.cmap-card h3 { margin: 0 0 4px; font-family: var(--f-display); font-stretch: 85%; font-weight: 700; font-size: 15px; }
+.cmap-card > p { margin: 0 0 8px; font-size: 12.5px; color: var(--muted); }
+.cmap-wrap { max-width: 100%; }
+#cmap { width: 100%; height: auto; display: block; }
+#cmap .node rect { fill: var(--chip); stroke: var(--line); stroke-width: 1; rx: 7; transition: fill .4s, stroke .4s; }
+#cmap .node.up rect { fill: var(--up-bg); stroke: var(--up); }
+#cmap .node.down rect { fill: var(--down-bg); stroke: var(--down); }
+#cmap .node.ctl rect { stroke-width: 2; }
+#cmap .node text { fill: var(--ink); font-family: var(--f-body); }
+#cmap .node .nm { font-size: 11.5px; font-weight: 700; }
+#cmap .node .vl { font-family: var(--f-data); font-size: 11px; }
+#cmap .node .dl { font-family: var(--f-data); font-size: 10.5px; fill: var(--muted); }
+#cmap .node.up .dl { fill: var(--up); } #cmap .node.down .dl { fill: var(--down); }
+#cmap .edge { fill: none; stroke: var(--muted); stroke-width: 1.3; opacity: .45; }
+#cmap .edge.neg { stroke-dasharray: 4 3; }
+#cmap .edge.live { stroke: var(--accent); opacity: 1; stroke-width: 2.2; stroke-dasharray: 6 5; animation: flowdash .6s linear infinite; }
+#cmap .elab { font-family: var(--f-data); font-size: 9.5px; fill: var(--muted); }
+#cmap .arrowhead { fill: var(--muted); }
+@keyframes flowdash { to { stroke-dashoffset: -11; } }
+@media (prefers-reduced-motion: reduce) { #cmap .edge.live { animation: none; } }
+.dlist { font-family: var(--f-data); font-size: 12.5px; margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.dlist .up { color: var(--up); } .dlist .down { color: var(--down); } .dlist .eq { color: var(--muted); }
+
+/* scrubbing + play panels + factor tips */
+#wg, #pv { cursor: ew-resize; touch-action: pan-y; }
+#pv { cursor: crosshair; }
+.scrub-bar { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; background: var(--chip); border-radius: 6px; padding: 6px 10px; margin: 4px 0 8px; font-family: var(--f-data); font-size: 12.5px; }
+.scrub-bar b { color: var(--accent); }
+.var { cursor: help; }
+.var sup { font-size: 0.6em; margin-left: 1px; color: var(--muted); font-family: var(--f-body); font-weight: 700; }
+.vtip { position: fixed; z-index: 50; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; box-shadow: 0 6px 24px rgba(0,0,0,.18); font-size: 13px; pointer-events: none; }
+.vtip b { font-family: var(--f-display); font-stretch: 85%; font-size: 14px; }
+.vtip p { margin: 4px 0 6px; color: var(--muted); }
+.vtip dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; }
+.vtip dt { font-weight: 700; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+.vtip dd { margin: 0; }
+details.play { margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 8px; }
+details.play summary { cursor: pointer; font-weight: 700; font-size: 13.5px; color: var(--accent); }
+.play-body { padding-top: 6px; }
+.play-body .ctl label .var { font-size: 14px; }
+.play-out { font-family: var(--f-data); font-size: 15px; margin: 6px 0; padding: 8px 10px; background: var(--chip); border-radius: 6px; }
+.play-out b { font-size: 20px; }
+.play-out .pk { font-weight: 700; }
+.play-out .up { color: var(--up); } .play-out .down { color: var(--down); } .play-out .eq { color: var(--muted); }
+.play-out span:last-child { display: block; font-size: 12.5px; margin-top: 2px; }
+
+/* valve status panel + PV legend */
+.valve-hud { top: 124px; right: 10px; background: rgba(10,15,19,.84); border: 1px solid var(--mon-line); border-radius: 8px; padding: 8px 10px; min-width: 190px; font-size: 12.5px; color: var(--mon-text); }
+.t-l { color: var(--accent); } .t-r { color: var(--venous); }
+.rule { border-left: 3px solid var(--accent); background: var(--surface); padding: 9px 12px; border-radius: 0 6px 6px 0; font-size: 14px; }
+.rule b { display: block; font-family: var(--f-display); font-stretch: 85%; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 2px; }
+.strip { display: flex; gap: 2px; margin-bottom: 10px; }
+.strip button { flex: var(--w, 1); min-width: 0; border: 0; border-radius: 4px; padding: 6px 2px 5px; font-size: 11px; font-family: var(--f-display); font-stretch: 80%; font-weight: 700; letter-spacing: .02em; background: var(--chip); color: var(--muted); cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-bottom: 3px solid var(--c, transparent); }
+.strip button[aria-current="step"] { background: var(--ink); color: var(--bg); }
+.schema { margin: 0 0 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 8px 6px; }
+.schema svg { width: 100%; height: auto; display: block; max-height: 420px; }
+.schema figcaption { font-size: 12px; color: var(--muted); margin-top: 2px; }
+#schema text { font-family: var(--f-body); fill: var(--ink); } #schema .m { text-anchor: middle; } #schema .e { text-anchor: end; }
+#schema .sl-p { font-family: var(--f-data); }
+#schema .sl-s { font-size: 9px; fill: var(--muted); } #schema .sl-v { font-size: 8.5px; font-weight: 700; fill: #c25e00; } #schema .sl-v.open { fill: #2a6fdb; }
+#schema .sw-r, #schema .sw-l { fill: none; stroke-linecap: round; } #schema .sw-r { stroke: #2f3f7d; } #schema .sw-l { stroke: #7d1f2a; }
+#schema .sb-r, #schema .sb-l { fill: none; stroke-linecap: round; } #schema .sb-r { stroke: #6276c4; } #schema .sb-l { stroke: #d9404f; }
+#schema .sch-mus { stroke: #6e2430; stroke-width: 1.5; }
+#schema .cav-r, #schema .atr-r { fill: #6276c4; } #schema .cav-l, #schema .atr-l { fill: #d9404f; }
+#schema .atr-r { stroke: #b65660; stroke-width: 4; } #schema .atr-l { stroke: #b65660; stroke-width: 4; }
+#schema .sch-fib path { fill: none; stroke: #5e1c26; stroke-width: 1.2; opacity: .16; }
+#schema .sch-pap { fill: #b4525a; stroke: #6e2430; stroke-width: .8; }
+#schema .sch-ch path { stroke: #f1e6dc; stroke-width: .8; opacity: .9; }
+#schema .lf-u { fill: none; stroke: #fff6ec; stroke-width: 5.5; stroke-linecap: round; }
+#schema .lf { fill: none; stroke: #ff8a1f; stroke-width: 3; stroke-linecap: round; } #schema .lf.open { stroke: #2f7bf0; }
+#schema .dot-r { fill: #dfe5ff; opacity: .85; } #schema .dot-l { fill: #ffe0e3; opacity: .85; }
+#schema .sl-n { fill: #fff; font-size: 10px; font-weight: 700; paint-order: stroke; stroke: rgba(0,0,0,.45); stroke-width: 2.4px; }
+#schema .sl-vn { font-size: 8px; font-weight: 700; fill: var(--ink); } #schema .sl-vi { font-size: 7px; font-weight: 700; fill: #fff; paint-order: stroke; stroke: rgba(0,0,0,.5); stroke-width: 2px; }
+.sch-valves { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12.5px; margin: 4px 2px 4px; }
+.sch-valves b { display: inline-block; min-width: 38px; text-align: center; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; padding: 0 5px; border-radius: 4px; background: #8a4a0c; color: #ffe4c4; }
+.sch-valves .open b { background: #1d4f9e; color: #dbe8ff; }
+#schema .sl-p { fill: #fff; font-size: 8.5px; paint-order: stroke; stroke: rgba(0,0,0,.45); stroke-width: 2.2px; }
+.envbox { margin-top: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; font-size: 13.5px; }
+.envbox .meters { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 6px 10px; margin-bottom: 7px; }
+.envbox .meters div { font-size: 11.5px; color: var(--muted); } .envbox .meters b { display: block; font-family: var(--f-data); font-size: 15px; color: var(--ink); font-weight: 500; }
+.envbox ul { margin: 0; padding-left: 18px; } .envbox li { margin: 3px 0; } .envbox .warn { color: var(--warn); font-weight: 600; }
+.tour-card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; min-height: 210px; }
+.tour-card h3 { margin: 0 0 2px; font-family: var(--f-display); font-stretch: 85%; font-size: 19px; }
+.tour-card .sub { color: var(--muted); font-size: 13px; margin: 0 0 8px; }
+.tour-card p { margin: 0 0 8px; }
+.tour-card .look { font-size: 13.5px; margin: 0 0 8px; padding-left: 18px; }
+.tour-card .why { font-family: var(--f-data); font-size: 12.5px; background: var(--chip); border-radius: 6px; padding: 7px 9px; display: grid; gap: 3px; }
+.why .vo { color: var(--down); font-weight: 600; } .why .vc { color: var(--up); font-weight: 600; }
+.tour-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.tour-nav span { color: var(--muted); font-size: 13px; }
+.tbtn { background: var(--chip); border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; cursor: pointer; font-size: 14px; }
+.tbtn.pri { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.tbtn:disabled { opacity: .4; cursor: default; }
+.gloss { margin: 0; font-size: 13.5px; } .gloss dt { font-weight: 700; margin-top: 7px; } .gloss dd { margin: 1px 0 0; color: var(--muted); }
+.vh-ph { font-family: var(--f-display); font-stretch: 80%; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: 13px; margin-bottom: 5px; }
+.vh-row { display: grid; grid-template-columns: 74px 60px 1fr; gap: 6px; align-items: center; padding: 2px 0; }
+.vh-row b { font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; padding: 1px 6px; border-radius: 4px; text-align: center; }
+.vh-row b.op { background: #1d4f9e; color: #dbe8ff; } .vh-row b.cl { background: #8a4a0c; color: #ffe4c4; }
+.vh-row em { font-style: normal; font-family: var(--f-data); font-size: 11px; color: var(--mon-dim); }
+.vh-lv { margin-top: 5px; font-family: var(--f-data); font-size: 12px; color: var(--mon-dim); }
+.pv-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); margin: 0 0 6px; }
+.pv-legend i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+@media (max-width: 640px) { .valve-hud { top: auto; bottom: 74px; left: 10px; right: auto; min-width: 0; font-size: 11.5px; } }
+
+/* graphs */
+.plot { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; }
+.plot h3 { margin: 0 0 2px; font-family: var(--f-display); font-stretch: 85%; font-weight: 700; font-size: 15px; }
+.plot p { margin: 0 0 6px; font-size: 12.5px; color: var(--muted); }
+.plot canvas { width: 100%; aspect-ratio: 4 / 3; max-width: 100%; display: block; }
+.plot canvas#wg { aspect-ratio: 8 / 9; }
+.bars { display: grid; gap: 6px; }
+.bars .b { display: grid; grid-template-columns: 96px minmax(0, 1fr) 70px; gap: 8px; align-items: center; font-size: 13px; }
+.bars .track { height: 10px; background: var(--chip); border-radius: 5px; position: relative; overflow: visible; }
+.bars .fill { height: 100%; background: var(--accent); border-radius: 5px; }
+.bars .base { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); opacity: .55; }
+.bars .n { font-family: var(--f-data); font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; }
+.credit { font-size: 12px; color: var(--muted); margin-top: 18px; }
+.credit a { color: inherit; }
+
+@media (max-width: 900px) {
+  html, body { height: auto; }
+  .app { display: block; height: auto; }
+  .bench { padding-right: max(12px, env(safe-area-inset-right, 0px)); }
+  .field { flex: none; height: 62vh; min-height: 360px; }
+  .notebook { border-left: 0; overflow: visible; padding-left: max(16px, env(safe-area-inset-left, 0px)); }
+  .tabs { top: env(safe-area-inset-top, 0px); }
+  .vit .val { font-size: 19px; }
+  .ov-br { max-width: 100%; left: 10px; }
+  .legend { width: 180px; }
+}
+@media (max-width: 640px) {
+  .ov-tr .legend { display: none; }
+  .ov-br { font-size: 10px; bottom: 8px; }
+  .seg button { padding: 6px 8px; font-size: 12px; }
+  .zoom { width: 250px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="bench">
+    <div class="vitals" id="vitals" aria-live="off"></div>
+    <div class="field" id="field">
+      <canvas id="gl" aria-label="3D heart and great vessels from Z-Anatomy, coloured by the simulation"></canvas>
+      <div id="labels"></div>
+      <div class="ov ov-tl">
+        <div class="seg" role="group" aria-label="View">
+          <button data-view="heart" aria-pressed="true">Heart</button>
+          <button data-view="chest" aria-pressed="false">Chest</button>
+          <button data-view="body" aria-pressed="false">Whole body</button>
+        </div>
+        <div class="seg" role="group" aria-label="Display">
+          <button id="tColor" aria-pressed="false" title="Colour every structure by its live pressure">Pressure map</button>
+          <button id="tFlow" aria-pressed="false" title="Make walls see-through and show moving red cells">Flow</button>
+          <button id="tLab" aria-pressed="true">Labels</button>
+          <button id="tArr" aria-pressed="true" title="Show or hide the flow arrows on a cross-section">Arrows</button>
+        </div>
+        <div class="seg" role="group" aria-label="Cross-section">
+          <button data-sec="off" aria-pressed="true" title="Whole heart">Whole</button>
+          <button data-sec="four" aria-pressed="false" title="Four-chamber cut: both atria, both ventricles, mitral and tricuspid valves">4-chamber</button>
+          <button data-sec="long" aria-pressed="false" title="Long-axis cut through the LV outflow: mitral and aortic valves">Long axis</button>
+          <button data-sec="short" aria-pressed="false" title="Short-axis cut across the ventricles">Short axis</button>
+        </div>
+        <div class="seg" role="group" aria-label="Valve close-up: look straight down onto one valve">
+          <span class="seg-lab">Valve</span>
+          <button data-sec="v_mitral" aria-pressed="false" title="Look down onto the mitral valve from the left atrium (the surgeon's view)">Mitral</button>
+          <button data-sec="v_aortic" aria-pressed="false" title="Look down onto the aortic valve from the aorta">Aortic</button>
+          <button data-sec="v_tricuspid" aria-pressed="false" title="Look down onto the tricuspid valve from the right atrium">Tricuspid</button>
+          <button data-sec="v_pulmonary" aria-pressed="false" title="Look down onto the pulmonary valve from the pulmonary trunk">Pulmonary</button>
+        </div>
+        <div class="seg run" role="group" aria-label="Time">
+          <button id="bPlay" aria-pressed="true" title="Pause or resume">Pause</button>
+          <button id="bSkip" aria-pressed="false" title="Run 15 simulated seconds at once">+15 s</button>
+        </div>
+        <div class="seg" role="group" aria-label="Speed">
+          <button data-speed="1" aria-pressed="true" title="Real time">1×</button>
+          <button data-speed="0.5" aria-pressed="false" title="Half speed">½×</button>
+          <button data-speed="0.25" aria-pressed="false" title="Quarter speed">¼×</button>
+          <button data-speed="0.1" aria-pressed="false" title="Slow motion: one heartbeat takes about 8 seconds">Slow-mo</button>
+        </div>
+      <div class="sec-bar" id="secBar" hidden>
+          <label for="secOff">Cut depth</label><input type="range" id="secOff" min="-30" max="30" step="1" value="0"><output id="secOffO">0 mm</output>
+          <span class="hint">The cut shows the myocardium and, with Flow on, the blood in each chamber (bright red left, dark red right): it jets in through the inlet valve, swirls, and streams out through the outlet valve. Arrows show the flow; the thicker the arrow, the stronger the flow. Use Slow-mo to watch each valve open and close.</span>
+        </div>
+      </div>
+      <div class="ov vhint" id="valveHint" hidden></div>
+      <div class="ov valve-hud" id="valveHud" hidden></div>
+      <div class="ov ov-tr">
+        <div class="phase" id="phase"><i></i><span>Ventricular filling</span></div>
+        <div class="legend" id="legend" hidden>
+          Pressure, mmHg
+          <div class="bar"></div>
+          <div class="ticks" id="ticks"></div>
+        </div>
+      </div>
+      <div class="ov ov-bl" id="zoomWrap" hidden>
+        <div class="zoom">
+          <header><h3 id="zTitle">Arteriole</h3><button class="xbtn" id="zClose" aria-label="Close magnified view">×</button></header>
+          <canvas id="zc" width="560" height="240"></canvas>
+          <div class="eq" id="zEq"></div>
+          <p id="zNote"></p>
+        </div>
+      </div>
+      <div class="ov ov-br" id="credit3d">Anatomy: <a href="https://www.z-anatomy.com" target="_blank" rel="noopener">Z-Anatomy</a> (CC BY-SA 4.0) · radii ×2 for visibility</div>
+      <div class="tip" id="tip" hidden></div>
+      <div class="loading" id="loading">Loading Z-Anatomy heart and vessels…</div>
+    </div>
+    <div class="sweep">
+      <canvas id="sw"></canvas>
+      <div class="keys"><span style="color:var(--abp)">ABP</span><span style="color:var(--lvp)">LVP</span><span style="color:var(--pap)">PAP</span><span style="color:var(--cvp)">CVP</span></div>
+    </div>
+  </div>
+
+  <main class="notebook">
+    <div class="nb-head">
+      <h1>Physiology Sandbox</h1>
+      <p>Change one thing and watch the whole circulation answer. A beat-by-beat model drives every number, trace and structure on the left.</p>
+    </div>
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-learn" aria-selected="true" aria-controls="p-learn">Start here</button>
+      <button role="tab" id="tab-exp" aria-selected="false" aria-controls="p-exp">Experiments</button>
+      <button role="tab" id="tab-fx" aria-selected="false" aria-controls="p-fx">Formulas</button>
+      <button role="tab" id="tab-gr" aria-selected="false" aria-controls="p-gr">Graphs</button>
+    </div>
+
+    <div id="p-learn" role="tabpanel" aria-labelledby="tab-learn">
+      <section class="grp">
+        <h2>One heartbeat, step by step <span class="aside">no background needed</span></h2>
+        <p class="note">The heart is two pumps side by side. The <b class="t-r">right side</b> sends used, low-oxygen blood to the lungs; the <b class="t-l">left side</b> sends fresh, oxygen-rich blood to the body. Each side has a small top chamber (<b>atrium</b>, a waiting room) and a big bottom chamber (<b>ventricle</b>, the pump). Four one-way doors, the <b>valves</b>, keep blood moving forward.</p>
+        <div class="rule"><b>The one rule to remember</b>Blood only moves from higher pressure to lower pressure. A valve is pushed open when the pressure behind it is higher than in front of it, and slams shut when that flips. Valves have no muscles: pressure does all the work.</div>
+      </section>
+      <section class="grp">
+        <div class="strip" id="tourStrip" role="group" aria-label="Phases of one beat"></div>
+        <figure class="schema"><svg id="schema" viewBox="0 0 320 240" role="img" aria-label="Simple diagram of the four heart chambers and valves, moving with the 3D heart"></svg>
+          <div class="sch-valves" id="schValves" aria-live="off"></div>
+          <figcaption>Front view, cut open. <b class="t-r">Blue blood</b> is oxygen-poor (right side, to the lungs); <b class="t-l">red blood</b> is oxygen-rich (left side, to the body). The dots move with the blood: faster dots, more flow. Valve leaflets are <b style="color:#2f7bf0">blue when open</b>, <b style="color:#c25e00">orange when shut</b>; the thin white cords tie the inlet valves to the papillary muscles.</figcaption></figure>
+        <div class="tour-card" id="tourCard" aria-live="polite"></div>
+        <div class="tour-nav">
+          <button class="tbtn" id="tourPrev">← Back</button>
+          <span id="tourPos"></span>
+          <button class="tbtn pri" id="tourNext">Next →</button>
+        </div>
+        <div class="tour-nav" style="margin-top:6px">
+          <button class="tbtn" id="tourSlow">Watch it beat in slow motion</button>
+          <button class="tbtn" id="tourLive">Back to normal speed</button>
+          <button class="tbtn" id="tourClose" hidden></button>
+        </div>
+      </section>
+      <section class="grp">
+        <h2>Words you will meet</h2>
+        <dl class="gloss">
+          <dt>Systole / diastole</dt><dd>Squeeze / relax. Ventricular systole pushes blood out; diastole lets the ventricle refill.</dd>
+          <dt>Mitral and tricuspid valves</dt><dd>The doors between atrium and ventricle (left and right). Thin sails tied down by cords (chordae tendineae) and little muscles (papillary muscles), so they can’t flip back into the atrium.</dd>
+          <dt>Aortic and pulmonary valves</dt><dd>The exit doors: three half-moon pockets each. When blood tries to fall back, the pockets fill and press together.</dd>
+          <dt>Stroke volume</dt><dd>How much one beat pushes out, about 70 ml (a small cup).</dd>
+          <dt>Cardiac output</dt><dd>Stroke volume × beats per minute, about 5 litres a minute: all your blood, every minute.</dd>
+          <dt>Pressure (mmHg)</dt><dd>How hard blood pushes. 120/80 means 120 at the top of each beat in the arteries, 80 at the bottom.</dd>
+        </dl>
+        <p class="note">Next: try the <b>Experiments</b> tab (change one thing, watch everything respond), then <b>Graphs</b>, where you can drag along the pressure–volume loop and see the heart at each moment.</p>
+      </section>
+    </div>
+
+    <div id="p-exp" role="tabpanel" aria-labelledby="tab-exp" hidden>
+      <section class="grp">
+        <h2>Patient <span class="aside" id="scenNote"></span></h2>
+        <div class="chips" id="diseases"></div>
+      </section>
+      <section class="grp" id="envGrp">
+        <h2>Surroundings <span class="aside">heat, cold, fever, altitude, posture</span></h2>
+        <p class="note">The outside world changes the circulation through the same knobs as everything else: vessel radius, venous filling, heart rate and contractility. Change one and read what the body does about it.</p>
+        <div id="envCtl"></div>
+        <div class="ctl"><label>Posture</label><output></output>
+          <div class="chips" id="posture" style="grid-column:1/-1;margin-top:4px">
+            <button class="chip" type="button" data-pos="supine" aria-pressed="true">Lying flat</button>
+            <button class="chip" type="button" data-pos="legs" aria-pressed="false">Legs raised</button>
+            <button class="chip" type="button" data-pos="stand" aria-pressed="false">Standing still</button>
+          </div></div>
+        <div class="envbox" id="envBox" aria-live="polite"></div>
+        <div class="row" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+          <button class="btn" type="button" id="envHour">Spend 1 hour here</button>
+          <button class="btn" type="button" id="envDrink">Drink to replace lost fluid</button>
+          <span class="note" id="envFluid" style="margin:0;align-self:center"></span>
+        </div>
+      </section>
+      <section class="grp">
+        <h2>Reflexes</h2>
+        <label class="switch"><input type="checkbox" id="baro" checked> Baroreflex</label>
+        <p class="note" id="baroNote" style="margin-top:6px">On: the carotid sinus and aortic arch correct MAP within seconds through HR, contractility, arteriolar and venous tone. Switch it off to see the direct effect of a change on its own.</p>
+        <label class="switch" style="margin-top:4px"><input type="checkbox" id="autoreg" checked> Local autoregulation</label>
+        <p class="note" style="margin-top:6px">Brain (60–140 mmHg), kidneys (80–170) and heart muscle (60–140) keep their flow nearly constant as pressure changes; coronary flow also follows the heart’s O₂ demand (Guyton ch. 17).</p>
+        <div id="autoCtl"></div>
+      </section>
+      <section class="grp">
+        <h2>Heart</h2>
+        <div id="heartCtl"></div>
+      </section>
+      <section class="grp">
+        <h2>Arterioles <span class="aside">resistance vessels, R ∝ 1/r⁴</span></h2>
+        <p class="note">Set the arteriolar radius in each organ bed. The visible arteries in 3D follow the same tone, but most of the resistance sits in vessels too small to model, so open the magnified view to see them.</p>
+        <div id="bedCtl"></div>
+      </section>
+      <section class="grp">
+        <h2>Veins <span class="aside">capacitance vessels</span></h2>
+        <p class="note">Venous radius sets how much blood the veins hold without stretching (unstressed volume ∝ r²). Narrowing them moves blood toward the heart and raises mean systemic filling pressure.</p>
+        <div id="veinCtl"></div>
+      </section>
+      <section class="grp">
+        <h2>Large arteries</h2>
+        <div id="artCtl"></div>
+      </section>
+      <section class="grp">
+        <h2>Blood volume <span class="aside vol" id="volNow"></span></h2>
+        <div class="row">
+          <button class="btn" data-inf="-500">Bleed 500 ml</button>
+          <button class="btn" data-inf="-1000">Bleed 1 L</button>
+          <button class="btn" data-inf="500">Transfuse 500 ml</button>
+        </div>
+        <p class="note" style="margin-top:8px">Volume leaves or enters the veins over 20 s.</p>
+      </section>
+      <section class="grp">
+        <h2>Drugs <span class="aside">several can be combined</span></h2>
+        <div id="drugs"></div>
+      </section>
+      <section class="grp">
+        <div class="row"><button class="btn primary" id="reset">Reset everything</button><span class="note" style="margin:0">Back to the healthy resting adult.</span></div>
+      </section>
+    </div>
+
+    <div id="p-fx" role="tabpanel" aria-labelledby="tab-fx" hidden>
+      <div class="cmap-card">
+        <h3>What drives what</h3>
+        <p>Each box is a live value from the last beat, with its change from the healthy baseline. Move a control below and follow the arrows: the links that just changed light up.</p>
+        <div class="cmap-wrap"><svg id="cmap" viewBox="0 0 440 570" role="img" aria-label="Cause and effect map of the circulation"></svg></div>
+        <div id="fxCtl"></div>
+      </div>
+      <p class="note">Every value below comes from the last simulated beat. Point at a variable to light up the structure it describes.</p>
+      <div id="fx"></div>
+    </div>
+
+    <div id="p-gr" role="tabpanel" aria-labelledby="tab-gr" hidden>
+      <div class="plot">
+        <h3>Left ventricular pressure–volume loop</h3>
+        <p><b>Drag along the loop</b> to stop at any moment: the heart switches to a close long-axis cut showing the LV, LA, mitral and aortic valves at that instant. Faint: the healthy baseline. Dashed: end-systolic (contractility) and end-diastolic (filling) lines.</p>
+        <div class="pv-legend"><span><i style="background:var(--venous)"></i>Filling (mitral open)</span><span><i style="background:var(--warn)"></i>Isovolumetric contraction</span><span><i style="background:var(--accent)"></i>Ejection (aortic open)</span><span><i style="background:var(--good)"></i>Isovolumetric relaxation</span></div>
+        <div class="scrub-bar" id="scrubBar2" hidden><span id="scrubInfo2"></span><button class="btn" id="scrubResume2" type="button">Resume</button></div>
+        <canvas id="pv" width="800" height="600" tabindex="0" aria-label="PV loop; drag along it to scrub through the beat"></canvas>
+      </div>
+      <div class="plot">
+        <h3>Wiggers diagram: one cardiac cycle</h3>
+        <p>The last simulated beat. <b>Click or drag across it</b> (or along the PV loop above, or use ← →) to stop at any moment and see that phase on the heart. Dashed lines mark the valve events; the ECG is schematic and timed to the model's activation.</p>
+        <div class="scrub-bar" id="scrubBar" hidden><span id="scrubInfo"></span><button class="btn" id="scrubResume" type="button">Resume</button></div>
+        <canvas id="wg" width="800" height="900" tabindex="0" aria-label="Wiggers diagram; drag to scrub through the beat"></canvas>
+      </div>
+      <div class="plot">
+        <h3>Guyton: cardiac output meets venous return</h3>
+        <p>Where the heart's function curve crosses the venous return curve is the operating point. Venous return falls to zero at Pmsf.</p>
+        <canvas id="gy" width="800" height="600"></canvas>
+      </div>
+      <div class="plot">
+        <h3>Where the cardiac output goes</h3>
+        <p>Flow per organ bed, ml/min. The tick marks the healthy baseline.</p>
+        <div class="bars" id="bars"></div>
+      </div>
+    </div>
+
+    <p class="credit">3D anatomy: <a href="https://github.com/Z-Anatomy/Models-of-human-anatomy" target="_blank" rel="noopener">Z-Anatomy, the libre 3D atlas of anatomy</a> (CC BY-SA 4.0), based on BodyParts3D © The Database Center for Life Science (CC BY 4.0). Meshes taken from the GLB export by the Svitylo 3D Anatomy Atlas, then cut into simulation regions; the adapted mesh file is shared under CC BY-SA 4.0. Z-Anatomy models only the posterior mitral leaflet and two tricuspid leaflets, so the anterior mitral and anterior tricuspid leaflets are rebuilt by rotating an existing leaflet into the gap; hovering one says so. Valve opening is driven by the simulated valve flow. Model values follow Guyton &amp; Hall resting adult figures; this is a teaching model, not a clinical tool.</p>
+  </main>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "./vendor/three/build/three.module.min.js",
+  "three/addons/": "./vendor/three/examples/jsm/",
+  "three-mesh-bvh": "./vendor/three-mesh-bvh/index.module.js"
+} }
+</script>
+<script type="module" src="app.js"></script>
+
+</body>
+</html>

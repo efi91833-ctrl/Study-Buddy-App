@@ -20,6 +20,7 @@ A personal, offline-first medical study platform built as a single-page React ap
 - `histology-questions.js` — Histology exam banks (GIT, Cardiovascular, Respiratory, Skin, Embryology, Cell Biology, etc.)
 - `anatomy-questions.js`, `embryo-questions.js`, `czech-questions.js`, etc. — per-subject question data
 - `vendor/` — local copies of React, ReactDOM, Babel, and PDF.js for offline use
+- `physiology-sandbox/` — Physiology Sandbox (Physiology → Practice tools): a beat-by-beat circulation model on the Z-Anatomy 3D heart (CC BY-SA 4.0), its own page shown in a frame. `sim.js` is the model, `app.js` the 3D view and lessons; three.js 0.160.0 and three-mesh-bvh 0.7.6 are vendored in `physiology-sandbox/vendor/` (MIT) so it runs offline. The service worker caches its files on first open.
 - `test/smoke.js` — headless test suite (`npm test`)
 
 ## How progress tracking works

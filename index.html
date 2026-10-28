@@ -575,6 +575,13 @@
     }
     /* ── Formula Builder ── */
     .fb-wrap { width: 100%; max-width: 860px; margin: 0 auto; padding: 0 24px 60px; box-sizing: border-box; }
+    /* Physiology Sandbox: slim bar, then the sandbox page filling the rest of the screen */
+    .ps-wrap { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+    .ps-head { display: flex; align-items: center; gap: 14px; padding: 10px 18px; background: var(--sb-cream); border-bottom: 1px solid var(--sb-line-soft); flex-wrap: wrap; }
+    .ps-title { font-family: var(--sb-serif); font-size: 20px; font-weight: 400; margin: 0; color: var(--sb-ink); flex: 1; }
+    .ps-open { font-size: 13px; color: var(--sb-ink-3); text-decoration: none; }
+    .ps-open:hover { color: var(--sb-ink); text-decoration: underline; }
+    .ps-frame { flex: 1; width: 100%; border: 0; display: block; min-height: 0; }
     .fb-head {
       position: sticky; top: 0; z-index: 10; background: var(--sb-panel);
       padding: 30px 60px 12px 0; margin-bottom: 18px; border-bottom: 1px solid var(--sb-line-soft);
@@ -4607,6 +4614,24 @@ function RgPressureMap() {
   );
 }
 
+// PHYSIOLOGY SANDBOX  (physiology-sandbox/: its own page, shown full-height in a frame)
+/* A beat-by-beat circulation model on the Z-Anatomy heart (three.js ES modules, vendored in
+ * physiology-sandbox/vendor). It is a separate page so its module scripts and 10 MB of
+ * anatomy data load only when it is opened; the service worker caches them on first use. */
+const SANDBOX_URL = 'physiology-sandbox/index.html';
+function PhysiologySandbox({ onBack }) {
+  return (
+    <div className="ps-wrap">
+      <div className="ps-head">
+        <button className="topbar-back" onClick={onBack}>← Physiology</button>
+        <h2 className="ps-title">Physiology Sandbox</h2>
+        <a className="ps-open" href={SANDBOX_URL} target="_blank" rel="noopener">Open in its own tab ↗</a>
+      </div>
+      <iframe className="ps-frame" src={SANDBOX_URL} title="Physiology Sandbox: 3D heart and circulation" allow="fullscreen" />
+    </div>
+  );
+}
+
 function RangesGame({ onBack }) {
   const [tab, setTab] = useState('labs');
   const data = window.PHYSIO_RANGES || {};
@@ -5230,6 +5255,8 @@ const SUBJECT_PAGES = {
         meta: (window.PHYSIO_FORMULAS || []).length + ' formulas by topic · write each one yourself, then calculate with it' },
       { type: 'ranges_game', name: 'Ranges',
         meta: ((window.PHYSIO_RANGES || {}).labs || []).length + ' normal ranges by topic · pressure map on a textbook figure' },
+      { type: 'physiology_sandbox', name: 'Physiology Sandbox',
+        meta: '3D heart & circulation · guided heartbeat, valves, drugs, disease, heat, altitude, posture' },
     ],
     unit: 'statements',
     counter: () => {
@@ -12897,6 +12924,16 @@ const PAGE_INSTRUCTIONS = {
       'Values you have not got right yet come first in new rounds.',
     ],
   },
+  physiology_sandbox: {
+    title: 'Physiology Sandbox',
+    steps: [
+      'New to the heart? Start with the “Start here” tab: seven short steps through one heartbeat, with a moving textbook diagram next to the 3D heart.',
+      'Experiments: change one thing (heart rate, contractility, a drug, a disease, bleeding, heat, cold, altitude, posture) and watch every number, trace and structure respond. Switch the baroreflex off to see the change on its own.',
+      'Formulas shows CO = HR × SV, MAP = CO × TPR and the rest with live values; point at any factor for what it means, and use “Play with the factors” to try what-ifs.',
+      'Graphs: drag along the pressure–volume loop or the Wiggers diagram to freeze the heart at that moment and see which valves are open.',
+      'In the 3D view, drag to turn, scroll or pinch to zoom. Use the cross-sections and the Valve buttons (Mitral, Aortic, Tricuspid, Pulmonary) to look inside; Slow-mo slows a beat to about 8 seconds.',
+    ],
+  },
   formula_builder: {
     title: 'Formula Builder',
     steps: [
@@ -16483,7 +16520,7 @@ function App() {
       />
     )}
     <div className="app">
-      {specialMode?.type !== 'brain_atlas' && <SearchWidget books={books} />}
+      {!['brain_atlas', 'physiology_sandbox'].includes(specialMode?.type) && <SearchWidget books={books} />}
       {/* One boundary around the whole router, re-keyed per screen so moving to
           a different screen clears a previous crash automatically. */}
       <ErrorBoundary
@@ -16531,6 +16568,8 @@ function App() {
             ? <RangesGame onBack={handleBack} />
           : specialMode?.type === 'formula_builder'
             ? <FormulaBuilder onBack={handleBack} />
+          : specialMode?.type === 'physiology_sandbox'
+            ? <PhysiologySandbox onBack={handleBack} />
           : specialMode?.type === 'instant_feedback'
             ? <InstantFeedbackExam subject={subject} examIndex={specialMode.examIndex} onBack={handleBack} />
           : !subject
