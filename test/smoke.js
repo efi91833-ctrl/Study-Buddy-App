@@ -74,7 +74,8 @@ run(
   'ExamScreen, ResultsBanner, WeakAreaCard, QuestionCard, YEARS, ' +
   'isTfSelection, tfGroupByStem, TrueFalseExam, FormulaBuilder, fxCheck, fxPreview, ' +
   'fbCalcCorrect, fbParseNumber, SUBJECT_PAGES, RangesGame, rgGrade, rgMakeScale, physioTermsIn, ' +
-  'PhysioAbout, UnitQuestion, RgMapPanel, stemFlagKey, isStemFlagged, flaggedCount };',
+  'PhysioAbout, UnitQuestion, RgMapPanel, stemFlagKey, isStemFlagged, flaggedCount, ' +
+  'PhysiologySandbox, SANDBOX_URL, PAGE_INSTRUCTIONS };',
   'app'
 );
 
@@ -326,6 +327,30 @@ check('MCH does not match inside MCHC', !T.physioTermsIn('MCHC only').includes('
 check('CO does not match CO2', !T.physioTermsIn('O2 and CO2 transport').includes('CO'));
 check('Ranges is a Physiology tool', T.SUBJECT_PAGES.Physiology.tools().some(t => t.type === 'ranges_game'));
 
+// Physiology Sandbox: a separate page (ES modules + 3D data) opened in a frame
+check('Physiology Sandbox is a Physiology tool', T.SUBJECT_PAGES.Physiology.tools().some(t => t.type === 'physiology_sandbox'));
+check('Physiology Sandbox has instructions', (T.PAGE_INSTRUCTIONS.physiology_sandbox || {}).steps?.length >= 3);
+{
+  const dir = path.join(ROOT, 'physiology-sandbox');
+  const sbHtml = fs.existsSync(path.join(ROOT, T.SANDBOX_URL)) ? read(T.SANDBOX_URL) : '';
+  check('sandbox page exists and is a full document', /^<!doctype html>/i.test(sbHtml) && /<\/html>\s*$/.test(sbHtml));
+  const im = /<script type="importmap">([\s\S]*?)<\/script>/.exec(sbHtml);
+  let imports = {}; try { imports = JSON.parse(im[1]).imports; } catch (e) {}
+  const targets = Object.values(imports);
+  check('sandbox loads three.js from its own vendor folder (works offline)', targets.length === 3 && targets.every(u => u.startsWith('./vendor/')), targets.join(' '));
+  const files = [
+    imports.three, imports['three-mesh-bvh'], imports['three/addons/'] + 'controls/OrbitControls.js',
+    imports['three/addons/'] + 'loaders/GLTFLoader.js', imports['three/addons/'] + 'environments/RoomEnvironment.js',
+    imports['three/addons/'] + 'utils/BufferGeometryUtils.js',
+    './app.js', './sim.js', './zanatomy-heart-vessels.glb.gz.txt', './zanatomy-meta.json', './heart-voxels.json', './heart-voxels.bin.gz.txt',
+  ].filter(Boolean);
+  const missing = files.filter(f => !fs.existsSync(path.join(dir, f)));
+  check('every sandbox module and data file is present', files.length === 12 && !missing.length, missing.join(' '));
+  const appSrc = fs.existsSync(path.join(dir, 'app.js')) ? fs.readFileSync(path.join(dir, 'app.js'), 'utf8') : '';
+  const fetched = [...appSrc.matchAll(/fetch\('([^']+)'\)/g)].map(m => m[1]);
+  check('files the sandbox fetches all exist', fetched.length >= 3 && fetched.every(f => fs.existsSync(path.join(dir, f))), fetched.join(' '));
+}
+
 console.log('\n=== render ===');
 /* Mount the real components so a JSX/prop mistake in the new UI shows up as a
  * failure here rather than a blank screen on the iPad. */
@@ -354,6 +379,8 @@ try {
     scale: { min: 0, max: 200, tick: 50, step: 1, dp: 0, tickDp: 0 } }, setSt() {} }));
 } catch (e) { mpErr = e; }
 try { rgHost = mount(R.createElement(w.__test.RangesGame, { onBack() {} })); } catch (e) { rgErr = e; }
+let sbHost = null, sbErr = null;
+try { sbHost = mount(R.createElement(w.__test.PhysiologySandbox, { onBack() {} })); } catch (e) { sbErr = e; }
 try {
   tfHost = mount(R.createElement(w.__test.TrueFalseExam, { subject: 'Physiology', examIndex: 0, onBack() {} }));
 } catch (e) { tfErr = e; }
@@ -379,6 +406,9 @@ setTimeout(() => {
   const mpt = mpHost ? mpHost.textContent : '';
   check('pressure map panel shows unit step, range step and mean', !mpErr && /Which unit/.test(mpt) && /pressure range/.test(mpt) && /Mean pressure/.test(mpt),
         (mpErr && mpErr.message) || mpt.slice(0, 160));
+  const sbt = sbHost ? sbHost.textContent : '', sbf = sbHost && sbHost.querySelector('iframe');
+  check('Physiology Sandbox screen shows the page in a frame with a way back', !sbErr && sbf && sbf.getAttribute('src') === T.SANDBOX_URL
+        && /← Physiology/.test(sbt), (sbErr && sbErr.message) || sbt.slice(0, 120));
   const rgt = rgHost ? rgHost.textContent : '';
   check('Ranges home shows both tabs', /Normal ranges/.test(rgt) && /Pressure map/.test(rgt) && /Sodium/.test(rgt), rgt.slice(0, 160));
   const fbt = fbHost ? fbHost.textContent : '';
