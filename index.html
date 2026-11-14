@@ -1801,6 +1801,7 @@
 <script src="histology-slide-ids.js"></script>
 <script src="hematopoiesis-map-data.js"></script>
 <script src="physiology-tf.js"></script>
+<script src="physiology-tf-block2.js"></script>
 <script src="physiology-formulas.js"></script>
 <script src="physiology-ranges.js"></script>
 <script src="physiology-glossary.js"></script>
@@ -2322,6 +2323,12 @@ const QUESTION_BANK = {
       // topic tags on each question for weak-area tracking.
       tfExam('1st - Block Test',
              Object.values(window.PHYSIO_TF || {}).flat()
+               .sort((x, y) => x.num - y.num)),
+      // 2nd block (physiology-tf-block2.js): membrane potential, respiration,
+      // plus the cardiovascular / DR ABC questions shown again in class.
+      // Stem numbers start at 201 so they never collide with the 1st block.
+      tfExam('2nd - Block Test',
+             Object.values(window.PHYSIO_TF_B2 || {}).flat()
                .sort((x, y) => x.num - y.num)),
     ],
     get questions() { return this.exams.flatMap(e => e.questions); },
@@ -5248,7 +5255,7 @@ const SUBJECT_PAGES = {
 
   Physiology: {
     groups: [
-      { label: 'True / False', names: ['1st - Block Test'] },
+      { label: 'True / False', names: ['1st - Block Test', '2nd - Block Test'] },
     ],
     tools: () => [
       { type: 'formula_builder', name: 'Formula Builder',
@@ -5260,8 +5267,8 @@ const SUBJECT_PAGES = {
     ],
     unit: 'statements',
     counter: () => {
-      const tf = window.PHYSIO_TF || {};
-      return Object.values(tf).reduce((n, list) => n + (list || []).length, 0) + ' T/F questions';
+      const count = bank => Object.values(bank || {}).reduce((n, list) => n + (list || []).length, 0);
+      return (count(window.PHYSIO_TF) + count(window.PHYSIO_TF_B2)) + ' T/F questions';
     },
   },
 };

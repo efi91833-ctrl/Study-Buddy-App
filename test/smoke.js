@@ -64,7 +64,7 @@ run(read('progress.js'), 'progress.js');
   'muscle-bank.js', 'artery-game.js', 'artery-assembly-data.js', 'timeline-data.js',
   'dissection-questions.js', 'brain-atlas-data.js', 'brain-labels.js',
   'brain-mri-quiz-data.js', 'vein-formation-data.js', 'histology-slides-data.js',
-  'histology-slide-ids.js', 'hematopoiesis-map-data.js', 'physiology-tf.js', 'physiology-formulas.js', 'physiology-ranges.js', 'physiology-glossary.js',
+  'histology-slide-ids.js', 'hematopoiesis-map-data.js', 'physiology-tf.js', 'physiology-tf-block2.js', 'physiology-formulas.js', 'physiology-ranges.js', 'physiology-glossary.js',
 ].forEach(f => run(read(f), f));
 
 // Expose the internals the test needs, then evaluate the app.
@@ -218,14 +218,14 @@ const PH = 'Physiology';
 const phys = T.QUESTION_BANK[PH];
 check('Physiology subject exists', !!phys);
 check('Physiology filed under 2nd Year', T.YEARS.some(y => y.name === '2nd Year' && y.subjects.includes(PH)));
-check('one T/F exam named "1st - Block Test", no duplicate banks',
-      phys.exams.map(e => e.name + ':' + e.type).join(',') === '1st - Block Test:tf');
+check('two T/F exams: "1st - Block Test" and "2nd - Block Test"',
+      phys.exams.map(e => e.name + ':' + e.type).join(',') === '1st - Block Test:tf,2nd - Block Test:tf');
 check('1st - Block Test holds all 125 questions in order (1-94 original, 95-125 past papers)',
       T.tfGroupByStem(phys.exams[0].questions).map(g => g.num).join() === Array.from({ length: 125 }, (_, k) => k + 1).join());
-check('subject page lists only the one block test',
-      T.SUBJECT_PAGES.Physiology.groups.length === 1 && T.SUBJECT_PAGES.Physiology.groups[0].names.join() === '1st - Block Test');
-check('three topics tagged for weak areas (Blood, Cardiovascular, DR ABC)', [...new Set(phys.questions.map(q => q.topic))].sort().join() === 'Blood,Cardiovascular,DR ABC');
-const allSt = phys.questions;
+check('subject page lists both block tests under True / False',
+      T.SUBJECT_PAGES.Physiology.groups.length === 1 && T.SUBJECT_PAGES.Physiology.groups[0].names.join() === '1st - Block Test,2nd - Block Test');
+const allSt = phys.exams[0].questions;
+check('three topics tagged in block 1 (Blood, Cardiovascular, DR ABC)', [...new Set(allSt.map(q => q.topic))].sort().join() === 'Blood,Cardiovascular,DR ABC');
 check('627 statements across 125 stems', allSt.length === 627 && T.tfGroupByStem(allSt).length === 125,
       allSt.length + ' / ' + T.tfGroupByStem(allSt).length);
 const norm = x => String(x).toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -233,6 +233,30 @@ check('every statement has a unique progress key', new Set(allSt.map(q => norm(q
 check('every statement is topic/subtopic tagged', allSt.every(q => q.topic && q.subtopic));
 check('every statement is scored', allSt.every(q => q.correct));
 check('Q94 now scored from the empty professor key (all false)', allSt.filter(q => q.stemNum === 94).every(q => q.correct === 'F'));
+
+// ── 2nd block (physiology-tf-block2.js) ──
+const b2 = phys.exams[1].questions;
+const b2Groups = T.tfGroupByStem(b2);
+check('2nd - Block Test holds 140 stems numbered 201-340 in order',
+      b2Groups.map(g => g.num).join() === Array.from({ length: 140 }, (_, k) => k + 201).join());
+check('2nd block: 656 statements, every one scored', b2.length === 656 && b2.every(q => q.correct), b2.length);
+check('2nd block: Simulation topic present', b2.some(q => q.topic === 'Simulation'));
+check('2nd block: membrane potential and respiration topics present',
+      ['Membrane potential', 'Respiration'].every(t => b2.some(q => q.topic === t)));
+check('2nd block: every statement has an explanation', b2.every(q => q.explanation));
+check('2nd block: unique progress keys inside the block', new Set(b2.map(q => norm(q.question))).size === b2.length);
+const b1Stems = new Set(allSt.map(q => q.stem));
+check('2nd block: 20 stems shared word for word with block 1 (shared progress)',
+      b2Groups.filter(g => b1Stems.has(g.stem)).length === 20);
+check('2nd block: no stem appears twice inside the block', new Set(b2Groups.map(g => g.stem.toLowerCase())).size === b2Groups.length);
+check('2nd block: no stem number collides with block 1', b2Groups.every(g => g.num > 200));
+const litStem = g => /^Student notes/.test(g.ref) || ['ID 710', 'ID 1972', 'ID 4821', 'ID 1630', 'ID 4574'].includes(g.ref) || g.stem === 'Membrane potential:';
+check('2nd block: every answer not taken from the professor\'s photos says it is literature-based',
+      b2Groups.filter(litStem).length === 58 && b2Groups.filter(litStem).every(g => /literature \(Guyton & Hall\), not on the provided images|from the literature \(Guyton & Hall\), not from the provided images/.test(g.note || '')));
+check('2nd block: explanations that follow the professor\'s key over the textbook are marked', b2.filter(q => /Source: the professor's key, not Guyton & Hall/.test(q.explanation)).length === 15);
+check('all-questions pool dedupes the shared stems (125 + 120 stems)',
+      T.tfGroupByStem(T.poolFor(PH, 'all')).length === 245, T.tfGroupByStem(T.poolFor(PH, 'all')).length);
+check('T/F routing: 2nd block test', T.isTfSelection(PH, 1));
 check('T/F routing: block test', T.isTfSelection(PH, 0) && T.isTfSelection(PH, 'weak'));
 check('T/F routing: weak-area session', T.isTfSelection(PH, 'weak'));
 check('T/F routing leaves other subjects alone', !T.isTfSelection(SUBJ, 0) && !T.isTfSelection(SUBJ, 'weak'));
@@ -384,6 +408,10 @@ try { sbHost = mount(R.createElement(w.__test.PhysiologySandbox, { onBack() {} }
 try {
   tfHost = mount(R.createElement(w.__test.TrueFalseExam, { subject: 'Physiology', examIndex: 0, onBack() {} }));
 } catch (e) { tfErr = e; }
+let tf2Host = null, tf2Err = null;
+try {
+  tf2Host = mount(R.createElement(w.__test.TrueFalseExam, { subject: 'Physiology', examIndex: 1, onBack() {} }));
+} catch (e) { tf2Err = e; }
 let tfFlagHost = null, tfShufHost = null, tfExtraErr = null;
 try {
   tfFlagHost = mount(R.createElement(w.__test.TrueFalseExam, { subject: 'Physiology', examIndex: 'flagged', onBack() {} }));
@@ -417,6 +445,10 @@ setTimeout(() => {
   check('T/F opens one question at a time by default', tfHost && tfHost.querySelectorAll('.question-card').length === 1
         && /Question 1 of 125/.test(tfHost.textContent) && /Check this question/.test(tfHost.textContent));
   check('progress can log a one-by-one session', typeof P.logSession === 'function');
+  const tf2t = tf2Host ? tf2Host.textContent : '';
+  check('2nd block opens one question at a time with Flag and shuffle', !tf2Err && /Question 1 of 140/.test(tf2t)
+        && /Check this question/.test(tf2t) && /Shuffled/.test(tf2t) && tf2Host.querySelector('.tf-flagbtn'),
+        (tf2Err && tf2Err.message) || tf2t.slice(0, 160));
   check('T/F shows In order / Shuffled and a Flag button', /In order/.test(tft) && /Shuffled/.test(tft)
         && tfHost.querySelector('.tf-flagbtn') && tfHost.querySelector('.tf-flagbtn').textContent === 'Flag');
   const fgt = tfFlagHost ? tfFlagHost.textContent : '';
