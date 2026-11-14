@@ -222,27 +222,28 @@ check('whole block tests first: "1st - Block Test" and "2nd - Block Test"',
       phys.exams.slice(0, 2).map(e => e.name + ':' + e.type).join(',') === '1st - Block Test:tf,2nd - Block Test:tf');
 check('every Physiology exam is True/False', phys.exams.every(e => e.type === 'tf'));
 const parts = phys.exams.filter(e => e.part);
-check('six subject exams (3 per block), marked as parts',
-      parts.map(e => e.name).join('|') === '1st Block · Blood pressure & heart|1st Block · Blood & coagulation|1st Block · DR ABC|2nd Block · Membrane potential|2nd Block · Respiration|2nd Block · Simulation',
+check('five subject exams (2 in block 1, 3 in block 2), marked as parts',
+      parts.map(e => e.name).join('|') === '1st Block · Blood pressure & heart|1st Block · Blood & coagulation|2nd Block · Membrane potential|2nd Block · Respiration|2nd Block · Simulation',
       parts.map(e => e.name).join('|'));
 const stemCount = e => T.tfGroupByStem(e.questions).length;
-check('1st block subjects add up to the whole block (125 stems)',
-      parts.slice(0, 3).reduce((n, e) => n + stemCount(e), 0) === 125 && parts.slice(0, 3).reduce((n, e) => n + e.questions.length, 0) === phys.exams[0].questions.length);
+check('1st block subjects add up to the whole block (119 stems)',
+      parts.slice(0, 2).reduce((n, e) => n + stemCount(e), 0) === 119 && parts.slice(0, 2).reduce((n, e) => n + e.questions.length, 0) === phys.exams[0].questions.length);
 check('2nd block subjects add up to the whole block (140 stems: MP 43, Respiration 63, Simulation 34)',
-      parts.slice(3).map(stemCount).join() === '43,63,34' && parts.slice(3).reduce((n, e) => n + e.questions.length, 0) === phys.exams[1].questions.length);
+      parts.slice(2).map(stemCount).join() === '43,63,34' && parts.slice(2).reduce((n, e) => n + e.questions.length, 0) === phys.exams[1].questions.length);
 check('each subject exam holds only its own topic', parts.every(e => new Set(e.questions.map(q => q.topic)).size === 1));
 check('subject exams route to the True/False screen', parts.every(e => T.isTfSelection(PH, phys.exams.indexOf(e))));
-check('1st - Block Test holds all 125 questions in order (1-94 original, 95-125 past papers)',
-      T.tfGroupByStem(phys.exams[0].questions).map(g => g.num).join() === Array.from({ length: 125 }, (_, k) => k + 1).join());
+const DR_ABC_MOVED = [104, 105, 117, 118, 122, 124];
+check('1st - Block Test holds 119 questions in order (1-125 without the 6 DR ABC ones, which moved to block 2)',
+      T.tfGroupByStem(phys.exams[0].questions).map(g => g.num).join() === Array.from({ length: 125 }, (_, k) => k + 1).filter(n => !DR_ABC_MOVED.includes(n)).join());
 const pg = T.SUBJECT_PAGES.Physiology.groups;
 check('subject page has one tab per block, whole test first, then its subjects',
       pg.map(g => g.label).join() === '1st Block Test,2nd Block Test'
-      && pg[0].names.join('|') === '1st - Block Test|1st Block · Blood pressure & heart|1st Block · Blood & coagulation|1st Block · DR ABC'
+      && pg[0].names.join('|') === '1st - Block Test|1st Block · Blood pressure & heart|1st Block · Blood & coagulation'
       && pg[1].names.join('|') === '2nd - Block Test|2nd Block · Membrane potential|2nd Block · Respiration|2nd Block · Simulation'
       && pg.every(g => g.names.every(n => phys.exams.some(e => e.name === n))));
 const allSt = phys.exams[0].questions;
-check('three topics tagged in block 1 (Blood, Cardiovascular, DR ABC)', [...new Set(allSt.map(q => q.topic))].sort().join() === 'Blood,Cardiovascular,DR ABC');
-check('627 statements across 125 stems', allSt.length === 627 && T.tfGroupByStem(allSt).length === 125,
+check('two topics tagged in block 1 (Blood, Cardiovascular); no DR ABC', [...new Set(allSt.map(q => q.topic))].sort().join() === 'Blood,Cardiovascular');
+check('601 statements across 119 stems', allSt.length === 601 && T.tfGroupByStem(allSt).length === 119,
       allSt.length + ' / ' + T.tfGroupByStem(allSt).length);
 const norm = x => String(x).toLowerCase().replace(/[^a-z0-9]/g, '');
 check('every statement has a unique progress key', new Set(allSt.map(q => norm(q.question))).size === allSt.length);
@@ -262,8 +263,13 @@ check('2nd block: membrane potential and respiration topics present',
 check('2nd block: every statement has an explanation', b2.every(q => q.explanation));
 check('2nd block: unique progress keys inside the block', new Set(b2.map(q => norm(q.question))).size === b2.length);
 const b1Stems = new Set(allSt.map(q => q.stem));
-check('2nd block: 20 stems shared word for word with block 1 (shared progress)',
-      b2Groups.filter(g => b1Stems.has(g.stem)).length === 20);
+check('2nd block: 14 stems shared word for word with block 1 (shared progress)',
+      b2Groups.filter(g => b1Stems.has(g.stem)).length === 14);
+const drAbc = ['Condition assessment (triage)', 'Hypotension & bradycardia', 'Perfusion assessment', 'SBAR communication'];
+check('DR ABC questions live only in block 2, under Simulation, with no pointer back to block 1',
+      b2Groups.filter(g => drAbc.includes(g.subtopic)).length === 6
+      && b2Groups.filter(g => drAbc.includes(g.subtopic)).every(g => g.topic === 'Simulation' && !/1st Block Test/.test(g.note || ''))
+      && !allSt.some(q => drAbc.includes(q.subtopic)));
 check('2nd block: no stem appears twice inside the block', new Set(b2Groups.map(g => g.stem.toLowerCase())).size === b2Groups.length);
 check('2nd block: no stem number collides with block 1', b2Groups.every(g => g.num > 200));
 const litStem = g => /^Student notes/.test(g.ref) || ['ID 710', 'ID 1972', 'ID 4821', 'ID 1630', 'ID 4574'].includes(g.ref) || g.stem === 'Membrane potential:';
@@ -463,11 +469,11 @@ setTimeout(() => {
   check('Formula Builder home lists formulas by topic', /Start a mixed round/.test(fbt) && /Practise all/.test(fbt) && /Cardiac output/.test(fbt), fbt.slice(0, 160));
   const tft = tfHost ? tfHost.textContent : '';
   check('T/F opens one question at a time by default', tfHost && tfHost.querySelectorAll('.question-card').length === 1
-        && /Question 1 of 125/.test(tfHost.textContent) && /Check this question/.test(tfHost.textContent));
+        && /Question 1 of 119/.test(tfHost.textContent) && /Check this question/.test(tfHost.textContent));
   check('progress can log a one-by-one session', typeof P.logSession === 'function');
   const spt = spHost ? spHost.textContent : '';
   check('Physiology page shows a tab per block and the 1st block subject rows', !spErr && /1st Block Test/.test(spt) && /2nd Block Test/.test(spt)
-        && /1st - Block Test/.test(spt) && /Blood pressure & heart/.test(spt) && /Blood & coagulation/.test(spt) && /DR ABC/.test(spt),
+        && /1st - Block Test/.test(spt) && /Blood pressure & heart/.test(spt) && /Blood & coagulation/.test(spt) && !/1st Block · DR ABC/.test(spt),
         (spErr && spErr.message) || spt.slice(0, 300));
   const tf2t = tf2Host ? tf2Host.textContent : '';
   check('2nd block opens one question at a time with Flag and shuffle', !tf2Err && /Question 1 of 140/.test(tf2t)
@@ -478,8 +484,8 @@ setTimeout(() => {
   const fgt = tfFlagHost ? tfFlagHost.textContent : '';
   check('flagged session renders the flagged question, marked Flagged', !tfExtraErr && /Flagged questions/.test(fgt)
         && /Question 1 of 1/.test(fgt) && tfFlagHost.querySelector('.tf-flagbtn.on'), (tfExtraErr && tfExtraErr.message) || fgt.slice(0, 160));
-  check('shuffled T/F still shows one question of 125', tfShufHost && tfShufHost.querySelectorAll('.question-card').length === 1
-        && /Question 1 of 125/.test(tfShufHost.textContent) && tfShufHost.querySelector('.tf-mode-btn.on + .tf-mode-btn, .tf-mode .on'));
+  check('shuffled T/F still shows one question of 119', tfShufHost && tfShufHost.querySelectorAll('.question-card').length === 1
+        && /Question 1 of 119/.test(tfShufHost.textContent) && tfShufHost.querySelector('.tf-mode-btn.on + .tf-mode-btn, .tf-mode .on'));
   check('T/F exam shows stem, statements and True/False choices',
         /True \/ False/.test(tft) && /Question 1/.test(tft) && /TrueFalse/.test(tft), tft.slice(0, 160));
 

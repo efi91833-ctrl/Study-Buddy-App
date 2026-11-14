@@ -1948,7 +1948,8 @@ function tfTopicExams(prefix, stems, topics) {
 }
 const PHYSIO_B1_STEMS = () => Object.values(window.PHYSIO_TF || {}).flat().sort((x, y) => x.num - y.num);
 const PHYSIO_B2_STEMS = () => Object.values(window.PHYSIO_TF_B2 || {}).flat().sort((x, y) => x.num - y.num);
-const PHYSIO_B1_TOPICS = [['Cardiovascular', 'Blood pressure & heart'], ['Blood', 'Blood & coagulation'], ['DR ABC', 'DR ABC']];
+// DR ABC lives only in the 2nd block (Simulation), so the 1st block has two subjects.
+const PHYSIO_B1_TOPICS = [['Cardiovascular', 'Blood pressure & heart'], ['Blood', 'Blood & coagulation']];
 const PHYSIO_B2_TOPICS = [['Membrane potential', 'Membrane potential'], ['Respiration', 'Respiration'], ['Simulation', 'Simulation']];
 
 const QUESTION_BANK = {
@@ -2338,7 +2339,7 @@ const QUESTION_BANK = {
       // topic tags on each question for weak-area tracking.
       tfExam('1st - Block Test', PHYSIO_B1_STEMS()),
       // 2nd block (physiology-tf-block2.js): membrane potential, respiration,
-      // plus the cardiovascular / DR ABC questions shown again in class.
+      // simulation (incl. all DR ABC questions, which are not in the 1st block).
       // Stem numbers start at 201 so they never collide with the 1st block.
       tfExam('2nd - Block Test', PHYSIO_B2_STEMS()),
       // The same questions split by subject (one row per subject in each block tab).

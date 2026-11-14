@@ -6,7 +6,8 @@
  * num starts at 201 so stems never collide with the 1st Block Test inside one session.
  * Stems that also appear in the 1st Block Test are copied word for word, so progress and flags are shared.
  * Topics are the three 2nd-block subjects (Membrane potential, Respiration, Simulation); the shared
- * clinical JINE/SIM_2 stems sit under Simulation here, under Blood/Cardiovascular/DR ABC in Block 1.
+ * clinical JINE/SIM_2 stems sit under Simulation here, under Blood/Cardiovascular in Block 1.
+ * The DR ABC questions (triage, SBAR, perfusion, hypotension) live only here, under Simulation.
  * Where the photo does not show the key (ID 710, ID 1972, "Membrane potential") the answer is from
  * standard physiology (Guyton & Hall) and the stem's note says so. */
 window.PHYSIO_TF_B2 = {
@@ -88,8 +89,7 @@ window.PHYSIO_TF_B2 = {
      "answer": false,
      "why": "Not red: he is conscious with a regular radial pulse and BP 90/60; red is for life-threatening findings."
     }
-   ],
-   "note": "Also in the 1st Block Test (Q105), so your progress on it is shared."
+   ]
   },
   {
    "num": 204,
@@ -202,8 +202,7 @@ window.PHYSIO_TF_B2 = {
      "answer": false,
      "why": "Responsive only to pain with shock-level BP means red (critical), not yellow."
     }
-   ],
-   "note": "Also in the 1st Block Test (Q117), so your progress on it is shared."
+   ]
   },
   {
    "num": 224,
@@ -236,8 +235,7 @@ window.PHYSIO_TF_B2 = {
      "answer": false,
      "why": "This omits the altered consciousness."
     }
-   ],
-   "note": "Also in the 1st Block Test (Q122), so your progress on it is shared."
+   ]
   },
   {
    "num": 225,
@@ -498,8 +496,7 @@ window.PHYSIO_TF_B2 = {
      "answer": false,
      "why": "CVP 25 mmHg is very high (heart failure or overload) and says nothing good about perfusion."
     }
-   ],
-   "note": "Also in the 1st Block Test (Q104), so your progress on it is shared."
+   ]
   },
   {
    "num": 238,
@@ -606,8 +603,7 @@ window.PHYSIO_TF_B2 = {
      "answer": true,
      "why": "Hypotension with tachycardia (shock index 135/80, about 1.7) in a bleeding patient means red."
     }
-   ],
-   "note": "Also in the 1st Block Test (Q124), so your progress on it is shared."
+   ]
   },
   {
    "num": 241,
@@ -714,8 +710,7 @@ window.PHYSIO_TF_B2 = {
      "answer": false,
      "why": "Tachycardia and BP 140/90 are secondary findings."
     }
-   ],
-   "note": "Also in the 1st Block Test (Q118), so your progress on it is shared."
+   ]
   },
   {
    "num": 325,
