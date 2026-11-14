@@ -1936,6 +1936,21 @@ function tfExam(name, stems) {
   return { name, type: 'tf', questions: tfStatements(list), countLabel: list.length + ' q' };
 }
 
+/* One exam per subject inside a block test. `topics` pairs a topic tag in the
+ * bank with the subject name shown on the page. These are marked `part` so the
+ * resume card offers the whole block, not each slice of it. */
+function tfTopicExams(prefix, stems, topics) {
+  return topics.map(([tag, label]) => {
+    const exam = tfExam(prefix + ' · ' + label, (stems || []).filter(s => s.topic === tag));
+    exam.part = true;
+    return exam;
+  }).filter(e => e.questions.length);
+}
+const PHYSIO_B1_STEMS = () => Object.values(window.PHYSIO_TF || {}).flat().sort((x, y) => x.num - y.num);
+const PHYSIO_B2_STEMS = () => Object.values(window.PHYSIO_TF_B2 || {}).flat().sort((x, y) => x.num - y.num);
+const PHYSIO_B1_TOPICS = [['Cardiovascular', 'Blood pressure & heart'], ['Blood', 'Blood & coagulation'], ['DR ABC', 'DR ABC']];
+const PHYSIO_B2_TOPICS = [['Membrane potential', 'Membrane potential'], ['Respiration', 'Respiration'], ['Simulation', 'Simulation']];
+
 const QUESTION_BANK = {
   Histology: {
     color: '#888',
@@ -2321,15 +2336,14 @@ const QUESTION_BANK = {
       // Every T/F question in number order (1-94 original set, 95+ past papers).
       // The PHYSIO_TF keys (Blood, Cardiovascular, Respiration, ...) stay as
       // topic tags on each question for weak-area tracking.
-      tfExam('1st - Block Test',
-             Object.values(window.PHYSIO_TF || {}).flat()
-               .sort((x, y) => x.num - y.num)),
+      tfExam('1st - Block Test', PHYSIO_B1_STEMS()),
       // 2nd block (physiology-tf-block2.js): membrane potential, respiration,
       // plus the cardiovascular / DR ABC questions shown again in class.
       // Stem numbers start at 201 so they never collide with the 1st block.
-      tfExam('2nd - Block Test',
-             Object.values(window.PHYSIO_TF_B2 || {}).flat()
-               .sort((x, y) => x.num - y.num)),
+      tfExam('2nd - Block Test', PHYSIO_B2_STEMS()),
+      // The same questions split by subject (one row per subject in each block tab).
+      ...tfTopicExams('1st Block', PHYSIO_B1_STEMS(), PHYSIO_B1_TOPICS),
+      ...tfTopicExams('2nd Block', PHYSIO_B2_STEMS(), PHYSIO_B2_TOPICS),
     ],
     get questions() { return this.exams.flatMap(e => e.questions); },
   },
@@ -5255,7 +5269,9 @@ const SUBJECT_PAGES = {
 
   Physiology: {
     groups: [
-      { label: 'True / False', names: ['1st - Block Test', '2nd - Block Test'] },
+      // One tab per block: the whole test first, then one row per subject.
+      { label: '1st Block Test', names: ['1st - Block Test', ...PHYSIO_B1_TOPICS.map(([, l]) => '1st Block · ' + l)] },
+      { label: '2nd Block Test', names: ['2nd - Block Test', ...PHYSIO_B2_TOPICS.map(([, l]) => '2nd Block · ' + l)] },
     ],
     tools: () => [
       { type: 'formula_builder', name: 'Formula Builder',
@@ -5351,7 +5367,7 @@ function SubjectPage({ subject, config, onSelectExam, onBack }) {
 
   const resume = hasStats
     ? listedExams
-        .filter(e => { const p = progressByName[e.name]; return p.done > 0 && p.done < p.total; })
+        .filter(e => { const p = progressByName[e.name]; return !e.part && p.done > 0 && p.done < p.total; })
         .sort((a, b) => progressByName[b.name].last - progressByName[a.name].last)
         .slice(0, 2)
     : [];

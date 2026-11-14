@@ -5,14 +5,16 @@
  * Same shape as physiology-tf.js: each stem has statements A..; answer true/false.
  * num starts at 201 so stems never collide with the 1st Block Test inside one session.
  * Stems that also appear in the 1st Block Test are copied word for word, so progress and flags are shared.
+ * Topics are the three 2nd-block subjects (Membrane potential, Respiration, Simulation); the shared
+ * clinical JINE/SIM_2 stems sit under Simulation here, under Blood/Cardiovascular/DR ABC in Block 1.
  * Where the photo does not show the key (ID 710, ID 1972, "Membrane potential") the answer is from
  * standard physiology (Guyton & Hall) and the stem's note says so. */
 window.PHYSIO_TF_B2 = {
- "Cardiovascular": [
+ "Simulation": [
   {
    "num": 201,
    "ref": "ID 5621",
-   "topic": "Cardiovascular",
+   "topic": "Simulation",
    "subtopic": "Hypotension management",
    "stem": "Which of the following noninvasive interventions can be used to improve brain perfusion in hypotensive patients?",
    "statements": [
@@ -50,9 +52,83 @@ window.PHYSIO_TF_B2 = {
    "note": "Also in the 1st Block Test (Q110), so your progress on it is shared."
   },
   {
+   "num": 203,
+   "ref": "Past paper (JINE)",
+   "topic": "Simulation",
+   "subtopic": "Condition assessment (triage)",
+   "stem": "Do the \"condition assessment\" for the following patient (choose red, yellow or green and a corresponding reason; more than one could be correct): 30-year-old conscious man in hot weather, feels dizzy, dry lips, sweating, red skin, no shortness of breath, RR 22/min, HR 120/min, regular pulse on radial artery, BP 90/60.",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Green because conscious, no shortness of breath, regular pulse on radial artery",
+     "answer": false,
+     "why": "Not green: dizziness, dehydration signs, tachycardia and low BP mean he is not stable."
+    },
+    {
+     "l": "B",
+     "text": "Yellow because of higher respiratory rate at rest",
+     "answer": false,
+     "why": "RR 22/min is only mildly raised; the key does not accept it as the reason for yellow."
+    },
+    {
+     "l": "C",
+     "text": "Yellow because of dizziness and signs of dehydration",
+     "answer": true,
+     "why": "Dizziness with dry lips and sweating in hot weather means dehydration or heat stress, so yellow (needs attention) is the right category and reason."
+    },
+    {
+     "l": "D",
+     "text": "Yellow because of high HR at rest",
+     "answer": false,
+     "why": "Per the key, the tachycardia is a consequence of the dehydration; the category is based on the clinical picture (dizziness, dehydration), not on HR alone."
+    },
+    {
+     "l": "E",
+     "text": "Red because of low BP",
+     "answer": false,
+     "why": "Not red: he is conscious with a regular radial pulse and BP 90/60; red is for life-threatening findings."
+    }
+   ],
+   "note": "Also in the 1st Block Test (Q105), so your progress on it is shared."
+  },
+  {
+   "num": 204,
+   "ref": "Past paper (SIM_2)",
+   "topic": "Simulation",
+   "subtopic": "Blood loss",
+   "stem": "A previously healthy person lost a large amount of blood. Now, hemoglobin concentration is 60 g/L. Choose the correct answer(s):",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Hb concentration value 60 g/L could have been obtained right after the bleeding",
+     "answer": false,
+     "why": "Right after bleeding, cells and plasma are lost in the same proportion, so Hb concentration is initially unchanged. It falls only later, when interstitial fluid dilutes the blood."
+    },
+    {
+     "l": "B",
+     "text": "This value of Hb can be physiological in women",
+     "answer": false,
+     "why": "Normal Hb is about 120-160 g/L in women; 60 g/L is severe anemia."
+    },
+    {
+     "l": "C",
+     "text": "Hb is critically low",
+     "answer": true,
+     "why": "60 g/L is critically low (below the usual transfusion threshold of about 70 g/L)."
+    },
+    {
+     "l": "D",
+     "text": "Hb was estimated with a delay after the blood loss",
+     "answer": true,
+     "why": "The drop needs hemodilution, which takes hours to days, so this value was measured with a delay after the loss."
+    }
+   ],
+   "note": "Also in the 1st Block Test (Q102), so your progress on it is shared."
+  },
+  {
    "num": 208,
    "ref": "ID 5062",
-   "topic": "Cardiovascular",
+   "topic": "Simulation",
    "subtopic": "Blood pressure regulation",
    "stem": "Which of the following parameters can significantly influence blood pressure?",
    "statements": [
@@ -90,9 +166,83 @@ window.PHYSIO_TF_B2 = {
    "note": "Also in the 1st Block Test (Q103), so your progress on it is shared."
   },
   {
+   "num": 210,
+   "ref": "ID 5614",
+   "topic": "Simulation",
+   "subtopic": "Hypotension & bradycardia",
+   "stem": "An 80-year-old man has fainted. On examination, in the supine position, he is very pale, responsive to pain, with RR 22/min, HR 35/min, BP 85/45 mmHg, and CRT 4 seconds. Choose the correct statement(s):",
+   "statements": [
+    {
+     "l": "A",
+     "text": "The patient should benefit from legs elevation",
+     "answer": false,
+     "why": "The hypotension comes from bradycardia (CO = HR x SV); raising the legs adds little."
+    },
+    {
+     "l": "B",
+     "text": "Venous return in the supine position is better than in the sitting position in this situation",
+     "answer": true,
+     "why": "Supine position removes hydrostatic pooling, so venous return is better than when sitting."
+    },
+    {
+     "l": "C",
+     "text": "There is no evidence of a sympathetic compensatory reaction",
+     "answer": false,
+     "why": "Pallor and CRT of 4 s show vasoconstriction, which is evidence of sympathetic compensation."
+    },
+    {
+     "l": "D",
+     "text": "Pharmacological inhibition of the vagus nerve (or parasympathetic activity) could increase cardiac output",
+     "answer": true,
+     "why": "Blocking the vagus (e.g. atropine) raises HR and therefore CO."
+    },
+    {
+     "l": "E",
+     "text": "The assessment of this man is classified as \"in danger\" (yellow)",
+     "answer": false,
+     "why": "Responsive only to pain with shock-level BP means red (critical), not yellow."
+    }
+   ],
+   "note": "Also in the 1st Block Test (Q117), so your progress on it is shared."
+  },
+  {
+   "num": 224,
+   "ref": "ID 5631",
+   "topic": "Simulation",
+   "subtopic": "SBAR communication",
+   "stem": "This question deals with SBAR communication skills. Choose the best statement (just one) representing the main problem of the given patient: 80-year-old woman on admission, pain responsive, RR 25, red hot skin, t 39 °C, pulse on radial artery absent, pulse on carotid regular, HR 135/min, BP 70/40, CRT 4 s.",
+   "statements": [
+    {
+     "l": "A",
+     "text": "A person with high temperature and low BP",
+     "answer": false,
+     "why": "This misses the reduced consciousness."
+    },
+    {
+     "l": "B",
+     "text": "A person responsive only to pain, hypotensive (BP 70/40) with fever",
+     "answer": true,
+     "why": "It captures consciousness (responsive only to pain), shock-level BP and fever."
+    },
+    {
+     "l": "C",
+     "text": "A person with tachycardia, hypotension and vasodilation",
+     "answer": false,
+     "why": "Vasodilation is not the main problem stated."
+    },
+    {
+     "l": "D",
+     "text": "Tachypnoic, tachycardic and hypotensive person",
+     "answer": false,
+     "why": "This omits the altered consciousness."
+    }
+   ],
+   "note": "Also in the 1st Block Test (Q122), so your progress on it is shared."
+  },
+  {
    "num": 225,
    "ref": "ID 5824 / ID 5640",
-   "topic": "Cardiovascular",
+   "topic": "Simulation",
    "subtopic": "Volume status",
    "stem": "A healthy 35-year-old individual has been dehydrated due to limited fluid intake over the past two days. Compared to optimal hydration, which of the following changes is most likely?",
    "statements": [
@@ -132,7 +282,7 @@ window.PHYSIO_TF_B2 = {
   {
    "num": 227,
    "ref": "ID 5638",
-   "topic": "Cardiovascular",
+   "topic": "Simulation",
    "subtopic": "Volume & venous pressure",
    "stem": "Drinking 1 L of fresh pure water within 1 minute:",
    "statements": [
@@ -166,7 +316,7 @@ window.PHYSIO_TF_B2 = {
   {
    "num": 229,
    "ref": "ID 5642 / ID 5825",
-   "topic": "Cardiovascular",
+   "topic": "Simulation",
    "subtopic": "Contractility",
    "stem": "Positive inotropic effect of the sympathetic nervous system on the heart increases the:",
    "statements": [
@@ -206,7 +356,7 @@ window.PHYSIO_TF_B2 = {
   {
    "num": 231,
    "ref": "ID 5789",
-   "topic": "Cardiovascular",
+   "topic": "Simulation",
    "subtopic": "Hemodynamics",
    "stem": "Consider condition of constant cardiac output: if arteriolar vasoconstriction occurs, blood pressure rises:",
    "statements": [
@@ -238,9 +388,49 @@ window.PHYSIO_TF_B2 = {
    "note": "Also in the 1st Block Test (Q113), so your progress on it is shared."
   },
   {
+   "num": 235,
+   "ref": "ID 5256",
+   "topic": "Simulation",
+   "subtopic": "Blood loss",
+   "stem": "After a 1 L blood loss:",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Blood count is not changed immediately (minutes) after bleeding",
+     "answer": true,
+     "why": "Whole blood is lost, so cell concentrations are unchanged in the first minutes."
+    },
+    {
+     "l": "B",
+     "text": "MCV, MCH and MCHC are not changed hours after bleeding",
+     "answer": true,
+     "why": "MCV, MCH and MCHC describe single cells; dilution changes counts but not these indices."
+    },
+    {
+     "l": "C",
+     "text": "MCV, MCH and MCHC are not changed one day after the bleeding",
+     "answer": true,
+     "why": "A day later the cells are still the same ones; new reticulocytes appear only after several days."
+    },
+    {
+     "l": "D",
+     "text": "The person could be thirsty",
+     "answer": true,
+     "why": "Hypovolemia triggers angiotensin II and ADH, which cause thirst."
+    },
+    {
+     "l": "E",
+     "text": "Immediately after bleeding the loss of volume is more serious than loss of erythrocytes",
+     "answer": true,
+     "why": "Right after bleeding the loss of volume threatens circulation first; reduced O2 capacity matters later."
+    }
+   ],
+   "note": "Also in the 1st Block Test (Q116), so your progress on it is shared."
+  },
+  {
    "num": 236,
    "ref": "Past paper (JINE)",
-   "topic": "Cardiovascular",
+   "topic": "Simulation",
    "subtopic": "Hypotension causes",
    "stem": "If the finding of low BP is not accompanied by a rise of HR, the reason could be in:",
    "statements": [
@@ -278,9 +468,43 @@ window.PHYSIO_TF_B2 = {
    "note": "Also in the 1st Block Test (Q121), so your progress on it is shared."
   },
   {
+   "num": 237,
+   "ref": "ID 5251",
+   "topic": "Simulation",
+   "subtopic": "Perfusion assessment",
+   "stem": "Which parameters inform us about sufficient peripheral perfusion?",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Mean arterial pressure over 90 mmHg",
+     "answer": true,
+     "why": "A mean arterial pressure above 90 mmHg gives an adequate perfusion pressure for peripheral tissues."
+    },
+    {
+     "l": "B",
+     "text": "Capillary refill time 4 s",
+     "answer": false,
+     "why": "A capillary refill time of 4 s is prolonged (normal under 2 s), a sign of poor peripheral perfusion."
+    },
+    {
+     "l": "C",
+     "text": "CVP 5 mmHg",
+     "answer": false,
+     "why": "CVP 5 mmHg is a normal filling pressure, but it describes preload and volume, not peripheral perfusion."
+    },
+    {
+     "l": "D",
+     "text": "CVP 25 mmHg",
+     "answer": false,
+     "why": "CVP 25 mmHg is very high (heart failure or overload) and says nothing good about perfusion."
+    }
+   ],
+   "note": "Also in the 1st Block Test (Q104), so your progress on it is shared."
+  },
+  {
    "num": 238,
    "ref": "ID 5624",
-   "topic": "Cardiovascular",
+   "topic": "Simulation",
    "subtopic": "Cardiac filling",
    "stem": "End-diastolic volume would be decreased by:",
    "statements": [
@@ -314,7 +538,7 @@ window.PHYSIO_TF_B2 = {
   {
    "num": 239,
    "ref": "Past paper (JINE)",
-   "topic": "Cardiovascular",
+   "topic": "Simulation",
    "subtopic": "Hypotension causes",
    "stem": "Your patient is severely hypotensive. What could be the reason?",
    "statements": [
@@ -352,9 +576,43 @@ window.PHYSIO_TF_B2 = {
    "note": "Also in the 1st Block Test (Q120), so your progress on it is shared."
   },
   {
+   "num": 240,
+   "ref": "Past paper (JINE)",
+   "topic": "Simulation",
+   "subtopic": "Condition assessment (triage)",
+   "stem": "Do the \"condition assessment\" for the following patient (choose red, yellow or green and a good reason; more than one could be correct): 50-year-old woman in laying position, alert, oriented, but very weak, no breathing difficulty, RR 22/min, pale skin, strong vaginal bleeding for 2 days, HR 135/min, BP 80/50, CRT 4 s.",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Yellow because of strong vaginal bleeding for 2 days",
+     "answer": false,
+     "why": "Heavy bleeding with shock means red, not yellow."
+    },
+    {
+     "l": "B",
+     "text": "Yellow because of HR 135/min at rest",
+     "answer": false,
+     "why": "This is red, not yellow."
+    },
+    {
+     "l": "C",
+     "text": "Yellow because of low BP",
+     "answer": false,
+     "why": "This is red, not yellow."
+    },
+    {
+     "l": "D",
+     "text": "Red because of low BP in a heavily bleeding person",
+     "answer": true,
+     "why": "Hypotension with tachycardia (shock index 135/80, about 1.7) in a bleeding patient means red."
+    }
+   ],
+   "note": "Also in the 1st Block Test (Q124), so your progress on it is shared."
+  },
+  {
    "num": 241,
    "ref": "Past paper (JINE)",
-   "topic": "Cardiovascular",
+   "topic": "Simulation",
    "subtopic": "Sympathetic response",
    "stem": "Increased blood pressure and heart rate could be a consequence of:",
    "statements": [
@@ -388,7 +646,7 @@ window.PHYSIO_TF_B2 = {
   {
    "num": 242,
    "ref": "Past paper (JINE)",
-   "topic": "Cardiovascular",
+   "topic": "Simulation",
    "subtopic": "Venous return",
    "stem": "Inspiration increases:",
    "statements": [
@@ -426,50 +684,635 @@ window.PHYSIO_TF_B2 = {
    "note": "Statement B refers to the right ventricle. Also in the 1st Block Test (Q125), so your progress on it is shared."
   },
   {
-   "num": 340,
-   "ref": "ID 4559",
-   "topic": "Cardiovascular",
-   "subtopic": "Cardiac output & heart rate",
-   "stem": "Consider an athletic 70-kg man during heavy exercise with the following parameters: oxygen consumption 4 L/min, arterial oxygen 190 mL/L, mixed venous blood oxygen 30 mL/L of blood, heart rate 180 beats/min. Which statement is correct?",
+   "num": 243,
+   "ref": "ID 5629",
+   "topic": "Simulation",
+   "subtopic": "SBAR communication",
+   "stem": "This question deals with SBAR communication skills. Choose the best expression of the main problem of the given patient: 40-year-old woman on admission, alert, cannot speak for nearly permanent cough, cyanotic, looks stressed, HR 135/min, BP 140/90, CRT 2 s.",
    "statements": [
     {
      "l": "A",
-     "text": "Cardiac output is 12 L/min",
+     "text": "Alert coughing person",
      "answer": false,
-     "why": "By Fick, CO = VO2 / (CaO2 - CvO2) = 4000 / 160 mL/L = 25 L/min, not 12."
+     "why": "This misses the cyanosis."
     },
     {
      "l": "B",
-     "text": "Cardiac output is 25 L/min",
-     "answer": true,
-     "why": "4 L/min / (190 - 30 mL/L) = 25 L/min."
+     "text": "Alert cyanotic and tachycardic person",
+     "answer": false,
+     "why": "This misses the main problem: the cough that stops her from speaking."
     },
     {
      "l": "C",
-     "text": "Stroke volume is 67 mL",
-     "answer": false,
-     "why": "67 mL x 180 = 12 L/min, which does not match CO of 25 L/min."
+     "text": "Permanently coughing cyanotic person",
+     "answer": true,
+     "why": "Permanent cough with cyanosis is the main problem (airway and breathing)."
     },
     {
      "l": "D",
-     "text": "Stroke volume is 138 mL",
+     "text": "Coughing person with tachycardia and high BP",
+     "answer": false,
+     "why": "Tachycardia and BP 140/90 are secondary findings."
+    }
+   ],
+   "note": "Also in the 1st Block Test (Q118), so your progress on it is shared."
+  },
+  {
+   "num": 325,
+   "ref": "ID 5068",
+   "topic": "Simulation",
+   "subtopic": "O2 delivery",
+   "stem": "You start breathing air with 40% oxygen. No other change.",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Amount of O2 delivered to tissues approximately doubles",
+     "answer": false,
+     "why": "Hb is already about 97% saturated; content rises only slightly."
+    },
+    {
+     "l": "B",
+     "text": "Amount of exhaled O2 approximately doubles",
      "answer": true,
-     "why": "SV = CO / HR = 25000 / 180, about 139 mL."
+     "why": "Inspired O2 almost doubles while consumption stays the same, so the exhaled amount roughly doubles."
+    },
+    {
+     "l": "C",
+     "text": "Metabolic rate increases by more than half",
+     "answer": false,
+     "why": "Metabolism does not depend on inspired O2."
+    },
+    {
+     "l": "D",
+     "text": "Hemoglobin saturation in the lungs does not change significantly",
+     "answer": true,
+     "why": "It is already near 100%."
     },
     {
      "l": "E",
-     "text": "Stroke volume cannot be calculated",
+     "text": "SpO2 increases considerably",
      "answer": false,
-     "why": "Once CO is known, SV = CO / HR can be calculated."
+     "why": "From about 97% to about 99-100%, only a little."
+    }
+   ]
+  },
+  {
+   "num": 326,
+   "ref": "ID 5088",
+   "topic": "Simulation",
+   "subtopic": "O2 delivery",
+   "stem": "If hemoglobin content drops from normal values by 30%, the oxygen delivery can still be maintained by:",
+   "statements": [
+    {
+     "l": "A",
+     "text": "increased ventilation",
+     "answer": false,
+     "why": "Hb is already saturated; more ventilation adds almost no O2."
+    },
+    {
+     "l": "B",
+     "text": "increased blood saturation in alveoli",
+     "answer": false,
+     "why": "Saturation is already about 97%."
+    },
+    {
+     "l": "C",
+     "text": "increased desaturation of blood",
+     "answer": true,
+     "why": "Tissues extract more O2 (larger arteriovenous difference); only 6% of the class got this right."
+    },
+    {
+     "l": "D",
+     "text": "reduced O2 consumption",
+     "answer": false,
+     "why": "That would lower demand, not maintain delivery."
+    },
+    {
+     "l": "E",
+     "text": "increased blood pressure",
+     "answer": false,
+     "why": "Pressure is not the variable; flow is."
     },
     {
      "l": "F",
-     "text": "Cardiac output cannot be calculated",
+     "text": "increased blood flow",
+     "answer": true,
+     "why": "Higher cardiac output carries more of the lower-content blood."
+    }
+   ]
+  },
+  {
+   "num": 327,
+   "ref": "ID 4815",
+   "topic": "Simulation",
+   "subtopic": "Patient assessment",
+   "stem": "When examining heart rate at a peripheral artery (radial), you do not feel any pulse. What should you do next (tick 3 options)?",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Call for help and initiate CPR",
      "answer": false,
-     "why": "All Fick data (VO2 and arteriovenous O2 difference) are given, so CO can be calculated."
+     "why": "Too early: first confirm that there is really no circulation (carotid pulse, consciousness, breathing)."
+    },
+    {
+     "l": "B",
+     "text": "Reassess consciousness",
+     "answer": true,
+     "why": "A responsive patient has a circulation."
+    },
+    {
+     "l": "C",
+     "text": "Control airway, reassess breathing",
+     "answer": true,
+     "why": "ABC: airway and breathing come first."
+    },
+    {
+     "l": "D",
+     "text": "Check blood pressure",
+     "answer": false,
+     "why": "Without a radial pulse, cuff BP is unreliable; check central pulse first."
+    },
+    {
+     "l": "E",
+     "text": "Check another peripheral pulse",
+     "answer": false,
+     "why": "A central (carotid) pulse is more informative."
+    },
+    {
+     "l": "F",
+     "text": "Check carotid pulse",
+     "answer": true,
+     "why": "A carotid pulse persists down to a systolic BP of about 60 mmHg."
+    }
+   ]
+  },
+  {
+   "num": 328,
+   "ref": "ID 4797",
+   "topic": "Simulation",
+   "subtopic": "Blood loss",
+   "stem": "Which of the following parameters help considerably when estimating the volume of acute blood loss (happened within minutes), if measured immediately after bleeding?",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Hb concentration in blood",
+     "answer": false,
+     "why": "Right after bleeding, whole blood is lost: Hb concentration stays normal until fluid shifts in hours later."
+    },
+    {
+     "l": "B",
+     "text": "MCHC",
+     "answer": false,
+     "why": "Red-cell indices do not change with acute blood loss."
+    },
+    {
+     "l": "C",
+     "text": "MCH",
+     "answer": false,
+     "why": "Unchanged."
+    },
+    {
+     "l": "D",
+     "text": "MCV",
+     "answer": false,
+     "why": "Unchanged."
+    },
+    {
+     "l": "E",
+     "text": "body core temperature",
+     "answer": false,
+     "why": "Not a measure of blood loss volume."
     }
    ],
-   "note": "Also in the 1st Block Test (Q112), so your progress on it is shared."
+   "note": "The professor's key for this question is empty (no option is correct); the 2018 notes confirm \"there was no right answer\"."
+  },
+  {
+   "num": 329,
+   "ref": "ID 4818",
+   "topic": "Simulation",
+   "subtopic": "Patient assessment",
+   "stem": "You are approaching a critically ill patient who is trying to communicate with you. What can be reasonably inferred?",
+   "statements": [
+    {
+     "l": "A",
+     "text": "The patient is NOT in a life-threatening condition",
+     "answer": false,
+     "why": "A talking patient can still be in shock or about to deteriorate."
+    },
+    {
+     "l": "B",
+     "text": "Patient's hemodynamics is stable",
+     "answer": false,
+     "why": "Talking says nothing about BP or heart rate."
+    },
+    {
+     "l": "C",
+     "text": "The patient is conscious",
+     "answer": true,
+     "why": "Trying to communicate proves consciousness."
+    },
+    {
+     "l": "D",
+     "text": "Patient's blood supply to the brain is adequate",
+     "answer": false,
+     "why": "The key marks this false: perfusion may be just enough for now, not adequate. (Source: the professor's key, not Guyton & Hall.)"
+    }
+   ]
+  },
+  {
+   "num": 330,
+   "ref": "ID 4816",
+   "topic": "Simulation",
+   "subtopic": "Patient assessment",
+   "stem": "Which parameters carry useful information regarding blood pressure?",
+   "statements": [
+    {
+     "l": "A",
+     "text": "SpO2",
+     "answer": false,
+     "why": "Saturation does not reflect pressure (it may even read normally at low BP)."
+    },
+    {
+     "l": "B",
+     "text": "Respiratory rate",
+     "answer": false,
+     "why": "Not specific for BP."
+    },
+    {
+     "l": "C",
+     "text": "Inspection of skin colour",
+     "answer": true,
+     "why": "Pale, mottled skin suggests vasoconstriction and low perfusion."
+    },
+    {
+     "l": "D",
+     "text": "Coagulation tests",
+     "answer": false,
+     "why": "Unrelated to BP."
+    },
+    {
+     "l": "E",
+     "text": "Inspection of neck veins",
+     "answer": true,
+     "why": "Jugular filling reflects central venous pressure and volume."
+    },
+    {
+     "l": "F",
+     "text": "Diuresis",
+     "answer": true,
+     "why": "Urine output falls when renal perfusion pressure drops."
+    }
+   ]
+  },
+  {
+   "num": 331,
+   "ref": "ID 4823",
+   "topic": "Simulation",
+   "subtopic": "Patient assessment",
+   "stem": "In a conscious patient you are unable to estimate blood pressure. Which other method could help to conclude that the patient is NOT severely hypotensive?",
+   "statements": [
+    {
+     "l": "A",
+     "text": "ECG",
+     "answer": false,
+     "why": "Shows electrical activity, not pressure."
+    },
+    {
+     "l": "B",
+     "text": "Auscultation of the heart",
+     "answer": false,
+     "why": "Heart sounds do not tell the pressure."
+    },
+    {
+     "l": "C",
+     "text": "Optoplethysmography (SpO2)",
+     "answer": true,
+     "why": "A good pulsatile pleth signal means peripheral pulses are present."
+    },
+    {
+     "l": "D",
+     "text": "Pulse check",
+     "answer": true,
+     "why": "A palpable radial pulse suggests systolic BP of at least about 80 mmHg."
+    },
+    {
+     "l": "E",
+     "text": "Inquiring the patient",
+     "answer": false,
+     "why": "The key marks this false; a conscious patient can still be hypotensive. (Source: the professor's key, not Guyton & Hall.)"
+    }
+   ]
+  },
+  {
+   "num": 332,
+   "ref": "ID 4819",
+   "topic": "Simulation",
+   "subtopic": "Transfusion",
+   "stem": "You are determined to administer a whole blood transfusion. Which tests should be performed at the bedside just before the transfusion is finally initiated?",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Cross match test",
+     "answer": false,
+     "why": "Done in the blood bank beforehand, not at the bedside."
+    },
+    {
+     "l": "B",
+     "text": "AB0 agglutination tests",
+     "answer": true,
+     "why": "Bedside ABO check of patient and unit is mandatory."
+    },
+    {
+     "l": "C",
+     "text": "Hemocoagulation tests",
+     "answer": false,
+     "why": "Not part of the pre-transfusion bedside check."
+    },
+    {
+     "l": "D",
+     "text": "Blood test for hemoglobin, hematocrit, blood cell count",
+     "answer": false,
+     "why": "Done earlier to decide on transfusion, not at the bedside just before it."
+    },
+    {
+     "l": "E",
+     "text": "Basic physical exam of the patient",
+     "answer": true,
+     "why": "Baseline vital signs to spot a reaction."
+    }
+   ]
+  },
+  {
+   "num": 333,
+   "ref": "ID 5055",
+   "topic": "Simulation",
+   "subtopic": "Patient assessment",
+   "stem": "You are performing a standard examination of an unconscious patient. You have no assistant. You see no obvious injuries. The chest is rising only if the chin is lifted. When checking a pulse rate at a peripheral artery (radial) you do not feel anything.",
+   "statements": [
+    {
+     "l": "A",
+     "text": "reassess central pulsation",
+     "answer": true,
+     "why": "Check the carotid pulse."
+    },
+    {
+     "l": "B",
+     "text": "HR estimation could help in search for the low blood pressure reason",
+     "answer": true,
+     "why": "Bradycardia or tachycardia points to the cause."
+    },
+    {
+     "l": "C",
+     "text": "regularity of pulsation could help in search for the low blood pressure reason",
+     "answer": true,
+     "why": "An irregular pulse suggests arrhythmia."
+    },
+    {
+     "l": "D",
+     "text": "the value of blood pressure and duration of the low BP period is important",
+     "answer": true,
+     "why": "Both decide how much organ damage is likely."
+    },
+    {
+     "l": "E",
+     "text": "check blood pressure (even if the chin can't be lifted during the procedure)",
+     "answer": false,
+     "why": "The airway comes first; you must not let go of the chin lift."
+    },
+    {
+     "l": "F",
+     "text": "call for help",
+     "answer": true,
+     "why": "An unconscious patient with an airway problem needs help."
+    }
+   ]
+  },
+  {
+   "num": 334,
+   "ref": "ID 5066",
+   "topic": "Simulation",
+   "subtopic": "Pulse oximetry",
+   "stem": "Interpretation errors in pulse oximetry may arise in the presence of:",
+   "statements": [
+    {
+     "l": "A",
+     "text": "carboxyhemoglobin",
+     "answer": true,
+     "why": "COHb absorbs like oxyHb, so SpO2 reads falsely high."
+    },
+    {
+     "l": "B",
+     "text": "methemoglobin",
+     "answer": true,
+     "why": "MetHb pulls SpO2 toward about 85%."
+    },
+    {
+     "l": "C",
+     "text": "nail varnish",
+     "answer": true,
+     "why": "Dark varnish blocks light."
+    },
+    {
+     "l": "D",
+     "text": "methylene blue",
+     "answer": true,
+     "why": "The dye absorbs at the oximeter's wavelength and falsely lowers SpO2."
+    },
+    {
+     "l": "E",
+     "text": "motion of a patient or a sensor",
+     "answer": true,
+     "why": "Motion artefact corrupts the pulsatile signal."
+    }
+   ]
+  },
+  {
+   "num": 335,
+   "ref": "ID 4821",
+   "topic": "Simulation",
+   "subtopic": "Blood loss",
+   "stem": "Your patient's results are as follows: Hb 110 g/L, Hct 0.38, RBC 5.1 x 10^6/uL, WBC 9.5 x 10^3/uL, arterial BP 90/60, CVP 2 mmHg, SpO2 97%, HR 90. What can be concluded?",
+   "statements": [
+    {
+     "l": "A",
+     "text": "All the values are within physiological limits",
+     "answer": false,
+     "why": "MCV is low, and BP and CVP are at the low edge."
+    },
+    {
+     "l": "B",
+     "text": "MCV is low",
+     "answer": true,
+     "why": "MCV = Hct / RBC = 0.38 / 5.1 x 10^12/L, about 75 fL (normal 80-95 fL)."
+    },
+    {
+     "l": "C",
+     "text": "The patient needs a blood transfusion",
+     "answer": false,
+     "why": "Hb 110 g/L with stable circulation is no indication."
+    },
+    {
+     "l": "D",
+     "text": "This patient could be acutely bleeding",
+     "answer": true,
+     "why": "Low-normal BP and CVP 2 mmHg are compatible with volume loss."
+    },
+    {
+     "l": "E",
+     "text": "Could be an asymptomatic anemic patient",
+     "answer": true,
+     "why": "Mild microcytic anemia, for example from iron deficiency."
+    }
+   ],
+   "note": "Answer based on the literature (Guyton & Hall), not on the provided images. The key is hidden in the photo, so the answers are worked out from the numbers. Only 24% of the class got B right, which fits B being true."
+  },
+  {
+   "num": 336,
+   "ref": "Student notes (SIM)",
+   "topic": "Simulation",
+   "subtopic": "Blood loss",
+   "stem": "What is the LEAST informative measurement in case of acute bleeding?",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Oximetry (SpO2)",
+     "answer": true,
+     "why": "Arterial saturation stays normal: the lungs still oxygenate whatever blood there is."
+    },
+    {
+     "l": "B",
+     "text": "Blood pressure",
+     "answer": false,
+     "why": "Falls in larger blood loss."
+    },
+    {
+     "l": "C",
+     "text": "Respiratory rate",
+     "answer": false,
+     "why": "Rises with shock."
+    },
+    {
+     "l": "D",
+     "text": "CVP",
+     "answer": false,
+     "why": "Falls with volume loss."
+    },
+    {
+     "l": "E",
+     "text": "Saturation of venous blood",
+     "answer": false,
+     "why": "Falls as tissues extract more O2."
+    },
+    {
+     "l": "F",
+     "text": "Acral (peripheral) temperature",
+     "answer": false,
+     "why": "Falls with vasoconstriction."
+    }
+   ],
+   "note": "Answer based on the literature (Guyton & Hall), not on the provided images. This question comes from the student notes in the Test 2 folder, which have no professor key."
+  },
+  {
+   "num": 337,
+   "ref": "Student notes (SIM)",
+   "topic": "Simulation",
+   "subtopic": "Blood loss",
+   "stem": "Which measurements are informative days after a bleeding?",
+   "statements": [
+    {
+     "l": "A",
+     "text": "MCH",
+     "answer": false,
+     "why": "Red-cell indices change only after weeks (iron deficiency)."
+    },
+    {
+     "l": "B",
+     "text": "Hb concentration",
+     "answer": true,
+     "why": "After fluid shifts into the vessels (hours to days), Hb falls and shows the loss."
+    },
+    {
+     "l": "C",
+     "text": "MCV",
+     "answer": false,
+     "why": "Changes only later."
+    },
+    {
+     "l": "D",
+     "text": "Reticulocyte count",
+     "answer": true,
+     "why": "Rises after 3-5 days as the marrow responds."
+    }
+   ],
+   "note": "Answer based on the literature (Guyton & Hall), not on the provided images. This question comes from the student notes in the Test 2 folder, which have no professor key."
+  },
+  {
+   "num": 338,
+   "ref": "Student notes (SIM)",
+   "topic": "Simulation",
+   "subtopic": "Blood loss",
+   "stem": "Which measurements are informative months after an acute/chronic blood loss?",
+   "statements": [
+    {
+     "l": "A",
+     "text": "Decrease in iron storage (ferritin)",
+     "answer": true,
+     "why": "Chronic loss depletes iron."
+    },
+    {
+     "l": "B",
+     "text": "Hb concentration",
+     "answer": true,
+     "why": "Iron-deficiency anemia develops."
+    },
+    {
+     "l": "C",
+     "text": "MCV",
+     "answer": true,
+     "why": "Becomes low (microcytosis)."
+    }
+   ],
+   "note": "Answer based on the literature (Guyton & Hall), not on the provided images. This question comes from the student notes in the Test 2 folder, which have no professor key."
+  },
+  {
+   "num": 339,
+   "ref": "Student notes (SIM)",
+   "topic": "Simulation",
+   "subtopic": "Blood loss",
+   "stem": "Someone loses 1.5 L of blood. What would be the best treatment options (pick 2)?",
+   "statements": [
+    {
+     "l": "A",
+     "text": "0.5 L of his own blood",
+     "answer": false,
+     "why": "Autologous blood is rarely available in an emergency, and 0.5 L is too little."
+    },
+    {
+     "l": "B",
+     "text": "0.5 L transfusion",
+     "answer": false,
+     "why": "Too little volume."
+    },
+    {
+     "l": "C",
+     "text": "1 L saline",
+     "answer": true,
+     "why": "Fast, available volume replacement."
+    },
+    {
+     "l": "D",
+     "text": "1 L plasma",
+     "answer": true,
+     "why": "Replaces volume and clotting factors."
+    },
+    {
+     "l": "E",
+     "text": "Clotting factors",
+     "answer": false,
+     "why": "Do not restore volume."
+    }
+   ],
+   "note": "Answer based on the literature (Guyton & Hall), not on the provided images. This question comes from the student notes in the Test 2 folder, which have no professor key."
   }
  ],
  "Membrane potential": [
@@ -2078,300 +2921,6 @@ window.PHYSIO_TF_B2 = {
     }
    ],
    "note": "Answer based on the literature (Guyton & Hall), not on the provided images. This question comes from the student notes in the Test 2 folder, which have no professor key."
-  }
- ],
- "DR ABC": [
-  {
-   "num": 203,
-   "ref": "Past paper (JINE)",
-   "topic": "DR ABC",
-   "subtopic": "Condition assessment (triage)",
-   "stem": "Do the \"condition assessment\" for the following patient (choose red, yellow or green and a corresponding reason; more than one could be correct): 30-year-old conscious man in hot weather, feels dizzy, dry lips, sweating, red skin, no shortness of breath, RR 22/min, HR 120/min, regular pulse on radial artery, BP 90/60.",
-   "statements": [
-    {
-     "l": "A",
-     "text": "Green because conscious, no shortness of breath, regular pulse on radial artery",
-     "answer": false,
-     "why": "Not green: dizziness, dehydration signs, tachycardia and low BP mean he is not stable."
-    },
-    {
-     "l": "B",
-     "text": "Yellow because of higher respiratory rate at rest",
-     "answer": false,
-     "why": "RR 22/min is only mildly raised; the key does not accept it as the reason for yellow."
-    },
-    {
-     "l": "C",
-     "text": "Yellow because of dizziness and signs of dehydration",
-     "answer": true,
-     "why": "Dizziness with dry lips and sweating in hot weather means dehydration or heat stress, so yellow (needs attention) is the right category and reason."
-    },
-    {
-     "l": "D",
-     "text": "Yellow because of high HR at rest",
-     "answer": false,
-     "why": "Per the key, the tachycardia is a consequence of the dehydration; the category is based on the clinical picture (dizziness, dehydration), not on HR alone."
-    },
-    {
-     "l": "E",
-     "text": "Red because of low BP",
-     "answer": false,
-     "why": "Not red: he is conscious with a regular radial pulse and BP 90/60; red is for life-threatening findings."
-    }
-   ],
-   "note": "Also in the 1st Block Test (Q105), so your progress on it is shared."
-  },
-  {
-   "num": 210,
-   "ref": "ID 5614",
-   "topic": "DR ABC",
-   "subtopic": "Hypotension & bradycardia",
-   "stem": "An 80-year-old man has fainted. On examination, in the supine position, he is very pale, responsive to pain, with RR 22/min, HR 35/min, BP 85/45 mmHg, and CRT 4 seconds. Choose the correct statement(s):",
-   "statements": [
-    {
-     "l": "A",
-     "text": "The patient should benefit from legs elevation",
-     "answer": false,
-     "why": "The hypotension comes from bradycardia (CO = HR x SV); raising the legs adds little."
-    },
-    {
-     "l": "B",
-     "text": "Venous return in the supine position is better than in the sitting position in this situation",
-     "answer": true,
-     "why": "Supine position removes hydrostatic pooling, so venous return is better than when sitting."
-    },
-    {
-     "l": "C",
-     "text": "There is no evidence of a sympathetic compensatory reaction",
-     "answer": false,
-     "why": "Pallor and CRT of 4 s show vasoconstriction, which is evidence of sympathetic compensation."
-    },
-    {
-     "l": "D",
-     "text": "Pharmacological inhibition of the vagus nerve (or parasympathetic activity) could increase cardiac output",
-     "answer": true,
-     "why": "Blocking the vagus (e.g. atropine) raises HR and therefore CO."
-    },
-    {
-     "l": "E",
-     "text": "The assessment of this man is classified as \"in danger\" (yellow)",
-     "answer": false,
-     "why": "Responsive only to pain with shock-level BP means red (critical), not yellow."
-    }
-   ],
-   "note": "Also in the 1st Block Test (Q117), so your progress on it is shared."
-  },
-  {
-   "num": 224,
-   "ref": "ID 5631",
-   "topic": "DR ABC",
-   "subtopic": "SBAR communication",
-   "stem": "This question deals with SBAR communication skills. Choose the best statement (just one) representing the main problem of the given patient: 80-year-old woman on admission, pain responsive, RR 25, red hot skin, t 39 °C, pulse on radial artery absent, pulse on carotid regular, HR 135/min, BP 70/40, CRT 4 s.",
-   "statements": [
-    {
-     "l": "A",
-     "text": "A person with high temperature and low BP",
-     "answer": false,
-     "why": "This misses the reduced consciousness."
-    },
-    {
-     "l": "B",
-     "text": "A person responsive only to pain, hypotensive (BP 70/40) with fever",
-     "answer": true,
-     "why": "It captures consciousness (responsive only to pain), shock-level BP and fever."
-    },
-    {
-     "l": "C",
-     "text": "A person with tachycardia, hypotension and vasodilation",
-     "answer": false,
-     "why": "Vasodilation is not the main problem stated."
-    },
-    {
-     "l": "D",
-     "text": "Tachypnoic, tachycardic and hypotensive person",
-     "answer": false,
-     "why": "This omits the altered consciousness."
-    }
-   ],
-   "note": "Also in the 1st Block Test (Q122), so your progress on it is shared."
-  },
-  {
-   "num": 237,
-   "ref": "ID 5251",
-   "topic": "DR ABC",
-   "subtopic": "Perfusion assessment",
-   "stem": "Which parameters inform us about sufficient peripheral perfusion?",
-   "statements": [
-    {
-     "l": "A",
-     "text": "Mean arterial pressure over 90 mmHg",
-     "answer": true,
-     "why": "A mean arterial pressure above 90 mmHg gives an adequate perfusion pressure for peripheral tissues."
-    },
-    {
-     "l": "B",
-     "text": "Capillary refill time 4 s",
-     "answer": false,
-     "why": "A capillary refill time of 4 s is prolonged (normal under 2 s), a sign of poor peripheral perfusion."
-    },
-    {
-     "l": "C",
-     "text": "CVP 5 mmHg",
-     "answer": false,
-     "why": "CVP 5 mmHg is a normal filling pressure, but it describes preload and volume, not peripheral perfusion."
-    },
-    {
-     "l": "D",
-     "text": "CVP 25 mmHg",
-     "answer": false,
-     "why": "CVP 25 mmHg is very high (heart failure or overload) and says nothing good about perfusion."
-    }
-   ],
-   "note": "Also in the 1st Block Test (Q104), so your progress on it is shared."
-  },
-  {
-   "num": 240,
-   "ref": "Past paper (JINE)",
-   "topic": "DR ABC",
-   "subtopic": "Condition assessment (triage)",
-   "stem": "Do the \"condition assessment\" for the following patient (choose red, yellow or green and a good reason; more than one could be correct): 50-year-old woman in laying position, alert, oriented, but very weak, no breathing difficulty, RR 22/min, pale skin, strong vaginal bleeding for 2 days, HR 135/min, BP 80/50, CRT 4 s.",
-   "statements": [
-    {
-     "l": "A",
-     "text": "Yellow because of strong vaginal bleeding for 2 days",
-     "answer": false,
-     "why": "Heavy bleeding with shock means red, not yellow."
-    },
-    {
-     "l": "B",
-     "text": "Yellow because of HR 135/min at rest",
-     "answer": false,
-     "why": "This is red, not yellow."
-    },
-    {
-     "l": "C",
-     "text": "Yellow because of low BP",
-     "answer": false,
-     "why": "This is red, not yellow."
-    },
-    {
-     "l": "D",
-     "text": "Red because of low BP in a heavily bleeding person",
-     "answer": true,
-     "why": "Hypotension with tachycardia (shock index 135/80, about 1.7) in a bleeding patient means red."
-    }
-   ],
-   "note": "Also in the 1st Block Test (Q124), so your progress on it is shared."
-  },
-  {
-   "num": 243,
-   "ref": "ID 5629",
-   "topic": "DR ABC",
-   "subtopic": "SBAR communication",
-   "stem": "This question deals with SBAR communication skills. Choose the best expression of the main problem of the given patient: 40-year-old woman on admission, alert, cannot speak for nearly permanent cough, cyanotic, looks stressed, HR 135/min, BP 140/90, CRT 2 s.",
-   "statements": [
-    {
-     "l": "A",
-     "text": "Alert coughing person",
-     "answer": false,
-     "why": "This misses the cyanosis."
-    },
-    {
-     "l": "B",
-     "text": "Alert cyanotic and tachycardic person",
-     "answer": false,
-     "why": "This misses the main problem: the cough that stops her from speaking."
-    },
-    {
-     "l": "C",
-     "text": "Permanently coughing cyanotic person",
-     "answer": true,
-     "why": "Permanent cough with cyanosis is the main problem (airway and breathing)."
-    },
-    {
-     "l": "D",
-     "text": "Coughing person with tachycardia and high BP",
-     "answer": false,
-     "why": "Tachycardia and BP 140/90 are secondary findings."
-    }
-   ],
-   "note": "Also in the 1st Block Test (Q118), so your progress on it is shared."
-  }
- ],
- "Blood": [
-  {
-   "num": 204,
-   "ref": "Past paper (SIM_2)",
-   "topic": "Blood",
-   "subtopic": "Blood loss",
-   "stem": "A previously healthy person lost a large amount of blood. Now, hemoglobin concentration is 60 g/L. Choose the correct answer(s):",
-   "statements": [
-    {
-     "l": "A",
-     "text": "Hb concentration value 60 g/L could have been obtained right after the bleeding",
-     "answer": false,
-     "why": "Right after bleeding, cells and plasma are lost in the same proportion, so Hb concentration is initially unchanged. It falls only later, when interstitial fluid dilutes the blood."
-    },
-    {
-     "l": "B",
-     "text": "This value of Hb can be physiological in women",
-     "answer": false,
-     "why": "Normal Hb is about 120-160 g/L in women; 60 g/L is severe anemia."
-    },
-    {
-     "l": "C",
-     "text": "Hb is critically low",
-     "answer": true,
-     "why": "60 g/L is critically low (below the usual transfusion threshold of about 70 g/L)."
-    },
-    {
-     "l": "D",
-     "text": "Hb was estimated with a delay after the blood loss",
-     "answer": true,
-     "why": "The drop needs hemodilution, which takes hours to days, so this value was measured with a delay after the loss."
-    }
-   ],
-   "note": "Also in the 1st Block Test (Q102), so your progress on it is shared."
-  },
-  {
-   "num": 235,
-   "ref": "ID 5256",
-   "topic": "Blood",
-   "subtopic": "Blood loss",
-   "stem": "After a 1 L blood loss:",
-   "statements": [
-    {
-     "l": "A",
-     "text": "Blood count is not changed immediately (minutes) after bleeding",
-     "answer": true,
-     "why": "Whole blood is lost, so cell concentrations are unchanged in the first minutes."
-    },
-    {
-     "l": "B",
-     "text": "MCV, MCH and MCHC are not changed hours after bleeding",
-     "answer": true,
-     "why": "MCV, MCH and MCHC describe single cells; dilution changes counts but not these indices."
-    },
-    {
-     "l": "C",
-     "text": "MCV, MCH and MCHC are not changed one day after the bleeding",
-     "answer": true,
-     "why": "A day later the cells are still the same ones; new reticulocytes appear only after several days."
-    },
-    {
-     "l": "D",
-     "text": "The person could be thirsty",
-     "answer": true,
-     "why": "Hypovolemia triggers angiotensin II and ADH, which cause thirst."
-    },
-    {
-     "l": "E",
-     "text": "Immediately after bleeding the loss of volume is more serious than loss of erythrocytes",
-     "answer": true,
-     "why": "Right after bleeding the loss of volume threatens circulation first; reduced O2 capacity matters later."
-    }
-   ],
-   "note": "Also in the 1st Block Test (Q116), so your progress on it is shared."
   }
  ],
  "Respiration": [
@@ -4698,605 +5247,52 @@ window.PHYSIO_TF_B2 = {
     }
    ],
    "note": "Answer based on the literature (Guyton & Hall), not on the provided images. This question comes from the student notes in the Test 2 folder, which have no professor key."
-  }
- ],
- "Simulation": [
-  {
-   "num": 325,
-   "ref": "ID 5068",
-   "topic": "Simulation",
-   "subtopic": "O2 delivery",
-   "stem": "You start breathing air with 40% oxygen. No other change.",
-   "statements": [
-    {
-     "l": "A",
-     "text": "Amount of O2 delivered to tissues approximately doubles",
-     "answer": false,
-     "why": "Hb is already about 97% saturated; content rises only slightly."
-    },
-    {
-     "l": "B",
-     "text": "Amount of exhaled O2 approximately doubles",
-     "answer": true,
-     "why": "Inspired O2 almost doubles while consumption stays the same, so the exhaled amount roughly doubles."
-    },
-    {
-     "l": "C",
-     "text": "Metabolic rate increases by more than half",
-     "answer": false,
-     "why": "Metabolism does not depend on inspired O2."
-    },
-    {
-     "l": "D",
-     "text": "Hemoglobin saturation in the lungs does not change significantly",
-     "answer": true,
-     "why": "It is already near 100%."
-    },
-    {
-     "l": "E",
-     "text": "SpO2 increases considerably",
-     "answer": false,
-     "why": "From about 97% to about 99-100%, only a little."
-    }
-   ]
   },
   {
-   "num": 326,
-   "ref": "ID 5088",
-   "topic": "Simulation",
-   "subtopic": "O2 delivery",
-   "stem": "If hemoglobin content drops from normal values by 30%, the oxygen delivery can still be maintained by:",
+   "num": 340,
+   "ref": "ID 4559",
+   "topic": "Respiration",
+   "subtopic": "Cardiac output & heart rate",
+   "stem": "Consider an athletic 70-kg man during heavy exercise with the following parameters: oxygen consumption 4 L/min, arterial oxygen 190 mL/L, mixed venous blood oxygen 30 mL/L of blood, heart rate 180 beats/min. Which statement is correct?",
    "statements": [
     {
      "l": "A",
-     "text": "increased ventilation",
+     "text": "Cardiac output is 12 L/min",
      "answer": false,
-     "why": "Hb is already saturated; more ventilation adds almost no O2."
+     "why": "By Fick, CO = VO2 / (CaO2 - CvO2) = 4000 / 160 mL/L = 25 L/min, not 12."
     },
     {
      "l": "B",
-     "text": "increased blood saturation in alveoli",
-     "answer": false,
-     "why": "Saturation is already about 97%."
+     "text": "Cardiac output is 25 L/min",
+     "answer": true,
+     "why": "4 L/min / (190 - 30 mL/L) = 25 L/min."
     },
     {
      "l": "C",
-     "text": "increased desaturation of blood",
-     "answer": true,
-     "why": "Tissues extract more O2 (larger arteriovenous difference); only 6% of the class got this right."
+     "text": "Stroke volume is 67 mL",
+     "answer": false,
+     "why": "67 mL x 180 = 12 L/min, which does not match CO of 25 L/min."
     },
     {
      "l": "D",
-     "text": "reduced O2 consumption",
-     "answer": false,
-     "why": "That would lower demand, not maintain delivery."
+     "text": "Stroke volume is 138 mL",
+     "answer": true,
+     "why": "SV = CO / HR = 25000 / 180, about 139 mL."
     },
     {
      "l": "E",
-     "text": "increased blood pressure",
+     "text": "Stroke volume cannot be calculated",
      "answer": false,
-     "why": "Pressure is not the variable; flow is."
+     "why": "Once CO is known, SV = CO / HR can be calculated."
     },
     {
      "l": "F",
-     "text": "increased blood flow",
-     "answer": true,
-     "why": "Higher cardiac output carries more of the lower-content blood."
-    }
-   ]
-  },
-  {
-   "num": 327,
-   "ref": "ID 4815",
-   "topic": "Simulation",
-   "subtopic": "Patient assessment",
-   "stem": "When examining heart rate at a peripheral artery (radial), you do not feel any pulse. What should you do next (tick 3 options)?",
-   "statements": [
-    {
-     "l": "A",
-     "text": "Call for help and initiate CPR",
+     "text": "Cardiac output cannot be calculated",
      "answer": false,
-     "why": "Too early: first confirm that there is really no circulation (carotid pulse, consciousness, breathing)."
-    },
-    {
-     "l": "B",
-     "text": "Reassess consciousness",
-     "answer": true,
-     "why": "A responsive patient has a circulation."
-    },
-    {
-     "l": "C",
-     "text": "Control airway, reassess breathing",
-     "answer": true,
-     "why": "ABC: airway and breathing come first."
-    },
-    {
-     "l": "D",
-     "text": "Check blood pressure",
-     "answer": false,
-     "why": "Without a radial pulse, cuff BP is unreliable; check central pulse first."
-    },
-    {
-     "l": "E",
-     "text": "Check another peripheral pulse",
-     "answer": false,
-     "why": "A central (carotid) pulse is more informative."
-    },
-    {
-     "l": "F",
-     "text": "Check carotid pulse",
-     "answer": true,
-     "why": "A carotid pulse persists down to a systolic BP of about 60 mmHg."
-    }
-   ]
-  },
-  {
-   "num": 328,
-   "ref": "ID 4797",
-   "topic": "Simulation",
-   "subtopic": "Blood loss",
-   "stem": "Which of the following parameters help considerably when estimating the volume of acute blood loss (happened within minutes), if measured immediately after bleeding?",
-   "statements": [
-    {
-     "l": "A",
-     "text": "Hb concentration in blood",
-     "answer": false,
-     "why": "Right after bleeding, whole blood is lost: Hb concentration stays normal until fluid shifts in hours later."
-    },
-    {
-     "l": "B",
-     "text": "MCHC",
-     "answer": false,
-     "why": "Red-cell indices do not change with acute blood loss."
-    },
-    {
-     "l": "C",
-     "text": "MCH",
-     "answer": false,
-     "why": "Unchanged."
-    },
-    {
-     "l": "D",
-     "text": "MCV",
-     "answer": false,
-     "why": "Unchanged."
-    },
-    {
-     "l": "E",
-     "text": "body core temperature",
-     "answer": false,
-     "why": "Not a measure of blood loss volume."
+     "why": "All Fick data (VO2 and arteriovenous O2 difference) are given, so CO can be calculated."
     }
    ],
-   "note": "The professor's key for this question is empty (no option is correct); the 2018 notes confirm \"there was no right answer\"."
-  },
-  {
-   "num": 329,
-   "ref": "ID 4818",
-   "topic": "Simulation",
-   "subtopic": "Patient assessment",
-   "stem": "You are approaching a critically ill patient who is trying to communicate with you. What can be reasonably inferred?",
-   "statements": [
-    {
-     "l": "A",
-     "text": "The patient is NOT in a life-threatening condition",
-     "answer": false,
-     "why": "A talking patient can still be in shock or about to deteriorate."
-    },
-    {
-     "l": "B",
-     "text": "Patient's hemodynamics is stable",
-     "answer": false,
-     "why": "Talking says nothing about BP or heart rate."
-    },
-    {
-     "l": "C",
-     "text": "The patient is conscious",
-     "answer": true,
-     "why": "Trying to communicate proves consciousness."
-    },
-    {
-     "l": "D",
-     "text": "Patient's blood supply to the brain is adequate",
-     "answer": false,
-     "why": "The key marks this false: perfusion may be just enough for now, not adequate. (Source: the professor's key, not Guyton & Hall.)"
-    }
-   ]
-  },
-  {
-   "num": 330,
-   "ref": "ID 4816",
-   "topic": "Simulation",
-   "subtopic": "Patient assessment",
-   "stem": "Which parameters carry useful information regarding blood pressure?",
-   "statements": [
-    {
-     "l": "A",
-     "text": "SpO2",
-     "answer": false,
-     "why": "Saturation does not reflect pressure (it may even read normally at low BP)."
-    },
-    {
-     "l": "B",
-     "text": "Respiratory rate",
-     "answer": false,
-     "why": "Not specific for BP."
-    },
-    {
-     "l": "C",
-     "text": "Inspection of skin colour",
-     "answer": true,
-     "why": "Pale, mottled skin suggests vasoconstriction and low perfusion."
-    },
-    {
-     "l": "D",
-     "text": "Coagulation tests",
-     "answer": false,
-     "why": "Unrelated to BP."
-    },
-    {
-     "l": "E",
-     "text": "Inspection of neck veins",
-     "answer": true,
-     "why": "Jugular filling reflects central venous pressure and volume."
-    },
-    {
-     "l": "F",
-     "text": "Diuresis",
-     "answer": true,
-     "why": "Urine output falls when renal perfusion pressure drops."
-    }
-   ]
-  },
-  {
-   "num": 331,
-   "ref": "ID 4823",
-   "topic": "Simulation",
-   "subtopic": "Patient assessment",
-   "stem": "In a conscious patient you are unable to estimate blood pressure. Which other method could help to conclude that the patient is NOT severely hypotensive?",
-   "statements": [
-    {
-     "l": "A",
-     "text": "ECG",
-     "answer": false,
-     "why": "Shows electrical activity, not pressure."
-    },
-    {
-     "l": "B",
-     "text": "Auscultation of the heart",
-     "answer": false,
-     "why": "Heart sounds do not tell the pressure."
-    },
-    {
-     "l": "C",
-     "text": "Optoplethysmography (SpO2)",
-     "answer": true,
-     "why": "A good pulsatile pleth signal means peripheral pulses are present."
-    },
-    {
-     "l": "D",
-     "text": "Pulse check",
-     "answer": true,
-     "why": "A palpable radial pulse suggests systolic BP of at least about 80 mmHg."
-    },
-    {
-     "l": "E",
-     "text": "Inquiring the patient",
-     "answer": false,
-     "why": "The key marks this false; a conscious patient can still be hypotensive. (Source: the professor's key, not Guyton & Hall.)"
-    }
-   ]
-  },
-  {
-   "num": 332,
-   "ref": "ID 4819",
-   "topic": "Simulation",
-   "subtopic": "Transfusion",
-   "stem": "You are determined to administer a whole blood transfusion. Which tests should be performed at the bedside just before the transfusion is finally initiated?",
-   "statements": [
-    {
-     "l": "A",
-     "text": "Cross match test",
-     "answer": false,
-     "why": "Done in the blood bank beforehand, not at the bedside."
-    },
-    {
-     "l": "B",
-     "text": "AB0 agglutination tests",
-     "answer": true,
-     "why": "Bedside ABO check of patient and unit is mandatory."
-    },
-    {
-     "l": "C",
-     "text": "Hemocoagulation tests",
-     "answer": false,
-     "why": "Not part of the pre-transfusion bedside check."
-    },
-    {
-     "l": "D",
-     "text": "Blood test for hemoglobin, hematocrit, blood cell count",
-     "answer": false,
-     "why": "Done earlier to decide on transfusion, not at the bedside just before it."
-    },
-    {
-     "l": "E",
-     "text": "Basic physical exam of the patient",
-     "answer": true,
-     "why": "Baseline vital signs to spot a reaction."
-    }
-   ]
-  },
-  {
-   "num": 333,
-   "ref": "ID 5055",
-   "topic": "Simulation",
-   "subtopic": "Patient assessment",
-   "stem": "You are performing a standard examination of an unconscious patient. You have no assistant. You see no obvious injuries. The chest is rising only if the chin is lifted. When checking a pulse rate at a peripheral artery (radial) you do not feel anything.",
-   "statements": [
-    {
-     "l": "A",
-     "text": "reassess central pulsation",
-     "answer": true,
-     "why": "Check the carotid pulse."
-    },
-    {
-     "l": "B",
-     "text": "HR estimation could help in search for the low blood pressure reason",
-     "answer": true,
-     "why": "Bradycardia or tachycardia points to the cause."
-    },
-    {
-     "l": "C",
-     "text": "regularity of pulsation could help in search for the low blood pressure reason",
-     "answer": true,
-     "why": "An irregular pulse suggests arrhythmia."
-    },
-    {
-     "l": "D",
-     "text": "the value of blood pressure and duration of the low BP period is important",
-     "answer": true,
-     "why": "Both decide how much organ damage is likely."
-    },
-    {
-     "l": "E",
-     "text": "check blood pressure (even if the chin can't be lifted during the procedure)",
-     "answer": false,
-     "why": "The airway comes first; you must not let go of the chin lift."
-    },
-    {
-     "l": "F",
-     "text": "call for help",
-     "answer": true,
-     "why": "An unconscious patient with an airway problem needs help."
-    }
-   ]
-  },
-  {
-   "num": 334,
-   "ref": "ID 5066",
-   "topic": "Simulation",
-   "subtopic": "Pulse oximetry",
-   "stem": "Interpretation errors in pulse oximetry may arise in the presence of:",
-   "statements": [
-    {
-     "l": "A",
-     "text": "carboxyhemoglobin",
-     "answer": true,
-     "why": "COHb absorbs like oxyHb, so SpO2 reads falsely high."
-    },
-    {
-     "l": "B",
-     "text": "methemoglobin",
-     "answer": true,
-     "why": "MetHb pulls SpO2 toward about 85%."
-    },
-    {
-     "l": "C",
-     "text": "nail varnish",
-     "answer": true,
-     "why": "Dark varnish blocks light."
-    },
-    {
-     "l": "D",
-     "text": "methylene blue",
-     "answer": true,
-     "why": "The dye absorbs at the oximeter's wavelength and falsely lowers SpO2."
-    },
-    {
-     "l": "E",
-     "text": "motion of a patient or a sensor",
-     "answer": true,
-     "why": "Motion artefact corrupts the pulsatile signal."
-    }
-   ]
-  },
-  {
-   "num": 335,
-   "ref": "ID 4821",
-   "topic": "Simulation",
-   "subtopic": "Blood loss",
-   "stem": "Your patient's results are as follows: Hb 110 g/L, Hct 0.38, RBC 5.1 x 10^6/uL, WBC 9.5 x 10^3/uL, arterial BP 90/60, CVP 2 mmHg, SpO2 97%, HR 90. What can be concluded?",
-   "statements": [
-    {
-     "l": "A",
-     "text": "All the values are within physiological limits",
-     "answer": false,
-     "why": "MCV is low, and BP and CVP are at the low edge."
-    },
-    {
-     "l": "B",
-     "text": "MCV is low",
-     "answer": true,
-     "why": "MCV = Hct / RBC = 0.38 / 5.1 x 10^12/L, about 75 fL (normal 80-95 fL)."
-    },
-    {
-     "l": "C",
-     "text": "The patient needs a blood transfusion",
-     "answer": false,
-     "why": "Hb 110 g/L with stable circulation is no indication."
-    },
-    {
-     "l": "D",
-     "text": "This patient could be acutely bleeding",
-     "answer": true,
-     "why": "Low-normal BP and CVP 2 mmHg are compatible with volume loss."
-    },
-    {
-     "l": "E",
-     "text": "Could be an asymptomatic anemic patient",
-     "answer": true,
-     "why": "Mild microcytic anemia, for example from iron deficiency."
-    }
-   ],
-   "note": "Answer based on the literature (Guyton & Hall), not on the provided images. The key is hidden in the photo, so the answers are worked out from the numbers. Only 24% of the class got B right, which fits B being true."
-  },
-  {
-   "num": 336,
-   "ref": "Student notes (SIM)",
-   "topic": "Simulation",
-   "subtopic": "Blood loss",
-   "stem": "What is the LEAST informative measurement in case of acute bleeding?",
-   "statements": [
-    {
-     "l": "A",
-     "text": "Oximetry (SpO2)",
-     "answer": true,
-     "why": "Arterial saturation stays normal: the lungs still oxygenate whatever blood there is."
-    },
-    {
-     "l": "B",
-     "text": "Blood pressure",
-     "answer": false,
-     "why": "Falls in larger blood loss."
-    },
-    {
-     "l": "C",
-     "text": "Respiratory rate",
-     "answer": false,
-     "why": "Rises with shock."
-    },
-    {
-     "l": "D",
-     "text": "CVP",
-     "answer": false,
-     "why": "Falls with volume loss."
-    },
-    {
-     "l": "E",
-     "text": "Saturation of venous blood",
-     "answer": false,
-     "why": "Falls as tissues extract more O2."
-    },
-    {
-     "l": "F",
-     "text": "Acral (peripheral) temperature",
-     "answer": false,
-     "why": "Falls with vasoconstriction."
-    }
-   ],
-   "note": "Answer based on the literature (Guyton & Hall), not on the provided images. This question comes from the student notes in the Test 2 folder, which have no professor key."
-  },
-  {
-   "num": 337,
-   "ref": "Student notes (SIM)",
-   "topic": "Simulation",
-   "subtopic": "Blood loss",
-   "stem": "Which measurements are informative days after a bleeding?",
-   "statements": [
-    {
-     "l": "A",
-     "text": "MCH",
-     "answer": false,
-     "why": "Red-cell indices change only after weeks (iron deficiency)."
-    },
-    {
-     "l": "B",
-     "text": "Hb concentration",
-     "answer": true,
-     "why": "After fluid shifts into the vessels (hours to days), Hb falls and shows the loss."
-    },
-    {
-     "l": "C",
-     "text": "MCV",
-     "answer": false,
-     "why": "Changes only later."
-    },
-    {
-     "l": "D",
-     "text": "Reticulocyte count",
-     "answer": true,
-     "why": "Rises after 3-5 days as the marrow responds."
-    }
-   ],
-   "note": "Answer based on the literature (Guyton & Hall), not on the provided images. This question comes from the student notes in the Test 2 folder, which have no professor key."
-  },
-  {
-   "num": 338,
-   "ref": "Student notes (SIM)",
-   "topic": "Simulation",
-   "subtopic": "Blood loss",
-   "stem": "Which measurements are informative months after an acute/chronic blood loss?",
-   "statements": [
-    {
-     "l": "A",
-     "text": "Decrease in iron storage (ferritin)",
-     "answer": true,
-     "why": "Chronic loss depletes iron."
-    },
-    {
-     "l": "B",
-     "text": "Hb concentration",
-     "answer": true,
-     "why": "Iron-deficiency anemia develops."
-    },
-    {
-     "l": "C",
-     "text": "MCV",
-     "answer": true,
-     "why": "Becomes low (microcytosis)."
-    }
-   ],
-   "note": "Answer based on the literature (Guyton & Hall), not on the provided images. This question comes from the student notes in the Test 2 folder, which have no professor key."
-  },
-  {
-   "num": 339,
-   "ref": "Student notes (SIM)",
-   "topic": "Simulation",
-   "subtopic": "Blood loss",
-   "stem": "Someone loses 1.5 L of blood. What would be the best treatment options (pick 2)?",
-   "statements": [
-    {
-     "l": "A",
-     "text": "0.5 L of his own blood",
-     "answer": false,
-     "why": "Autologous blood is rarely available in an emergency, and 0.5 L is too little."
-    },
-    {
-     "l": "B",
-     "text": "0.5 L transfusion",
-     "answer": false,
-     "why": "Too little volume."
-    },
-    {
-     "l": "C",
-     "text": "1 L saline",
-     "answer": true,
-     "why": "Fast, available volume replacement."
-    },
-    {
-     "l": "D",
-     "text": "1 L plasma",
-     "answer": true,
-     "why": "Replaces volume and clotting factors."
-    },
-    {
-     "l": "E",
-     "text": "Clotting factors",
-     "answer": false,
-     "why": "Do not restore volume."
-    }
-   ],
-   "note": "Answer based on the literature (Guyton & Hall), not on the provided images. This question comes from the student notes in the Test 2 folder, which have no professor key."
+   "note": "Also in the 1st Block Test (Q112), so your progress on it is shared."
   }
  ]
 };

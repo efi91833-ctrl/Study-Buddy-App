@@ -75,7 +75,7 @@ run(
   'isTfSelection, tfGroupByStem, TrueFalseExam, FormulaBuilder, fxCheck, fxPreview, ' +
   'fbCalcCorrect, fbParseNumber, SUBJECT_PAGES, RangesGame, rgGrade, rgMakeScale, physioTermsIn, ' +
   'PhysioAbout, UnitQuestion, RgMapPanel, stemFlagKey, isStemFlagged, flaggedCount, ' +
-  'PhysiologySandbox, SANDBOX_URL, PAGE_INSTRUCTIONS };',
+  'PhysiologySandbox, SANDBOX_URL, PAGE_INSTRUCTIONS, SubjectPage };',
   'app'
 );
 
@@ -218,12 +218,28 @@ const PH = 'Physiology';
 const phys = T.QUESTION_BANK[PH];
 check('Physiology subject exists', !!phys);
 check('Physiology filed under 2nd Year', T.YEARS.some(y => y.name === '2nd Year' && y.subjects.includes(PH)));
-check('two T/F exams: "1st - Block Test" and "2nd - Block Test"',
-      phys.exams.map(e => e.name + ':' + e.type).join(',') === '1st - Block Test:tf,2nd - Block Test:tf');
+check('whole block tests first: "1st - Block Test" and "2nd - Block Test"',
+      phys.exams.slice(0, 2).map(e => e.name + ':' + e.type).join(',') === '1st - Block Test:tf,2nd - Block Test:tf');
+check('every Physiology exam is True/False', phys.exams.every(e => e.type === 'tf'));
+const parts = phys.exams.filter(e => e.part);
+check('six subject exams (3 per block), marked as parts',
+      parts.map(e => e.name).join('|') === '1st Block · Blood pressure & heart|1st Block · Blood & coagulation|1st Block · DR ABC|2nd Block · Membrane potential|2nd Block · Respiration|2nd Block · Simulation',
+      parts.map(e => e.name).join('|'));
+const stemCount = e => T.tfGroupByStem(e.questions).length;
+check('1st block subjects add up to the whole block (125 stems)',
+      parts.slice(0, 3).reduce((n, e) => n + stemCount(e), 0) === 125 && parts.slice(0, 3).reduce((n, e) => n + e.questions.length, 0) === phys.exams[0].questions.length);
+check('2nd block subjects add up to the whole block (140 stems: MP 43, Respiration 63, Simulation 34)',
+      parts.slice(3).map(stemCount).join() === '43,63,34' && parts.slice(3).reduce((n, e) => n + e.questions.length, 0) === phys.exams[1].questions.length);
+check('each subject exam holds only its own topic', parts.every(e => new Set(e.questions.map(q => q.topic)).size === 1));
+check('subject exams route to the True/False screen', parts.every(e => T.isTfSelection(PH, phys.exams.indexOf(e))));
 check('1st - Block Test holds all 125 questions in order (1-94 original, 95-125 past papers)',
       T.tfGroupByStem(phys.exams[0].questions).map(g => g.num).join() === Array.from({ length: 125 }, (_, k) => k + 1).join());
-check('subject page lists both block tests under True / False',
-      T.SUBJECT_PAGES.Physiology.groups.length === 1 && T.SUBJECT_PAGES.Physiology.groups[0].names.join() === '1st - Block Test,2nd - Block Test');
+const pg = T.SUBJECT_PAGES.Physiology.groups;
+check('subject page has one tab per block, whole test first, then its subjects',
+      pg.map(g => g.label).join() === '1st Block Test,2nd Block Test'
+      && pg[0].names.join('|') === '1st - Block Test|1st Block · Blood pressure & heart|1st Block · Blood & coagulation|1st Block · DR ABC'
+      && pg[1].names.join('|') === '2nd - Block Test|2nd Block · Membrane potential|2nd Block · Respiration|2nd Block · Simulation'
+      && pg.every(g => g.names.every(n => phys.exams.some(e => e.name === n))));
 const allSt = phys.exams[0].questions;
 check('three topics tagged in block 1 (Blood, Cardiovascular, DR ABC)', [...new Set(allSt.map(q => q.topic))].sort().join() === 'Blood,Cardiovascular,DR ABC');
 check('627 statements across 125 stems', allSt.length === 627 && T.tfGroupByStem(allSt).length === 125,
@@ -240,7 +256,7 @@ const b2Groups = T.tfGroupByStem(b2);
 check('2nd - Block Test holds 140 stems numbered 201-340 in order',
       b2Groups.map(g => g.num).join() === Array.from({ length: 140 }, (_, k) => k + 201).join());
 check('2nd block: 656 statements, every one scored', b2.length === 656 && b2.every(q => q.correct), b2.length);
-check('2nd block: Simulation topic present', b2.some(q => q.topic === 'Simulation'));
+check('2nd block: only its three subjects as topics', [...new Set(b2.map(q => q.topic))].sort().join() === 'Membrane potential,Respiration,Simulation');
 check('2nd block: membrane potential and respiration topics present',
       ['Membrane potential', 'Respiration'].every(t => b2.some(q => q.topic === t)));
 check('2nd block: every statement has an explanation', b2.every(q => q.explanation));
@@ -408,6 +424,10 @@ try { sbHost = mount(R.createElement(w.__test.PhysiologySandbox, { onBack() {} }
 try {
   tfHost = mount(R.createElement(w.__test.TrueFalseExam, { subject: 'Physiology', examIndex: 0, onBack() {} }));
 } catch (e) { tfErr = e; }
+let spHost = null, spErr = null;
+try {
+  spHost = mount(R.createElement(w.__test.SubjectPage, { subject: 'Physiology', config: w.__test.SUBJECT_PAGES.Physiology, onSelectExam() {}, onBack() {} }));
+} catch (e) { spErr = e; }
 let tf2Host = null, tf2Err = null;
 try {
   tf2Host = mount(R.createElement(w.__test.TrueFalseExam, { subject: 'Physiology', examIndex: 1, onBack() {} }));
@@ -445,6 +465,10 @@ setTimeout(() => {
   check('T/F opens one question at a time by default', tfHost && tfHost.querySelectorAll('.question-card').length === 1
         && /Question 1 of 125/.test(tfHost.textContent) && /Check this question/.test(tfHost.textContent));
   check('progress can log a one-by-one session', typeof P.logSession === 'function');
+  const spt = spHost ? spHost.textContent : '';
+  check('Physiology page shows a tab per block and the 1st block subject rows', !spErr && /1st Block Test/.test(spt) && /2nd Block Test/.test(spt)
+        && /1st - Block Test/.test(spt) && /Blood pressure & heart/.test(spt) && /Blood & coagulation/.test(spt) && /DR ABC/.test(spt),
+        (spErr && spErr.message) || spt.slice(0, 300));
   const tf2t = tf2Host ? tf2Host.textContent : '';
   check('2nd block opens one question at a time with Flag and shuffle', !tf2Err && /Question 1 of 140/.test(tf2t)
         && /Check this question/.test(tf2t) && /Shuffled/.test(tf2t) && tf2Host.querySelector('.tf-flagbtn'),
