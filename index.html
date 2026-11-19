@@ -2448,8 +2448,10 @@ function weightedSample(subject, pool, size) {
  *   focused   — this is a weak-area session
  *   hidden    — how many mastered questions were filtered out
  */
-function buildExam(subject, examIndex) {
+function buildExam(subject, examIndex, opts) {
   const focused = examIndex === 'weak';
+  // includeMastered: practise the whole exam, including what you already got right.
+  const includeMastered = !!(opts && opts.includeMastered);
   const pool = poolFor(subject, examIndex);
   const P = window.Progress;
 
@@ -2473,6 +2475,9 @@ function buildExam(subject, examIndex) {
   }
 
   // Curated exam: keep the author's ordering, just drop what is already mastered.
+  if (includeMastered) {
+    return { questions: [...pool], exhausted: false, focused: false, hidden: 0, all: true };
+  }
   if (fresh.length < MIN_EXAM_SIZE) {
     return { questions: [...pool], exhausted: true, focused: false, hidden: 0 };
   }
@@ -2914,10 +2919,22 @@ function TfStatementRow({ item, answer, submitted, onChoose }) {
 
 const TF_MODE_KEY = 'sb_tf_mode';
 const TF_SHUFFLE_KEY = 'sb_tf_shuffle';
+// 'all': every question in the exam. 'new': skip the ones already answered correctly.
+const TF_POOL_KEY = 'sb_tf_pool';
 
 function TrueFalseExam({ subject, examIndex, onBack, onFocusWeak }) {
-  // Built once per mount, like ExamScreen: remounting picks up new mastery.
-  const [built] = useState(() => buildExam(subject, examIndex));
+  // Weak-area and flagged sessions pick their own questions, so the
+  // all / not-yet-correct choice applies only to a block test or subject.
+  const poolChoice = typeof examIndex === 'number';
+  const [allQs, setAllQs] = useState(() => {
+    try { return localStorage.getItem(TF_POOL_KEY) === 'all'; } catch (e) { return false; }
+  });
+  // Rebuilt only when the choice changes, so answering a question correctly
+  // mid-session does not pull it off the screen.
+  const built = useMemo(
+    () => buildExam(subject, examIndex, { includeMastered: poolChoice && allQs }),
+    [subject, examIndex, poolChoice, allQs]
+  );
   const statements = built.questions;
   const ordered = useMemo(() => tfGroupByStem(statements), [statements]);
   // Shuffle changes the order of the questions only; statements keep A, B, C...
@@ -2964,6 +2981,13 @@ function TrueFalseExam({ subject, examIndex, onBack, onFocusWeak }) {
   function pickMode(m) {
     setMode(m);
     try { localStorage.setItem(TF_MODE_KEY, m); } catch (e) {}
+  }
+
+  function pickPool(all) {
+    setAllQs(all);
+    setIdx(0);
+    setAnswers({});
+    try { localStorage.setItem(TF_POOL_KEY, all ? 'all' : 'new'); } catch (e) {}
   }
 
   const isChecked = num => mode === 'all' ? submitted : !!checked[num];
@@ -3084,6 +3108,17 @@ function TrueFalseExam({ subject, examIndex, onBack, onFocusWeak }) {
           </button>
         ))}
       </div>
+      {poolChoice && (
+        <div className="tf-mode" title="Choose whether questions you already answered correctly are included">
+          {[[false, 'Not yet correct'], [true, 'All questions']].map(([k, label]) => (
+            <button key={label} className={'tf-mode-btn' + (allQs === k ? ' on' : '')}
+              disabled={(locked || answeredCount > 0) && allQs !== k}
+              onClick={() => allQs !== k && pickPool(k)}>
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 

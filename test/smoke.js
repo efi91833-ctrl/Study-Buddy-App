@@ -291,6 +291,11 @@ check('per-statement scoring', tfRes.answered === firstStem.length && tfRes.corr
 const bloodAfter = T.buildExam(PH, 0).questions;
 check('correct statements are hidden next time, wrong one stays',
       bloodAfter.length === blood.length - (firstStem.length - 1) && bloodAfter.some(q => q.id === firstStem[0].id));
+const bloodAll = T.buildExam(PH, 0, { includeMastered: true });
+check('"All questions" keeps the correctly answered statements',
+      bloodAll.questions.length === blood.length && bloodAll.hidden === 0 && !bloodAll.exhausted);
+check('"All questions" leaves weak-area sessions alone',
+      T.buildExam(PH, 'weak', { includeMastered: true }).focused);
 check('weak areas tracked by subtopic', P.weakAreas(PH).length === 0 && P.summary(PH).attempts === firstStem.length);
 
 console.log('\n=== physiology flags ===');
@@ -481,7 +486,10 @@ setTimeout(() => {
         (tf2Err && tf2Err.message) || tf2t.slice(0, 160));
   check('T/F shows In order / Shuffled and a Flag button', /In order/.test(tft) && /Shuffled/.test(tft)
         && tfHost.querySelector('.tf-flagbtn') && tfHost.querySelector('.tf-flagbtn').textContent === 'Flag');
+  check('block test offers Not yet correct / All questions', /Not yet correct/.test(tft) && /All questions/.test(tft)
+        && /Not yet correct/.test(tf2t) && /All questions/.test(tf2t));
   const fgt = tfFlagHost ? tfFlagHost.textContent : '';
+  check('flagged session has no Not yet correct / All questions switch', !/All questions/.test(fgt));
   check('flagged session renders the flagged question, marked Flagged', !tfExtraErr && /Flagged questions/.test(fgt)
         && /Question 1 of 1/.test(fgt) && tfFlagHost.querySelector('.tf-flagbtn.on'), (tfExtraErr && tfExtraErr.message) || fgt.slice(0, 160));
   check('shuffled T/F still shows one question of 119', tfShufHost && tfShufHost.querySelectorAll('.question-card').length === 1
